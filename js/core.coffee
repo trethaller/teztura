@@ -29,5 +29,22 @@ class Layer
     c.height = height
     return c
 
+
+Bezier =
+  quadratic: (pts, t)->
+    lerp = (a, b, t) ->
+      return (a * t + b * (1-t))
+    f3 = (v1, v2, v3, t) ->
+      return lerp(lerp(v1, v2, t), lerp(v2, v3, t), t)
+    f2 = (v1, v2, t) ->
+      return lerp(v1, v2, t)
+
+    if pts.length is 1
+      return pts[0]
+    else if pts.length is 2
+      return new Point f2(pts[0].x, pts[1].x, t), f2(pts[0].y, pts[1].y, t)
+    else
+      return new Point f3(pts[0].x, pts[1].x, pts[2].x, t), f3(pts[0].y, pts[1].y, pts[2].y, t)
+
 if module?
   module.exports = {Point, Rect, FloatBuffer, Layer}

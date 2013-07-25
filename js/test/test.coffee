@@ -14,4 +14,3 @@ describe 'Rect', ()->
     b = new Core.Rect(200,50,100,100)
     assert.equal(a.intersect(b).width, 0)
     assert.equal(b.intersect(a).height, 50)
-
