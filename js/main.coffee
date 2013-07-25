@@ -29,6 +29,7 @@ class Layer
 drawing = false
 gamma = 1.0
 layer = new Layer(width, height)
+offset = new Point(50, 30)
 
 `
 function updateLayer (layer, rects, gamma) {
@@ -85,9 +86,9 @@ getPenPressure = () ->
   return 1.0
 
 onDraw = (e) ->
-  brushX = e.pageX-$mainCanvas.position().left;
-  brushY = e.pageY-$mainCanvas.position().top;
-  brushW = 20
+  brushX = e.pageX-$mainCanvas.position().left-offset.x;
+  brushY = e.pageY-$mainCanvas.position().top-offset.y;
+  brushW = 30
   brushH = 20
 
   pressure = getPenPressure()
@@ -97,11 +98,11 @@ onDraw = (e) ->
       i = (brushX + ix + (brushY + iy) * width)
       fb[i] += pressure * 0.2
 
-  brushRect = [brushX, brushY, brushW, brushH]
+  brushRect = [brushX, brushY, brushW+1, brushH+1]
   updateLayer(layer,[brushRect], gamma)
   getMainContext().drawImage(layer.canvas,
     brushRect[0], brushRect[1], brushRect[2], brushRect[3],
-    brushRect[0], brushRect[1], brushRect[2], brushRect[3])
+    offset.x + brushRect[0], offset.y + brushRect[1], brushRect[2], brushRect[3])
 
 changeGamma = (value) ->
   gamma = value
@@ -109,7 +110,7 @@ changeGamma = (value) ->
 
 refresh = () ->
   updateLayer(layer,[[0,0,width,height]], gamma)
-  getMainContext().drawImage(layer.canvas, 0, 0)
+  getMainContext().drawImage(layer.canvas, offset.x, offset.y)
 
 # ---
 
