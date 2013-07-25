@@ -1,14 +1,8 @@
 
-
-
-
-
 $mainCanvas = $('#canvas')
 width = $mainCanvas.width()
 height = $mainCanvas.height()
 
-getWTPlugin = () ->
-  return document.getElementById('wtPlugin')
 
 createCanvas = (width, height) ->
   c = document.createElement('canvas')
@@ -18,56 +12,105 @@ createCanvas = (width, height) ->
 
 offscreenCtx = createCanvas(width,height).getContext '2d'
 
-#buffer = new ArrayBuffer width * height * 4
-#fbuffer = new Float32Array buffer
 
-#ibuffer8 = new Uint8ClampedArray buffer;
-#ibuffer = new Uint32Array imgdata.data
+class FloatBuffer
+  constructor: (@width, @height) ->
+    @buffer = new ArrayBuffer @width * @height * 4
+    @fbuffer = new Float32Array @buffer
 
-offscreenCtx.fillRect 0,0,width,height
 
 offscreenImg = offscreenCtx.getImageData 0,0,width,height
 
 drawing = false
 
+fbuffer = new FloatBuffer(width,height)
+
+`
+function updateCanvas (fbuffer, ctx, imgData, rects) {
+  var width = fbuffer.width;
+  var height = fbuffer.height;
+  var data = imgData.data;
+  for(var i in rects) {
+    var r = rects[i];
+    var minX = r[0];
+    var minY = r[1];
+    var maxX = minX + r[2];
+    var maxY = minY + r[3];
+    for(var iy=minY; iy<maxY; ++iy) {
+      var offset = iy * width;
+      for(var ix=minX; ix<maxX; ++ix) {
+        var fval = fbuffer[offset + ix];
+        var val = (fval + 1.0) * 127
+        var i = (offset + ix) << 2;
+        data[i] = val;
+        data[++i] = val;
+        data[++i] = val;
+        data[++i] = 0xff;
+      }
+    }
+
+    ctx.putImageData(imgData, 0, 0, r[0], r[1], r[2], r[3])
+  }
+}
+
+function fillBuffer(fbuffer, func) {
+  var width = fbuffer.width;
+  var height = fbuffer.height;
+  var invw = 1.0 / width;
+  var invh = 1.0 / height;
+  for(var iy=0; iy<height; ++iy) {
+    var off = iy * width;
+    for(var ix=0; ix<width; ++ix) {
+      fbuffer[off + ix] = func(ix * invw, iy * invh);
+    }
+  }
+}
+`
+
+getMainContext = () ->
+  return $mainCanvas[0].getContext('2d')
+
+getPenPressure = () ->
+  plugin = document.getElementById('wtPlugin')
+  penAPI = plugin.penAPI
+  if penAPI and penAPI.pointerType > 0
+    return penAPI.pressure
+  return 1.0
 
 onDraw = (e) ->
-  x = e.pageX-$mainCanvas.position().left;
-  y = e.pageY-$mainCanvas.position().top;
+  brushX = e.pageX-$mainCanvas.position().left;
+  brushY = e.pageY-$mainCanvas.position().top;
+  brushW = 20
+  brushH = 20
 
-  #[x, y] = [e.clientX, e.clientY]
-  #ctx = e.target.getContext '2d'
+  pressure = getPenPressure()
+  for ix in [0..brushW]
+    for iy in [0..brushH]
+      i = (brushX + ix + (brushY + iy) * width)
+      fbuffer[i] += pressure * 0.2
 
-  if not drawing
-    return
+  brushRect = [brushX, brushY, brushW, brushH]
+  updateCanvas fbuffer,offscreenCtx,offscreenImg,[brushRect]
+  getMainContext().drawImage(offscreenCtx.canvas,
+    brushRect[0], brushRect[1], brushRect[2], brushRect[3],
+    brushRect[0], brushRect[1], brushRect[2], brushRect[3])
 
-  penAPI = getWTPlugin().penAPI
-  pressure = 0.0
-  if penAPI
-    pressure = penAPI.pressure;
-
-  lol = 5
-  col = Math.round((1-pressure) * 255)
-  data = offscreenImg.data
-  for ix in [0..lol]
-    for iy in [0..lol]
-      i = (x + ix + (y + iy) * width)*4
-      data[ i ]   = col
-      data[ i+1 ] = col
-      data[ i+2 ] = col
-      data[ i+3 ] = 0xff
-      #ibuffer[ x + ix + (y + iy) * width ] = 0xffff0080 + ix
-  
-
-  offscreenCtx.putImageData(offscreenImg, 0, 0, x, y, lol, lol)
-  $mainCanvas[0].getContext('2d').drawImage(offscreenCtx.canvas, x, y, lol, lol, x, y, lol, lol)
-  #$mainCanvas.getContext('2d').fillRect(x,y,lol,lol)
 
 $mainCanvas.mouseup (e) -> drawing = false
 $mainCanvas.mousedown (e) ->
   drawing = true
   onDraw(e)
 $mainCanvas.mousemove (e) ->
-  onDraw(e)
+  if drawing
+    onDraw(e)
+
+# ---
+
+fillBuffer fbuffer, (x,y) ->
+  return Math.sin(x * y * 10)
+
+updateCanvas fbuffer,offscreenCtx,offscreenImg,[[0,0,width,height]]
+
+getMainContext().drawImage(offscreenCtx.canvas, 0, 0)
 
 
