@@ -10,27 +10,32 @@ createCanvas = (width, height) ->
   c.height = height
   return c
 
-offscreenCtx = createCanvas(width,height).getContext '2d'
 
+class Point
+  constructor: (@x, @y) ->;
 
 class FloatBuffer
   constructor: (@width, @height) ->
     @buffer = new ArrayBuffer @width * @height * 4
     @fbuffer = new Float32Array @buffer
 
-
-offscreenImg = offscreenCtx.getImageData 0,0,width,height
+class Layer
+  constructor: (@width, @height) ->
+    @fbuffer = new FloatBuffer(@width, @height)
+    @canvas = createCanvas(@width,@height)
+    @context = @canvas.getContext '2d'
+    @imageData = @context.getImageData(0,0,width,height)
 
 drawing = false
 gamma = 1.0
-
-fbuffer = new FloatBuffer(width,height)
+layer = new Layer(width, height)
 
 `
-function updateCanvas (fbuffer, ctx, imgData, rects, gamma) {
-  var width = fbuffer.width;
-  var height = fbuffer.height;
-  var data = imgData.data;
+function updateLayer (layer, rects, gamma) {
+  var width = layer.width;
+  var height = layer.height;
+  var data = layer.imageData.data;
+  var fb = layer.fbuffer;
   for(var i in rects) {
     var r = rects[i];
     var minX = r[0];
@@ -40,8 +45,7 @@ function updateCanvas (fbuffer, ctx, imgData, rects, gamma) {
     for(var iy=minY; iy<maxY; ++iy) {
       var offset = iy * width;
       for(var ix=minX; ix<maxX; ++ix) {
-        var fval = fbuffer[offset + ix];
-        //var val = Math.round(Math.pow((fval + 1.0) * 0.5, gamma) * 255.0)
+        var fval = fb[offset + ix];
         var val = Math.pow((fval + 1.0) * 0.5, gamma) * 255.0;
         var i = (offset + ix) << 2;
         data[i] = val;
@@ -51,19 +55,20 @@ function updateCanvas (fbuffer, ctx, imgData, rects, gamma) {
       }
     }
 
-    ctx.putImageData(imgData, 0, 0, r[0], r[1], r[2], r[3])
+    layer.context.putImageData(layer.imageData, 0, 0, r[0], r[1], r[2], r[3])
   }
 }
 
-function fillBuffer(fbuffer, func) {
-  var width = fbuffer.width;
-  var height = fbuffer.height;
+function fillLayer(layer, func) {
+  var width = layer.width;
+  var height = layer.height;
   var invw = 1.0 / width;
   var invh = 1.0 / height;
+  var fb = layer.fbuffer;
   for(var iy=0; iy<height; ++iy) {
     var off = iy * width;
     for(var ix=0; ix<width; ++ix) {
-      fbuffer[off + ix] = func(ix * invw, iy * invh);
+      fb[off + ix] = func(ix * invw, iy * invh);
     }
   }
 }
@@ -86,14 +91,15 @@ onDraw = (e) ->
   brushH = 20
 
   pressure = getPenPressure()
+  fb = layer.fbuffer
   for ix in [0..brushW]
     for iy in [0..brushH]
       i = (brushX + ix + (brushY + iy) * width)
-      fbuffer[i] += pressure * 0.2
+      fb[i] += pressure * 0.2
 
   brushRect = [brushX, brushY, brushW, brushH]
-  updateCanvas fbuffer,offscreenCtx,offscreenImg,[brushRect], gamma
-  getMainContext().drawImage(offscreenCtx.canvas,
+  updateLayer(layer,[brushRect], gamma)
+  getMainContext().drawImage(layer.canvas,
     brushRect[0], brushRect[1], brushRect[2], brushRect[3],
     brushRect[0], brushRect[1], brushRect[2], brushRect[3])
 
@@ -102,9 +108,8 @@ changeGamma = (value) ->
   refresh()
 
 refresh = () ->
-  updateCanvas fbuffer,offscreenCtx,offscreenImg,[[0,0,width,height]], gamma
-  getMainContext().drawImage(offscreenCtx.canvas, 0, 0)
-
+  updateLayer(layer,[[0,0,width,height]], gamma)
+  getMainContext().drawImage(layer.canvas, 0, 0)
 
 # ---
 
@@ -127,7 +132,7 @@ $('#gammaSlider').slider(
 
 # ---
 
-fillBuffer fbuffer, (x,y) ->
+fillLayer layer, (x,y) ->
   return Math.sin(x * y * 10)
   #return 0
 
