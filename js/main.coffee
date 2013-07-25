@@ -22,11 +22,12 @@ class FloatBuffer
 offscreenImg = offscreenCtx.getImageData 0,0,width,height
 
 drawing = false
+gamma = 1.0
 
 fbuffer = new FloatBuffer(width,height)
 
 `
-function updateCanvas (fbuffer, ctx, imgData, rects) {
+function updateCanvas (fbuffer, ctx, imgData, rects, gamma) {
   var width = fbuffer.width;
   var height = fbuffer.height;
   var data = imgData.data;
@@ -40,7 +41,8 @@ function updateCanvas (fbuffer, ctx, imgData, rects) {
       var offset = iy * width;
       for(var ix=minX; ix<maxX; ++ix) {
         var fval = fbuffer[offset + ix];
-        var val = (fval + 1.0) * 127
+        //var val = Math.round(Math.pow((fval + 1.0) * 0.5, gamma) * 255.0)
+        var val = Math.pow((fval + 1.0) * 0.5, gamma) * 255.0;
         var i = (offset + ix) << 2;
         data[i] = val;
         data[++i] = val;
@@ -90,11 +92,21 @@ onDraw = (e) ->
       fbuffer[i] += pressure * 0.2
 
   brushRect = [brushX, brushY, brushW, brushH]
-  updateCanvas fbuffer,offscreenCtx,offscreenImg,[brushRect]
+  updateCanvas fbuffer,offscreenCtx,offscreenImg,[brushRect], gamma
   getMainContext().drawImage(offscreenCtx.canvas,
     brushRect[0], brushRect[1], brushRect[2], brushRect[3],
     brushRect[0], brushRect[1], brushRect[2], brushRect[3])
 
+changeGamma = (value) ->
+  gamma = value
+  refresh()
+
+refresh = () ->
+  updateCanvas fbuffer,offscreenCtx,offscreenImg,[[0,0,width,height]], gamma
+  getMainContext().drawImage(offscreenCtx.canvas, 0, 0)
+
+
+# ---
 
 $mainCanvas.mouseup (e) -> drawing = false
 $mainCanvas.mousedown (e) ->
@@ -104,13 +116,20 @@ $mainCanvas.mousemove (e) ->
   if drawing
     onDraw(e)
 
+$('#gammaSlider').slider(
+  min: 0
+  max: 4
+  step: 0.01
+  value: gamma
+  change: (evt, ui) ->
+    changeGamma ui.value
+)
+
 # ---
 
 fillBuffer fbuffer, (x,y) ->
   return Math.sin(x * y * 10)
+  #return 0
 
-updateCanvas fbuffer,offscreenCtx,offscreenImg,[[0,0,width,height]]
-
-getMainContext().drawImage(offscreenCtx.canvas, 0, 0)
-
+refresh()
 
