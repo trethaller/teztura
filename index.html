@@ -28,5 +28,20 @@
         <script src="js/vendor/bootstrap.min.js"></script>
         <!--script src="js/main.js"></script-->
         <script src="js/test.js"></script>
+
+
+    <!-- ********************************************************************* 
+     Embed the WacomTabletPlugin object.
+     To avoid plugin selection on page, size and position are adjusted 
+     so as to "tuck it under" canvas. 
+    ***************************************************************** -->
+    <!--[if IE]>
+    <object id='wtPlugin' classid='CLSID:092dfa86-5807-5a94-bf3b-5a53ba9e5308' WIDTH=1 HEIGHT=1 style="position:absolute; left:100px; top:100px">
+    </object>
+    <![endif]--><!--[if !IE]> <-->
+    <object id="wtPlugin" type="application/x-wacomtabletplugin" WIDTH=1 HEIGHT=1 style="position:absolute; left:100px; top:100px">
+        <!-- <param name="onload" value="pluginLoaded" /> -->
+    </object>
+
     </body>
 </html>
