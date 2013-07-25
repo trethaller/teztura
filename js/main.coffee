@@ -3,54 +3,9 @@ $mainCanvas = $('#canvas')
 width = $mainCanvas.width()
 height = $mainCanvas.height()
 
-assert = (b) ->
-  if not b
-    throw "Assertion failed"
-assertEqual = (a,b) ->
-  if a != b
-    throw "Assertion failed: #{a} != #{b}"
-
-createCanvas = (width, height) ->
-  c = document.createElement('canvas')
-  c.width = width
-  c.height = height
-  return c
-
-class Point
-  constructor: (@x, @y) ->;
-
-class Rect
-  constructor: (@x, @y, @width, @height) -> ;
-  intersect: (rect) ->
-    nmaxx = Math.min(@x+@width, rect.x+rect.width)
-    nmaxy = Math.min(@x+@width, rect.x+rect.width)
-    nx = Math.max(@x, rect.x)
-    ny = Math.max(@y, rect.y)
-    return new Rect(nx, ny, Math.max(0, nmaxx-nx), Math.max(0, nmaxy-ny))
-
-  # Tests
-  a = new Rect(10,20,100,100)
-  b = new Rect(20,10,100,100)
-  assertEqual(a.intersect(b).width, 90)
-  assertEqual(b.intersect(a).width, 90)
-  assertEqual(a.intersect(b).height, 90)
-  assertEqual(b.intersect(a).height, 90)
-  a = new Rect(0,0,100,100)
-  b = new Rect(200,50,100,100)
-  assertEqual(a.intersect(b).width, 0)
-  assertEqual(b.intersect(a).height, 50)
-
-class FloatBuffer
-  constructor: (@width, @height) ->
-    @buffer = new ArrayBuffer @width * @height * 4
-    @fbuffer = new Float32Array @buffer
-
-class Layer
-  constructor: (@width, @height) ->
-    @fbuffer = new FloatBuffer(@width, @height)
-    @canvas = createCanvas(@width,@height)
-    @context = @canvas.getContext '2d'
-    @imageData = @context.getImageData(0,0,width,height)
+class Brush
+  stroke: (layer, start, end, pressure) ->
+    throw "Not implemented"
 
 drawing = false
 gamma = 1.0
