@@ -4,20 +4,48 @@ width = $mainCanvas.width()
 height = $mainCanvas.height()
 
 class Brush
-  stroke: (layer, start, end, pressure) ->
-    throw "Not implemented"
+  stroke: (layer, start, end, pressure) -> ;
+  move: (pos, intensity) -> ;
+  beginStroke: (pos) -> ;
+  endStroke: (pos) -> ;
+
+class TestBrush1
+  drawing: false
+  lastpos: null
+  accumulator: 0.0
+  stepSize: 4.0
+
+  move: (pos, intensity) ->;
+  draw: (layer, pos, intensity) ->
+    delt = pos.sub(lastpos)
+    length = delt.length()
+    dir = delt.scale(1.0 / length)
+    while(@accumulator + stepSize <= length)
+      @accumulator += @stepSize
+      pt = pos + dir.scale(@accumulator)
+
+    @accumulator -= length
+    lastpos = pos
+
+  beginStroke: (pos) ->
+    drawing = true
+    @accumulator = 0
+  endStroke: (pos) ->
+    lastpos = null
+    drawing = false
+
 
 drawing = false
 gamma = 1.0
 layer = new Layer(width, height)
-offset = new Point(50, 30)
+offset = new Vector(50, 30)
 
 `
-function updateLayer (layer, rects, gamma) {
+function drawLayer (layer, rects, gamma) {
   var width = layer.width;
   var height = layer.height;
-  var data = layer.imageData.data;
-  var fb = layer.fbuffer;
+  var imgData = layer.imageData.data;
+  var fb = layer.data.fbuffer;
   for(var i in rects) {
     var r = rects[i];
     var minX = r[0];
@@ -30,10 +58,10 @@ function updateLayer (layer, rects, gamma) {
         var fval = fb[offset + ix];
         var val = Math.pow((fval + 1.0) * 0.5, gamma) * 255.0;
         var i = (offset + ix) << 2;
-        data[i] = val;
-        data[++i] = val;
-        data[++i] = val;
-        data[++i] = 0xff;
+        imgData[i] = val;
+        imgData[++i] = val;
+        imgData[++i] = val;
+        imgData[++i] = 0xff;
       }
     }
 
@@ -46,7 +74,7 @@ function fillLayer(layer, func) {
   var height = layer.height;
   var invw = 1.0 / width;
   var invh = 1.0 / height;
-  var fb = layer.fbuffer;
+  var fb = layer.data.fbuffer;
   for(var iy=0; iy<height; ++iy) {
     var off = iy * width;
     for(var ix=0; ix<width; ++ix) {
@@ -73,14 +101,14 @@ onDraw = (e) ->
   brushH = 20
 
   pressure = getPenPressure()
-  fb = layer.fbuffer
+  fb = layer.data.fbuffer
   for ix in [0..brushW]
     for iy in [0..brushH]
       i = (brushX + ix + (brushY + iy) * width)
       fb[i] += pressure * 0.2
 
   brushRect = [brushX, brushY, brushW+1, brushH+1]
-  updateLayer(layer,[brushRect], gamma)
+  drawLayer(layer,[brushRect], gamma)
   getMainContext().drawImage(layer.canvas,
     brushRect[0], brushRect[1], brushRect[2], brushRect[3],
     offset.x + brushRect[0], offset.y + brushRect[1], brushRect[2], brushRect[3])
@@ -90,7 +118,7 @@ changeGamma = (value) ->
   refresh()
 
 refresh = () ->
-  updateLayer(layer,[[0,0,width,height]], gamma)
+  drawLayer(layer,[[0,0,width,height]], gamma)
   getMainContext().drawImage(layer.canvas, offset.x, offset.y)
 
 # ---

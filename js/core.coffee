@@ -1,6 +1,24 @@
 
-class Point
+class Vector
   constructor: (@x, @y) ->;
+  distanceTo: (v) ->
+    return Math.sqrt(squareDistanceTo(v))
+  squareDistanceTo: (v) ->
+    dx = @x - v.x
+    dy = @y - v.y
+    return dx*dx + dy*dy
+  add: (v) ->
+    return new Vector(@x+v.x, @y+v.y)
+  sub: (v) ->
+    return new Vector(@x-v.x, @y-v.y)
+  scale: (s) ->
+    return new Vector(@x*s, @y*s)
+  length: () ->
+    return Math.sqrt(@squareLength())
+  squareLength: () ->
+    return @x*@x+@y*@y
+  normalized: () ->
+    return @scale(1.0 / @length())
 
 class Rect
   constructor: (@x, @y, @width, @height) -> ;
@@ -18,7 +36,7 @@ class FloatBuffer
 
 class Layer
   constructor: (@width, @height) ->
-    @fbuffer = new FloatBuffer(@width, @height)
+    @data = new FloatBuffer(@width, @height)
     @canvas = @createCanvas(@width,@height)
     @context = @canvas.getContext '2d'
     @imageData = @context.getImageData(0,0,width,height)
@@ -42,9 +60,9 @@ Bezier =
     if pts.length is 1
       return pts[0]
     else if pts.length is 2
-      return new Point f2(pts[0].x, pts[1].x, t), f2(pts[0].y, pts[1].y, t)
+      return new Vector f2(pts[0].x, pts[1].x, t), f2(pts[0].y, pts[1].y, t)
     else
-      return new Point f3(pts[0].x, pts[1].x, pts[2].x, t), f3(pts[0].y, pts[1].y, pts[2].y, t)
+      return new Vector f3(pts[0].x, pts[1].x, pts[2].x, t), f3(pts[0].y, pts[1].y, pts[2].y, t)
 
 if module?
-  module.exports = {Point, Rect, FloatBuffer, Layer}
+  module.exports = {Vector, Rect, FloatBuffer, Layer}

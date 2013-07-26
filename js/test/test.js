@@ -20,3 +20,25 @@ describe('Rect', function() {
     return assert.equal(b.intersect(a).height, 50);
   });
 });
+
+describe('Vector', function() {
+  it('should add and sub', function() {
+    var va, vb;
+    va = new Core.Vector(1, 2);
+    vb = new Core.Vector(2, 3);
+    assert.equal(va.add(vb).x, 3);
+    assert.equal(va.add(vb).y, 5);
+    assert.equal(va.sub(vb).x, -1);
+    return assert.equal(va.sub(vb).y, -1);
+  });
+  it('should calculate length', function() {
+    var v;
+    v = new Core.Vector(3, 4);
+    return assert.equal(v.length(), 5);
+  });
+  return it('should normalize', function() {
+    var v;
+    v = new Core.Vector(2, 2);
+    return assert.equal(v.normalized().length(), 1);
+  });
+});
