@@ -3,36 +3,6 @@ $mainCanvas = $('#canvas')
 width = $mainCanvas.width()
 height = $mainCanvas.height()
 
-class Brush
-  stroke: (layer, start, end, pressure) -> ;
-  move: (pos, intensity) -> ;
-  beginStroke: (pos) -> ;
-  endStroke: (pos) -> ;
-
-class TestBrush1
-  drawing: false
-  lastpos: null
-  accumulator: 0.0
-  stepSize: 4.0
-
-  move: (pos, intensity) ->;
-  draw: (layer, pos, intensity) ->
-    delt = pos.sub(lastpos)
-    length = delt.length()
-    dir = delt.scale(1.0 / length)
-    while(@accumulator + stepSize <= length)
-      @accumulator += @stepSize
-      pt = pos + dir.scale(@accumulator)
-
-    @accumulator -= length
-    lastpos = pos
-
-  beginStroke: (pos) ->
-    drawing = true
-    @accumulator = 0
-  endStroke: (pos) ->
-    lastpos = null
-    drawing = false
 
 
 drawing = false
@@ -40,49 +10,6 @@ gamma = 1.0
 layer = new Layer(width, height)
 offset = new Vector(50, 30)
 
-`
-function drawLayer (layer, rects, gamma) {
-  var width = layer.width;
-  var height = layer.height;
-  var imgData = layer.imageData.data;
-  var fb = layer.data.fbuffer;
-  for(var i in rects) {
-    var r = rects[i];
-    var minX = r[0];
-    var minY = r[1];
-    var maxX = minX + r[2];
-    var maxY = minY + r[3];
-    for(var iy=minY; iy<maxY; ++iy) {
-      var offset = iy * width;
-      for(var ix=minX; ix<maxX; ++ix) {
-        var fval = fb[offset + ix];
-        var val = Math.pow((fval + 1.0) * 0.5, gamma) * 255.0;
-        var i = (offset + ix) << 2;
-        imgData[i] = val;
-        imgData[++i] = val;
-        imgData[++i] = val;
-        imgData[++i] = 0xff;
-      }
-    }
-
-    layer.context.putImageData(layer.imageData, 0, 0, r[0], r[1], r[2], r[3])
-  }
-}
-
-function fillLayer(layer, func) {
-  var width = layer.width;
-  var height = layer.height;
-  var invw = 1.0 / width;
-  var invh = 1.0 / height;
-  var fb = layer.data.fbuffer;
-  for(var iy=0; iy<height; ++iy) {
-    var off = iy * width;
-    for(var ix=0; ix<width; ++ix) {
-      fb[off + ix] = func(ix * invw, iy * invh);
-    }
-  }
-}
-`
 
 getMainContext = () ->
   return $mainCanvas[0].getContext('2d')
@@ -101,7 +28,7 @@ onDraw = (e) ->
   brushH = 20
 
   pressure = getPenPressure()
-  fb = layer.data.fbuffer
+  fb = layer.getBuffer()
   for ix in [0..brushW]
     for iy in [0..brushH]
       i = (brushX + ix + (brushY + iy) * width)
