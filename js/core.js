@@ -246,9 +246,9 @@ function drawLayer (layer, rects, gamma) {
     var minY = r.y;
     var maxX = minX + r.width;
     var maxY = minY + r.height;
-    for(var iy=minY; iy<maxY; ++iy) {
+    for(var iy=minY; iy<=maxY; ++iy) {
       var offset = iy * width;
-      for(var ix=minX; ix<maxX; ++ix) {
+      for(var ix=minX; ix<=maxX; ++ix) {
         var fval = fb[offset + ix];
         var val = Math.pow((fval + 1.0) * 0.5, gamma) * 255.0;
         var i = (offset + ix) << 2;
@@ -258,7 +258,7 @@ function drawLayer (layer, rects, gamma) {
         imgData[++i] = 0xff;
       }
     }
-    layer.context.putImageData(layer.imageData, 0, 0, r.x, r.y, r.width, r.height);
+    layer.context.putImageData(layer.imageData, 0, 0, r.x, r.y, r.width+1, r.height+1);
   }
 }
 
