@@ -8,8 +8,8 @@ height = $mainCanvas.height()
 drawing = false
 gamma = 1.0
 layer = new Layer(width, height)
-offset = new Vector(100, 50)
-scale = 10
+offset = new Vector(0, 0)
+scale = 1
 
 brush = new TestBrush1()
 brush.stepSize = 1

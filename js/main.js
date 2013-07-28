@@ -13,9 +13,9 @@ gamma = 1.0;
 
 layer = new Layer(width, height);
 
-offset = new Vector(100, 50);
+offset = new Vector(0, 0);
 
-scale = 10;
+scale = 1;
 
 brush = new TestBrush1();
 

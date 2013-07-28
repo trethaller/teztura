@@ -66,6 +66,7 @@ class FloatBuffer
     @buffer = new ArrayBuffer @width * @height * 4
     @fbuffer = new Float32Array @buffer
 
+
 class Layer
   constructor: (@width, @height) ->
     @data = new FloatBuffer(@width, @height)
@@ -184,7 +185,47 @@ function fillLayer(layer, func) {
     }
   }
 }
+
+function blendBuffers(pos, srcFb, dstFb, intensity) {
+  var sw = Math.min(srcFb.width, dstFb.width - pos.x);
+  var sh = Math.min(srcFb.height, dstFb.height - pos.y);
+  var srcData = srcFb.getBuffer();
+  var dstData = dstFb.getBuffer();
+  for(var sy=0; sy<sh; ++sy) {
+    var srci = sy * sw;
+    var dsti = (pos.y + sy) * dstFb.width + pos.x;
+    for(var sx=0; sx<sw; ++sx) {
+      dstData[dsti] += srcData[srci] * intensity;
+      ++dsti;
+      ++srci;
+    }
+  }
+}
 `
+
+genBlendFunc = (args, expression)->
+  expr = expression
+    .replace("{dst}", "dstData[dsti]")
+    .replace("{src}", "srcData[srci]")
+
+  str = "
+    (function (pos, srcFb, dstFb, #{args}) {
+      var sw = Math.min(srcFb.width, dstFb.width - pos.x);
+      var sh = Math.min(srcFb.height, dstFb.height - pos.y);
+      var srcData = srcFb.getBuffer();
+      var dstData = dstFb.getBuffer();
+      for(var sy=0; sy<sh; ++sy) {
+        var srci = sy * sw;
+        var dsti = (pos.y + sy) * dstFb.width + pos.x;
+        for(var sx=0; sx<sw; ++sx) {
+          #{expr};
+          ++dsti;
+          ++srci;
+        }
+      }
+    })"
+  return eval(str)
+
 
 
 if module?

@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html class="no-js">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        <title></title>
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width">
+        <style>
+            body {
+                padding-top: 60px;
+                padding-bottom: 40px;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div>
+                <canvas id="canvas" width="800" height="600"></canvas>
+            </div>
+        </div> <!-- /container -->
+
+        <script src="js/vendor/jquery-1.10.1.min.js"></script>
+        <script src="js/core.js"></script>
+
+        <script type="text/javascript">
+
+            var $mainCanvas = $('#canvas');
+            var width = $mainCanvas.width();
+            var height = $mainCanvas.height();
+
+            var ctx = $('canvas')[0].getContext('2d');
+            var layer = new Layer(width, height);
+
+            var layer = new Layer(width, height);
+            var brush = new Layer(64, 64);
+            
+            fillLayer(brush, function(x,y) {
+                x -= 0.5;
+                y -= 0.5;
+                var d = Math.min(Math.sqrt(x*x + y*y)*2, 1);
+                return (Math.cos(d*Math.PI)+1) * 0.5;
+            });
+
+            fillLayer(layer, function(x,y) {
+                return (Math.round(x*40) % 2) * 0.1 -
+                    (Math.round(y*40) % 2) * 0.1;
+            });
+
+           
+            //var func = genBlendFunc("intensity", "{dst} += {src} * intensity");
+            blendBuffers(new Vector(1000,10), brush, layer, 1.0);
+
+            /*
+            function testBlend(y, args, expr) {
+                func = genBlendFunc(args, expr);
+                var nsteps = 100;
+                for(var i=0; i<nsteps; ++i) {
+                    var pressure = (1.0 - Math.cos(2 * Math.PI * i / nsteps)) * 0.5;
+                    func(new Vector(10+i*10,y), brush, layer, pressure);
+                }                  
+            }
+
+            testBlend(10, "intensity", "{dst} += {src} * intensity");
+            testBlend(110, "intensity", "{dst} = {src} * intensity");
+            testBlend(210, "intensity", "{dst} *= 1 + {src} * intensity");
+            */
+
+
+            drawLayer(layer,[new Rect(0,0,width,height)], 1.0);
+            $mainCanvas[0].getContext('2d').drawImage(layer.canvas, 0, 0);
+
+
+        </script>
+
+    </body>
+</html>
