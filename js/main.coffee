@@ -10,6 +10,8 @@ gamma = 1.0
 layer = new Layer(width, height)
 offset = new Vector(50, 30)
 
+brush = new TestBrush1()
+brush.stepSize = 1
 
 getMainContext = () ->
   return $mainCanvas[0].getContext('2d')
@@ -24,39 +26,46 @@ getPenPressure = () ->
 onDraw = (e) ->
   brushX = e.pageX-$mainCanvas.position().left-offset.x;
   brushY = e.pageY-$mainCanvas.position().top-offset.y;
-  brushW = 30
-  brushH = 20
 
   pressure = getPenPressure()
-  fb = layer.getBuffer()
-  for ix in [0..brushW]
-    for iy in [0..brushH]
-      i = (brushX + ix + (brushY + iy) * width)
-      fb[i] += pressure * 0.2
+  brushRects = []
 
-  brushRect = [brushX, brushY, brushW+1, brushH+1]
-  drawLayer(layer,[brushRect], gamma)
-  getMainContext().drawImage(layer.canvas,
-    brushRect[0], brushRect[1], brushRect[2], brushRect[3],
-    offset.x + brushRect[0], offset.y + brushRect[1], brushRect[2], brushRect[3])
+  pos = new Vector(brushX, brushY)
+  rect = brush.draw(layer, pos, pressure)
+  brushRects.push(rect.round())
+
+  setTimeout(()->
+    drawLayer(layer,brushRects, gamma)
+    for rect in brushRects
+      getMainContext().drawImage(layer.canvas,
+        rect.x, rect.y, rect.width, rect.height,
+        offset.x + rect.x,
+        offset.y + rect.y,
+        rect.width, rect.height)
+  ,0)
+
 
 changeGamma = (value) ->
   gamma = value
   refresh()
 
 refresh = () ->
-  drawLayer(layer,[[0,0,width,height]], gamma)
+  drawLayer(layer,[new Rect(0,0,width,height)], gamma)
   getMainContext().drawImage(layer.canvas, offset.x, offset.y)
 
 # ---
 
-$mainCanvas.mouseup (e) -> drawing = false
+$mainCanvas.mouseup (e) ->
+  drawing = false
+  brush.endStroke()
 $mainCanvas.mousedown (e) ->
   drawing = true
+  brush.beginStroke()
   onDraw(e)
 $mainCanvas.mousemove (e) ->
   if drawing
     onDraw(e)
+    
 
 $('#gammaSlider').slider(
   min: 0
@@ -70,8 +79,8 @@ $('#gammaSlider').slider(
 # ---
 
 fillLayer layer, (x,y) ->
-  return Math.sin(x * y * 10)
-  #return 0
+  #return Math.sin(x * y * 10)
+  return -1
 
 refresh()
 

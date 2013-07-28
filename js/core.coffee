@@ -28,6 +28,35 @@ class Rect
     nx = Math.max(@x, rect.x)
     ny = Math.max(@y, rect.y)
     return new Rect(nx, ny, Math.max(0, nmaxx-nx), Math.max(0, nmaxy-ny))
+  union: (rect) ->
+    ret = new Rect(@x,@y,@width,@height)
+    ret.extend(rect.topLeft())
+    ret.extend(rect.bottomRight())
+    return ret
+
+  round: ()->
+    return new Rect(
+      Math.floor(@x),
+      Math.floor(@y),
+      Math.ceil(@width),
+      Math.ceil(@height))
+
+  extend: (pt) ->
+    if pt.x < @x
+      @width += @x - pt.x
+      @x = pt.x
+    else
+      @width = Math.max(@width, pt.x - @x)
+    if pt.y < @y
+      @height += @y - pt.y
+      @y = pt.y
+    else
+      @height = Math.max(@height, pt.y - @y)
+    
+  topLeft: ()->
+    return new Vector(@x,@y)
+  bottomRight: ()->
+    return new Vector(@x+@width, @y+@height)
 
 class FloatBuffer
   constructor: (@width, @height) ->
@@ -84,6 +113,7 @@ class TestBrush1
   move: (pos, intensity) ->;
   draw: (layer, pos, intensity) ->
     fb = layer.getBuffer()
+    rect = new Rect(pos.x, pos.y, 1, 1)
     if @lastpos?
       delt = pos.sub(@lastpos)
       length = delt.length()
@@ -92,11 +122,13 @@ class TestBrush1
         @accumulator += @stepSize
         pt = @lastpos.add(dir.scale(@accumulator))
         fb[ Math.floor(pt.x) + Math.floor(pt.y) * layer.width ] = 1.0
+        rect.extend(pt)
       @accumulator -= length
     else
       fb[ Math.floor(pos.x) + Math.floor(pos.y) * layer.width ] = 1.0
 
     @lastpos = pos
+    return rect
 
   beginStroke: () ->
     @drawing = true
@@ -114,10 +146,10 @@ function drawLayer (layer, rects, gamma) {
   var fb = layer.getBuffer();
   for(var i in rects) {
     var r = rects[i];
-    var minX = r[0];
-    var minY = r[1];
-    var maxX = minX + r[2];
-    var maxY = minY + r[3];
+    var minX = r.x;
+    var minY = r.y;
+    var maxX = minX + r.width;
+    var maxY = minY + r.height;
     for(var iy=minY; iy<maxY; ++iy) {
       var offset = iy * width;
       for(var ix=minX; ix<maxX; ++ix) {
@@ -130,8 +162,7 @@ function drawLayer (layer, rects, gamma) {
         imgData[++i] = 0xff;
       }
     }
-
-    layer.context.putImageData(layer.imageData, 0, 0, r[0], r[1], r[2], r[3])
+    layer.context.putImageData(layer.imageData, 0, 0, r.x, r.y, r.width, r.height);
   }
 }
 

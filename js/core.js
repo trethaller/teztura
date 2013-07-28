@@ -63,6 +63,41 @@ Rect = (function() {
     return new Rect(nx, ny, Math.max(0, nmaxx - nx), Math.max(0, nmaxy - ny));
   };
 
+  Rect.prototype.union = function(rect) {
+    var ret;
+    ret = new Rect(this.x, this.y, this.width, this.height);
+    ret.extend(rect.topLeft());
+    ret.extend(rect.bottomRight());
+    return ret;
+  };
+
+  Rect.prototype.round = function() {
+    return new Rect(Math.floor(this.x), Math.floor(this.y), Math.ceil(this.width), Math.ceil(this.height));
+  };
+
+  Rect.prototype.extend = function(pt) {
+    if (pt.x < this.x) {
+      this.width += this.x - pt.x;
+      this.x = pt.x;
+    } else {
+      this.width = Math.max(this.width, pt.x - this.x);
+    }
+    if (pt.y < this.y) {
+      this.height += this.y - pt.y;
+      return this.y = pt.y;
+    } else {
+      return this.height = Math.max(this.height, pt.y - this.y);
+    }
+  };
+
+  Rect.prototype.topLeft = function() {
+    return new Vector(this.x, this.y);
+  };
+
+  Rect.prototype.bottomRight = function() {
+    return new Vector(this.x + this.width, this.y + this.height);
+  };
+
   return Rect;
 
 })();
@@ -156,8 +191,9 @@ TestBrush1 = (function() {
   TestBrush1.prototype.move = function(pos, intensity) {};
 
   TestBrush1.prototype.draw = function(layer, pos, intensity) {
-    var delt, dir, fb, length, pt;
+    var delt, dir, fb, length, pt, rect;
     fb = layer.getBuffer();
+    rect = new Rect(pos.x, pos.y, 1, 1);
     if (this.lastpos != null) {
       delt = pos.sub(this.lastpos);
       length = delt.length();
@@ -166,12 +202,14 @@ TestBrush1 = (function() {
         this.accumulator += this.stepSize;
         pt = this.lastpos.add(dir.scale(this.accumulator));
         fb[Math.floor(pt.x) + Math.floor(pt.y) * layer.width] = 1.0;
+        rect.extend(pt);
       }
       this.accumulator -= length;
     } else {
       fb[Math.floor(pos.x) + Math.floor(pos.y) * layer.width] = 1.0;
     }
-    return this.lastpos = pos;
+    this.lastpos = pos;
+    return rect;
   };
 
   TestBrush1.prototype.beginStroke = function() {
@@ -196,10 +234,10 @@ function drawLayer (layer, rects, gamma) {
   var fb = layer.getBuffer();
   for(var i in rects) {
     var r = rects[i];
-    var minX = r[0];
-    var minY = r[1];
-    var maxX = minX + r[2];
-    var maxY = minY + r[3];
+    var minX = r.x;
+    var minY = r.y;
+    var maxX = minX + r.width;
+    var maxY = minY + r.height;
     for(var iy=minY; iy<maxY; ++iy) {
       var offset = iy * width;
       for(var ix=minX; ix<maxX; ++ix) {
@@ -212,8 +250,7 @@ function drawLayer (layer, rects, gamma) {
         imgData[++i] = 0xff;
       }
     }
-
-    layer.context.putImageData(layer.imageData, 0, 0, r[0], r[1], r[2], r[3])
+    layer.context.putImageData(layer.imageData, 0, 0, r.x, r.y, r.width, r.height);
   }
 }
 
