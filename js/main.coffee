@@ -29,12 +29,15 @@ onDraw = (e) ->
 
   pressure = getPenPressure()
   brushRects = []
+  layerRect = layer.getRect()
 
   pos = new Vector(brushX, brushY)
-  rect = brush.draw(layer, pos, pressure)
-  brushRects.push(rect.round())
+  rect = brush.draw(layer, pos, pressure).round().intersect(layerRect)
+  if not rect.empty()
+    brushRects.push(rect)
 
-  setTimeout(()->
+  #setTimeout(()->
+  if true
     drawLayer(layer,brushRects, gamma)
     for rect in brushRects
       getMainContext().drawImage(layer.canvas,
@@ -42,7 +45,7 @@ onDraw = (e) ->
         offset.x + rect.x,
         offset.y + rect.y,
         rect.width, rect.height)
-  ,0)
+  #,0)
 
 
 changeGamma = (value) ->
@@ -79,8 +82,8 @@ $('#gammaSlider').slider(
 # ---
 
 fillLayer layer, (x,y) ->
-  #return Math.sin(x * y * 10)
   return -1
 
 refresh()
+
 

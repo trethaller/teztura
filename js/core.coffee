@@ -24,7 +24,7 @@ class Rect
   constructor: (@x, @y, @width, @height) -> ;
   intersect: (rect) ->
     nmaxx = Math.min(@x+@width, rect.x+rect.width)
-    nmaxy = Math.min(@x+@width, rect.x+rect.width)
+    nmaxy = Math.min(@y+@height, rect.y+rect.height)
     nx = Math.max(@x, rect.x)
     ny = Math.max(@y, rect.y)
     return new Rect(nx, ny, Math.max(0, nmaxx-nx), Math.max(0, nmaxy-ny))
@@ -33,6 +33,9 @@ class Rect
     ret.extend(rect.topLeft())
     ret.extend(rect.bottomRight())
     return ret
+
+  empty: ()->
+    return @width<=0 or @height<=0
 
   round: ()->
     return new Rect(
@@ -70,6 +73,8 @@ class Layer
     @context = @canvas.getContext '2d'
     @imageData = @context.getImageData(0,0,width,height)
 
+  getRect: () ->
+    return new Rect(0,0,@width,@height)
 
   getBuffer: () ->
     return @data.fbuffer

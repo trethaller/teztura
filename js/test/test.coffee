@@ -21,6 +21,12 @@ describe 'Rect', ()->
     assertClose(a.intersect(b).width, 0)
     assertClose(b.intersect(a).height, 50)
   
+  it 'should intersect inner rect', ()->
+    a = new Core.Rect(0,0,100,100)
+    b = new Core.Rect(10,20,20,20)
+    c = a.intersect(b)
+    assert.deepEqual(b,c)
+
   it 'should union', ()->
     a = new Core.Rect(10,20,10,10)
     b = new Core.Rect(15,25,10,15)
@@ -42,7 +48,11 @@ describe 'Rect', ()->
     assertClose(a.height, 40)
     assertClose(a.x, 5)
     assertClose(a.y, 0)
-    
+
+  it 'should not extend inner point', ()->
+    a = new Core.Rect(10,10,10,10)
+    a.extend(V(15,15))
+    assert.deepEqual(a, new Core.Rect(10,10,10,10))
 
 describe 'Vector', ()->
   it 'should add and sub', ()->

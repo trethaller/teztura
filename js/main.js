@@ -34,16 +34,18 @@ getPenPressure = function() {
 };
 
 onDraw = function(e) {
-  var brushRects, brushX, brushY, pos, pressure, rect;
+  var brushRects, brushX, brushY, layerRect, pos, pressure, rect, _i, _len, _results;
   brushX = e.pageX - $mainCanvas.position().left - offset.x;
   brushY = e.pageY - $mainCanvas.position().top - offset.y;
   pressure = getPenPressure();
   brushRects = [];
+  layerRect = layer.getRect();
   pos = new Vector(brushX, brushY);
-  rect = brush.draw(layer, pos, pressure);
-  brushRects.push(rect.round());
-  return setTimeout(function() {
-    var _i, _len, _results;
+  rect = brush.draw(layer, pos, pressure).round().intersect(layerRect);
+  if (!rect.empty()) {
+    brushRects.push(rect);
+  }
+  if (true) {
     drawLayer(layer, brushRects, gamma);
     _results = [];
     for (_i = 0, _len = brushRects.length; _i < _len; _i++) {
@@ -51,7 +53,7 @@ onDraw = function(e) {
       _results.push(getMainContext().drawImage(layer.canvas, rect.x, rect.y, rect.width, rect.height, offset.x + rect.x, offset.y + rect.y, rect.width, rect.height));
     }
     return _results;
-  }, 0);
+  }
 };
 
 changeGamma = function(value) {

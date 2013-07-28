@@ -57,7 +57,7 @@ Rect = (function() {
   Rect.prototype.intersect = function(rect) {
     var nmaxx, nmaxy, nx, ny;
     nmaxx = Math.min(this.x + this.width, rect.x + rect.width);
-    nmaxy = Math.min(this.x + this.width, rect.x + rect.width);
+    nmaxy = Math.min(this.y + this.height, rect.y + rect.height);
     nx = Math.max(this.x, rect.x);
     ny = Math.max(this.y, rect.y);
     return new Rect(nx, ny, Math.max(0, nmaxx - nx), Math.max(0, nmaxy - ny));
@@ -69,6 +69,10 @@ Rect = (function() {
     ret.extend(rect.topLeft());
     ret.extend(rect.bottomRight());
     return ret;
+  };
+
+  Rect.prototype.empty = function() {
+    return this.width <= 0 || this.height <= 0;
   };
 
   Rect.prototype.round = function() {
@@ -123,6 +127,10 @@ Layer = (function() {
     this.context = this.canvas.getContext('2d');
     this.imageData = this.context.getImageData(0, 0, width, height);
   }
+
+  Layer.prototype.getRect = function() {
+    return new Rect(0, 0, this.width, this.height);
+  };
 
   Layer.prototype.getBuffer = function() {
     return this.data.fbuffer;

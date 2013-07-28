@@ -27,6 +27,13 @@ describe('Rect', function() {
     assertClose(a.intersect(b).width, 0);
     return assertClose(b.intersect(a).height, 50);
   });
+  it('should intersect inner rect', function() {
+    var a, b, c;
+    a = new Core.Rect(0, 0, 100, 100);
+    b = new Core.Rect(10, 20, 20, 20);
+    c = a.intersect(b);
+    return assert.deepEqual(b, c);
+  });
   it('should union', function() {
     var a, b, c;
     a = new Core.Rect(10, 20, 10, 10);
@@ -37,7 +44,7 @@ describe('Rect', function() {
     assertClose(c.width, 15);
     return assertClose(c.height, 20);
   });
-  return it('should extend', function() {
+  it('should extend', function() {
     var a;
     a = new Core.Rect(10, 10, 10, 10);
     a.extend(V(5, 0));
@@ -50,6 +57,12 @@ describe('Rect', function() {
     assertClose(a.height, 40);
     assertClose(a.x, 5);
     return assertClose(a.y, 0);
+  });
+  return it('should not extend inner point', function() {
+    var a;
+    a = new Core.Rect(10, 10, 10, 10);
+    a.extend(V(15, 15));
+    return assert.deepEqual(a, new Core.Rect(10, 10, 10, 10));
   });
 });
 
