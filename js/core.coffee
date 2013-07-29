@@ -7,6 +7,8 @@ class Vector
     dx = @x - v.x
     dy = @y - v.y
     return dx*dx + dy*dy
+  round: ()->
+    return new Vector(Math.round(@x), Math.round(@y))
   add: (v) ->
     return new Vector(@x+v.x, @y+v.y)
   sub: (v) ->
@@ -185,22 +187,6 @@ function fillLayer(layer, func) {
     }
   }
 }
-
-function blendBuffers(pos, srcFb, dstFb, intensity) {
-  var sw = Math.min(srcFb.width, dstFb.width - pos.x);
-  var sh = Math.min(srcFb.height, dstFb.height - pos.y);
-  var srcData = srcFb.getBuffer();
-  var dstData = dstFb.getBuffer();
-  for(var sy=0; sy<sh; ++sy) {
-    var srci = sy * sw;
-    var dsti = (pos.y + sy) * dstFb.width + pos.x;
-    for(var sx=0; sx<sw; ++sx) {
-      dstData[dsti] += srcData[srci] * intensity;
-      ++dsti;
-      ++srci;
-    }
-  }
-}
 `
 
 genBlendFunc = (args, expression)->
@@ -210,14 +196,16 @@ genBlendFunc = (args, expression)->
 
   str = "
     (function (pos, srcFb, dstFb, #{args}) {
+      var minx = Math.max(0, -pos.x);
+      var miny = Math.max(0, -pos.y);
       var sw = Math.min(srcFb.width, dstFb.width - pos.x);
       var sh = Math.min(srcFb.height, dstFb.height - pos.y);
       var srcData = srcFb.getBuffer();
       var dstData = dstFb.getBuffer();
-      for(var sy=0; sy<sh; ++sy) {
-        var srci = sy * sw;
-        var dsti = (pos.y + sy) * dstFb.width + pos.x;
-        for(var sx=0; sx<sw; ++sx) {
+      for(var sy=miny; sy<sh; ++sy) {
+        var srci = sy * srcFb.width + minx;
+        var dsti = (pos.y + sy) * dstFb.width + pos.x + minx;
+        for(var sx=minx; sx<sw; ++sx) {
           #{expr};
           ++dsti;
           ++srci;

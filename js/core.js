@@ -18,6 +18,10 @@ Vector = (function() {
     return dx * dx + dy * dy;
   };
 
+  Vector.prototype.round = function() {
+    return new Vector(Math.round(this.x), Math.round(this.y));
+  };
+
   Vector.prototype.add = function(v) {
     return new Vector(this.x + v.x, this.y + v.y);
   };
@@ -275,28 +279,12 @@ function fillLayer(layer, func) {
     }
   }
 }
-
-function blendBuffers(pos, srcFb, dstFb, intensity) {
-  var sw = Math.min(srcFb.width, dstFb.width - pos.x);
-  var sh = Math.min(srcFb.height, dstFb.height - pos.y);
-  var srcData = srcFb.getBuffer();
-  var dstData = dstFb.getBuffer();
-  for(var sy=0; sy<sh; ++sy) {
-    var srci = sy * sw;
-    var dsti = (pos.y + sy) * dstFb.width + pos.x;
-    for(var sx=0; sx<sw; ++sx) {
-      dstData[dsti] += srcData[srci] * intensity;
-      ++dsti;
-      ++srci;
-    }
-  }
-}
 ;
 
 genBlendFunc = function(args, expression) {
   var expr, str;
   expr = expression.replace("{dst}", "dstData[dsti]").replace("{src}", "srcData[srci]");
-  str = "    (function (pos, srcFb, dstFb, " + args + ") {      var sw = Math.min(srcFb.width, dstFb.width - pos.x);      var sh = Math.min(srcFb.height, dstFb.height - pos.y);      var srcData = srcFb.getBuffer();      var dstData = dstFb.getBuffer();      for(var sy=0; sy<sh; ++sy) {        var srci = sy * sw;        var dsti = (pos.y + sy) * dstFb.width + pos.x;        for(var sx=0; sx<sw; ++sx) {          " + expr + ";          ++dsti;          ++srci;        }      }    })";
+  str = "    (function (pos, srcFb, dstFb, " + args + ") {      var minx = Math.max(0, -pos.x);      var miny = Math.max(0, -pos.y);      var sw = Math.min(srcFb.width, dstFb.width - pos.x);      var sh = Math.min(srcFb.height, dstFb.height - pos.y);      var srcData = srcFb.getBuffer();      var dstData = dstFb.getBuffer();      for(var sy=miny; sy<sh; ++sy) {        var srci = sy * srcFb.width + minx;        var dsti = (pos.y + sy) * dstFb.width + pos.x + minx;        for(var sx=minx; sx<sw; ++sx) {          " + expr + ";          ++dsti;          ++srci;        }      }    })";
   return eval(str);
 };
 
