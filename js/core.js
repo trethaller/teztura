@@ -83,18 +83,23 @@ Rect = (function() {
     return new Rect(Math.floor(this.x), Math.floor(this.y), Math.ceil(this.width), Math.ceil(this.height));
   };
 
-  Rect.prototype.extend = function(pt) {
-    if (pt.x < this.x) {
-      this.width += this.x - pt.x;
-      this.x = pt.x;
+  Rect.prototype.extend = function(obj) {
+    if (obj.width != null) {
+      this.extend(obj.topLeft());
+      return this.extend(obj.bottomRight());
     } else {
-      this.width = Math.max(this.width, pt.x - this.x);
-    }
-    if (pt.y < this.y) {
-      this.height += this.y - pt.y;
-      return this.y = pt.y;
-    } else {
-      return this.height = Math.max(this.height, pt.y - this.y);
+      if (obj.x < this.x) {
+        this.width += this.x - obj.x;
+        this.x = obj.x;
+      } else {
+        this.width = Math.max(this.width, obj.x - this.x);
+      }
+      if (obj.y < this.y) {
+        this.height += this.y - obj.y;
+        return this.y = obj.y;
+      } else {
+        return this.height = Math.max(this.height, obj.y - this.y);
+      }
     }
   };
 
@@ -200,11 +205,19 @@ TestBrush1 = (function() {
 
   TestBrush1.prototype.stepSize = 4.0;
 
+  TestBrush1.prototype.nsteps = 0;
+
+  TestBrush1.prototype.drawStep = function(layer, pos, intensity, rect) {
+    var fb;
+    fb = layer.getBuffer();
+    fb[Math.floor(pos.x) + Math.floor(pos.y) * layer.width] = intensity;
+    return rect.extend(pos);
+  };
+
   TestBrush1.prototype.move = function(pos, intensity) {};
 
   TestBrush1.prototype.draw = function(layer, pos, intensity) {
-    var delt, dir, fb, length, pt, rect;
-    fb = layer.getBuffer();
+    var delt, dir, length, pt, rect;
     rect = new Rect(pos.x, pos.y, 1, 1);
     if (this.lastpos != null) {
       delt = pos.sub(this.lastpos);
@@ -213,12 +226,13 @@ TestBrush1 = (function() {
       while (this.accumulator + this.stepSize <= length) {
         this.accumulator += this.stepSize;
         pt = this.lastpos.add(dir.scale(this.accumulator));
-        fb[Math.floor(pt.x) + Math.floor(pt.y) * layer.width] = 1.0;
-        rect.extend(pt);
+        this.drawStep(layer, pt, intensity, rect);
+        ++this.nsteps;
       }
       this.accumulator -= length;
     } else {
-      fb[Math.floor(pos.x) + Math.floor(pos.y) * layer.width] = 1.0;
+      this.drawStep(layer, pos, intensity, rect);
+      ++this.nsteps;
     }
     this.lastpos = pos;
     return rect;
@@ -226,12 +240,14 @@ TestBrush1 = (function() {
 
   TestBrush1.prototype.beginStroke = function() {
     this.drawing = true;
-    return this.accumulator = 0;
+    this.accumulator = 0;
+    return this.nsteps = 0;
   };
 
   TestBrush1.prototype.endStroke = function() {
     this.lastpos = null;
-    return this.drawing = false;
+    this.drawing = false;
+    return console.log("" + this.nsteps + " steps drawn");
   };
 
   return TestBrush1;

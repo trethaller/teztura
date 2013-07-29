@@ -46,17 +46,21 @@ class Rect
       Math.ceil(@width),
       Math.ceil(@height))
 
-  extend: (pt) ->
-    if pt.x < @x
-      @width += @x - pt.x
-      @x = pt.x
+  extend: (obj) ->
+    if obj.width?
+      @extend(obj.topLeft())
+      @extend(obj.bottomRight())
     else
-      @width = Math.max(@width, pt.x - @x)
-    if pt.y < @y
-      @height += @y - pt.y
-      @y = pt.y
-    else
-      @height = Math.max(@height, pt.y - @y)
+      if obj.x < @x
+        @width += @x - obj.x
+        @x = obj.x
+      else
+        @width = Math.max(@width, obj.x - @x)
+      if obj.y < @y
+        @height += @y - obj.y
+        @y = obj.y
+      else
+        @height = Math.max(@height, obj.y - @y)
     
   topLeft: ()->
     return new Vector(@x,@y)
@@ -117,10 +121,15 @@ class TestBrush1
   lastpos: null
   accumulator: 0.0
   stepSize: 4.0
+  nsteps: 0
+
+  drawStep: (layer, pos, intensity, rect)->
+    fb = layer.getBuffer()
+    fb[ Math.floor(pos.x) + Math.floor(pos.y) * layer.width ] = intensity
+    rect.extend(pos)
 
   move: (pos, intensity) ->;
   draw: (layer, pos, intensity) ->
-    fb = layer.getBuffer()
     rect = new Rect(pos.x, pos.y, 1, 1)
     if @lastpos?
       delt = pos.sub(@lastpos)
@@ -129,11 +138,12 @@ class TestBrush1
       while(@accumulator + @stepSize <= length)
         @accumulator += @stepSize
         pt = @lastpos.add(dir.scale(@accumulator))
-        fb[ Math.floor(pt.x) + Math.floor(pt.y) * layer.width ] = 1.0
-        rect.extend(pt)
+        @drawStep(layer, pt, intensity, rect)
+        ++@nsteps
       @accumulator -= length
     else
-      fb[ Math.floor(pos.x) + Math.floor(pos.y) * layer.width ] = 1.0
+      @drawStep(layer, pos, intensity, rect)
+      ++@nsteps
 
     @lastpos = pos
     return rect
@@ -141,9 +151,11 @@ class TestBrush1
   beginStroke: () ->
     @drawing = true
     @accumulator = 0
+    @nsteps = 0
   endStroke: () ->
     @lastpos = null
     @drawing = false
+    console.log("#{@nsteps} steps drawn")
 
 
 `

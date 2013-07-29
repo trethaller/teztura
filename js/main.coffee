@@ -12,7 +12,28 @@ offset = new Vector(0, 0)
 scale = 1
 
 brush = new TestBrush1()
-brush.stepSize = 1
+brush.stepSize = 10
+
+brushLayer = new Layer(64,64)
+
+fillLayer brushLayer, (x,y)->
+  x -= 0.5
+  y -= 0.5
+  d = Math.min(Math.sqrt(x*x + y*y)*2, 1)
+  return (Math.cos(d*Math.PI)+1) * 0.5
+
+bfunc = genBlendFunc("intensity", "{dst} += {src} * intensity")
+
+
+brush.drawStep = (layer, pos, intensity, rect)->
+  r = new Rect(
+    pos.x - brushLayer.width * 0.5,
+    pos.y - brushLayer.height * 0.5,
+    brushLayer.width,
+    brushLayer.height).round()
+
+  bfunc(r.topLeft(), brushLayer, layer, intensity)
+  rect.extend(r)
 
 getMainContext = () ->
   return $mainCanvas[0].getContext('2d')
@@ -40,14 +61,14 @@ onDraw = (e) ->
   if not rect.empty()
     brushRects.push(rect)
 
-  #setTimeout(()->
-  if true
+  setTimeout(()->
+  #if true
     drawLayer(layer,brushRects, gamma)
     for rect in brushRects
       getMainContext().drawImage(layer.canvas,
         rect.x, rect.y, rect.width+1, rect.height+1,
         rect.x, rect.y, rect.width+1, rect.height+1)
-  #,0)
+  ,0)
 
 
 changeGamma = (value) ->
