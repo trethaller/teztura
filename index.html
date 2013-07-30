@@ -15,7 +15,17 @@
   <script src="js/app.js"></script>
 </head>
 <body>
-  <script type="text/x-handlebars" data-template-name="application">{{outlet}}</script>
+  <script type="text/x-handlebars" data-template-name="editor">
+Hahah
+
+{{view App.DocumentView documentBinding="document"}}
+Drawing: {{document.drawing}}</script>
+
+<script type="text/x-handlebars" data-template-name="document-view"><div class="document-view">
+<canvas width="512" height="512"></canvas>
+</div></script>
+
+<script type="text/x-handlebars" data-template-name="application">{{outlet}}</script>
 
 
 </body>

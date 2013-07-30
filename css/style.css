@@ -1,4 +1,15 @@
 /* Put your CSS here */
-html, body {
+body {
     margin: 20px;
 }
+
+.document-view {
+	padding: 20px;
+	border: 1px solid #ddd;
+	text-align: center;
+}
+
+.document-view canvas {
+    border: 1px solid #ddd;
+}
+
