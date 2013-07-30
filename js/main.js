@@ -23,13 +23,7 @@ brush.stepSize = 4;
 
 brushLayer = new Layer(32, 32);
 
-fillLayer(brushLayer, function(x, y) {
-  var d;
-  x -= 0.5;
-  y -= 0.5;
-  d = Math.min(Math.sqrt(x * x + y * y) * 2, 1);
-  return (Math.cos(d * Math.PI) + 1) * 0.5;
-});
+fillLayer(brushLayer, getRoundBrushFunc(0.8));
 
 bfunc = genBlendFunc("intensity", "{dst} += {src} * intensity");
 

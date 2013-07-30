@@ -189,13 +189,14 @@ function drawLayer (layer, rects, gamma) {
 function fillLayer(layer, func) {
   var width = layer.width;
   var height = layer.height;
-  var invw = 1.0 / width;
-  var invh = 1.0 / height;
+  var invw = 2.0 / (width - 1);
+  var invh = 2.0 / (height - 1);
   var fb = layer.getBuffer();
   for(var iy=0; iy<height; ++iy) {
     var off = iy * width;
     for(var ix=0; ix<width; ++ix) {
-      fb[off + ix] = func(ix * invw, iy * invh);
+      fb[off] = func(ix * invw - 1.0, iy * invh - 1.0);
+      ++off;
     }
   }
 }
@@ -227,6 +228,11 @@ genBlendFunc = (args, expression)->
   return eval(str)
 
 
+getRoundBrushFunc = (hardness) ->
+  hardnessPlus1 = hardness + 1.0
+  return (x,y) -> 
+    d = Math.min(1.0, Math.max(0.0, (Math.sqrt(x*x + y*y) * hardnessPlus1 - hardness)))
+    return Math.cos(d * Math.PI) * 0.5 + 0.5
 
 if module?
   module.exports = {Vector, Rect, FloatBuffer, Layer}

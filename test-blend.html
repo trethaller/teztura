@@ -22,6 +22,7 @@
 
         <script src="js/vendor/jquery-1.10.1.min.js"></script>
         <script src="js/core.js"></script>
+        <script src="js/brushes.js"></script>
 
         <script type="text/javascript">
 
@@ -35,29 +36,16 @@
             var layer = new Layer(width, height);
             var brush = new Layer(100, 100);
             
-            fillLayer(brush, function(x,y) {
-                x -= 0.5;
-                y -= 0.5;
-                var d = Math.min(Math.sqrt(x*x + y*y)*2, 1);
-                return (Math.cos(d*Math.PI)+1) * 0.5;
-            });
+            fillLayer(brush, getRoundBrushFunc(0.0));
 
             fillLayer(layer, function(x,y) {
+                x += 1.0
+                y += 1.0
                 return (Math.round(x*40) % 2) * 0.1 -
                     (Math.round(y*40) % 2) * 0.1;
-                
-                //return 0;
             });
 
            
-            //var func = genBlendFunc("intensity", "{dst} += {src} * intensity");
-            /*
-            blendBuffers(new Vector(-100,-100), brush, layer, 1.0);
-            blendBuffers(new Vector(400,-100), brush, layer, 1.0);
-            blendBuffers(new Vector(-100,400), brush, layer, 1.0);
-            blendBuffers(new Vector(400,400), brush, layer, 1.0);
-            */
-
             function testBlend(y, args, expr) {
                 func = genBlendFunc(args, expr);
                 var nsteps = 30;
