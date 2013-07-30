@@ -43,7 +43,7 @@ compileTemplates = do
     
 compileCoffee = do
     putStrLn "Compile coffee scripts..."
-    system "coffee js/core.coffee js/brushes.coffee js/main.coffee js/test/test.coffee"
+    system "coffee -c -b js/app.coffee js/core.coffee js/brushes.coffee js/main.coffee js/test/test.coffee"
 
 main = do
     compileTemplates
