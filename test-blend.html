@@ -70,6 +70,7 @@
             testBlend(0, "intensity", "{dst} += {src} * intensity");
             testBlend(100, "intensity", "{dst} = {src} * intensity");
             testBlend(200, "intensity", "{dst} *= 1 + {src} * intensity");
+            testBlend(300, "intensity", "{dst} = {dst} * (1 - intensity*{src}) + 0.5 * intensity*{src}");
 
 
             drawLayer(layer,[new Rect(0,0,width,height)], 1.0);

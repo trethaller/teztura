@@ -17,11 +17,11 @@ offset = new Vector(0, 0);
 
 scale = 1;
 
-brush = new TestBrush1();
+brush = new StepBrush();
 
-brush.stepSize = 10;
+brush.stepSize = 4;
 
-brushLayer = new Layer(64, 64);
+brushLayer = new Layer(32, 32);
 
 fillLayer(brushLayer, function(x, y) {
   var d;
@@ -36,7 +36,7 @@ bfunc = genBlendFunc("intensity", "{dst} += {src} * intensity");
 brush.drawStep = function(layer, pos, intensity, rect) {
   var r;
   r = new Rect(pos.x - brushLayer.width * 0.5, pos.y - brushLayer.height * 0.5, brushLayer.width, brushLayer.height).round();
-  bfunc(r.topLeft(), brushLayer, layer, intensity);
+  bfunc(r.topLeft(), brushLayer, layer, intensity * 0.1);
   return rect.extend(r);
 };
 
@@ -59,7 +59,7 @@ screenToCanvas = function(pt) {
 };
 
 onDraw = function(e) {
-  var brushRects, brushX, brushY, layerRect, pos, pressure, rect;
+  var brushRects, brushX, brushY, layerRect, pos, pressure, rect, _i, _len, _results;
   brushX = e.pageX - $mainCanvas.position().left;
   brushY = e.pageY - $mainCanvas.position().top;
   pos = screenToCanvas(new Vector(brushX, brushY));
@@ -70,8 +70,7 @@ onDraw = function(e) {
   if (!rect.empty()) {
     brushRects.push(rect);
   }
-  return setTimeout(function() {
-    var _i, _len, _results;
+  if (true) {
     drawLayer(layer, brushRects, gamma);
     _results = [];
     for (_i = 0, _len = brushRects.length; _i < _len; _i++) {
@@ -79,7 +78,7 @@ onDraw = function(e) {
       _results.push(getMainContext().drawImage(layer.canvas, rect.x, rect.y, rect.width + 1, rect.height + 1, rect.x, rect.y, rect.width + 1, rect.height + 1));
     }
     return _results;
-  }, 0);
+  }
 };
 
 changeGamma = function(value) {

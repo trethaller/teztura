@@ -11,10 +11,10 @@ layer = new Layer(width, height)
 offset = new Vector(0, 0)
 scale = 1
 
-brush = new TestBrush1()
-brush.stepSize = 10
+brush = new StepBrush()
+brush.stepSize = 4
 
-brushLayer = new Layer(64,64)
+brushLayer = new Layer(32,32)
 
 fillLayer brushLayer, (x,y)->
   x -= 0.5
@@ -32,7 +32,7 @@ brush.drawStep = (layer, pos, intensity, rect)->
     brushLayer.width,
     brushLayer.height).round()
 
-  bfunc(r.topLeft(), brushLayer, layer, intensity)
+  bfunc(r.topLeft(), brushLayer, layer, intensity*0.1)
   rect.extend(r)
 
 getMainContext = () ->
@@ -61,14 +61,14 @@ onDraw = (e) ->
   if not rect.empty()
     brushRects.push(rect)
 
-  setTimeout(()->
-  #if true
+  #setTimeout(()->
+  if true
     drawLayer(layer,brushRects, gamma)
     for rect in brushRects
       getMainContext().drawImage(layer.canvas,
         rect.x, rect.y, rect.width+1, rect.height+1,
         rect.x, rect.y, rect.width+1, rect.height+1)
-  ,0)
+  #,0)
 
 
 changeGamma = (value) ->

@@ -116,7 +116,7 @@ class Brush
   beginStroke: (pos) -> ;
   endStroke: (pos) -> ;
 
-class TestBrush1
+class StepBrush
   drawing: false
   lastpos: null
   accumulator: 0.0
@@ -203,8 +203,8 @@ function fillLayer(layer, func) {
 
 genBlendFunc = (args, expression)->
   expr = expression
-    .replace("{dst}", "dstData[dsti]")
-    .replace("{src}", "srcData[srci]")
+    .replace(/{dst}/g, "dstData[dsti]")
+    .replace(/{src}/g, "srcData[srci]")
 
   str = "
     (function (pos, srcFb, dstFb, #{args}) {
