@@ -255,7 +255,7 @@ StepBrush = (function() {
 })();
 
 
-function drawLayer (layer, rects, gamma) {
+function renderLayer (layer, rects, gamma) {
   var width = layer.width;
   var height = layer.height;
   var imgData = layer.imageData.data;

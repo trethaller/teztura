@@ -65,7 +65,7 @@ onDraw = function(e) {
     brushRects.push(rect);
   }
   if (true) {
-    drawLayer(layer, brushRects, gamma);
+    StepBrushyer(layer, brushRects, gamma);
     _results = [];
     for (_i = 0, _len = brushRects.length; _i < _len; _i++) {
       rect = brushRects[_i];
@@ -81,7 +81,7 @@ changeGamma = function(value) {
 };
 
 refresh = function() {
-  drawLayer(layer, [new Rect(0, 0, width, height)], gamma);
+  renderLayer(layer, [new Rect(0, 0, width, height)], gamma);
   return getMainContext().drawImage(layer.canvas, 0, 0);
 };
 

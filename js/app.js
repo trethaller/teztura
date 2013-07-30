@@ -19,6 +19,10 @@ App.Router.map(function() {
 });
 
 App.DocumentController = Ember.Controller.extend({
+  drawing: false,
+  context: null,
+  layer: null,
+  dirtyRects: null,
   startDrawing: function() {
     this.set("drawing", true);
     return console.log("start drawing");
@@ -36,28 +40,66 @@ App.DocumentController = Ember.Controller.extend({
 
 App.DocumentView = Ember.View.extend({
   templateName: 'document-view',
+  context: null,
+  dirtyRectsChanged: (function() {
+    var rects;
+    rects = this.get('controller.dirtyRects');
+    if (rects != null) {
+      renderRects(rects);
+    }
+    return this.get('controller').set('dirtyRects', null);
+  }).observes('controller.dirtyRects'),
+  renderRects: function(rects) {
+    var ctx, layer, rect, _i, _len, _results;
+    ctx = this.get('context');
+    layer = this.get('controller.layer');
+    _results = [];
+    for (_i = 0, _len = rects.length; _i < _len; _i++) {
+      rect = rects[_i];
+      _results.push(ctx.drawImage(layer.canvas, rect.x, rect.y, rect.width + 1, rect.height + 1, rect.x, rect.y, rect.width + 1, rect.height + 1));
+    }
+    return _results;
+  },
   didInsertElement: function() {
-    var $canvas, context, self;
+    var $canvas, context, layer, self;
     self = this;
-    $canvas = self.$().find('canvas');
+    layer = this.get('controller.layer');
+    $canvas = $('<canvas/>', {
+      'class': ''
+    }).attr({
+      width: layer.width,
+      height: layer.height
+    });
+    this.$().addClass('document-view');
+    this.$().append($canvas);
     context = $canvas[0].getContext('2d');
     context.fillRect(10, 10, 10, 10);
+    this.get('controller').set('context', context);
     self.$().mousedown(function(e) {
-      return self.get('document').send('startDrawing');
+      e.preventDefault();
+      if (e.which === 1) {
+        return self.get('controller').send('startDrawing');
+      }
     });
     self.$().mouseup(function(e) {
-      return self.get('document').send('stopDrawing');
+      if (e.which === 1) {
+        return self.get('controller').send('stopDrawing');
+      }
     });
     self.$().mousemove(function(e) {
       var x, y;
       x = e.pageX - $canvas.position().left;
       y = e.pageY - $canvas.position().top;
-      return self.get('document').send('mouseMove', x, y);
+      if (e.which === 1) {
+        return self.get('controller').send('mouseMove', x, y);
+      }
     });
   }
 });
 
-doc = App.DocumentController.create();
+doc = App.DocumentController.create({
+  layer: new Layer(512, 512)
+});
 
 App.EditorRoute = Ember.Route.extend({
   model: function() {

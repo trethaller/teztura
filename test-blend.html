@@ -61,7 +61,7 @@
             testBlend(300, "intensity", "{dst} = {dst} * (1 - intensity*{src}) + 0.5 * intensity*{src}");
 
 
-            drawLayer(layer,[new Rect(0,0,width,height)], 1.0);
+            renderLayer(layer,[new Rect(0,0,width,height)], 1.0);
             $mainCanvas[0].getContext('2d').drawImage(layer.canvas, 0, 0);
 
 

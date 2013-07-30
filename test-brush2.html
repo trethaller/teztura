@@ -67,7 +67,7 @@
             testBrush(230, 110, getRoundBrushFunc(5));
             testBrush(340, 110, getRoundBrushFunc(15));
 
-            drawLayer(layer,[new Rect(0,0,width,height)], 1.0);
+            renderLayer(layer,[new Rect(0,0,width,height)], 1.0);
             $mainCanvas[0].getContext('2d').drawImage(layer.canvas, 0, 0);
 
 

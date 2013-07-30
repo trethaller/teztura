@@ -58,7 +58,7 @@ onDraw = (e) ->
 
   #setTimeout(()->
   if true
-    drawLayer(layer,brushRects, gamma)
+    StepBrushyer(layer,brushRects, gamma)
     for rect in brushRects
       getMainContext().drawImage(layer.canvas,
         rect.x, rect.y, rect.width+1, rect.height+1,
@@ -71,7 +71,7 @@ changeGamma = (value) ->
   refresh()
 
 refresh = () ->
-  drawLayer(layer,[new Rect(0,0,width,height)], gamma)
+  renderLayer(layer,[new Rect(0,0,width,height)], gamma)
   getMainContext().drawImage(layer.canvas, 0, 0)
 
 # ---

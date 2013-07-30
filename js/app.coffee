@@ -11,6 +11,13 @@ App.Router.map ()->
 
 
 App.DocumentController = Ember.Controller.extend
+  drawing: false
+  tiling: true
+  
+  context: null
+  layer: null
+  dirtyRects: null
+
   startDrawing: ()->
     @set("drawing", true)
     console.log "start drawing"
@@ -25,27 +32,55 @@ App.DocumentController = Ember.Controller.extend
 
 App.DocumentView = Ember.View.extend
   templateName: 'document-view'
-  
+  context: null
+
+  dirtyRectsChanged: (()->
+    rects = @get('controller.dirtyRects')
+    if rects?
+      renderRects(rects)
+    @get('controller').set('dirtyRects', null)
+  ).observes('controller.dirtyRects')
+
+  renderRects: (rects)->
+    ctx = @get('context')
+    layer = @get('controller.layer')
+    for rect in rects
+      ctx.drawImage(layer.canvas,
+        rect.x, rect.y, rect.width+1, rect.height+1,
+        rect.x, rect.y, rect.width+1, rect.height+1)
+
   didInsertElement: ()->
     self = this
-    $canvas = self.$().find('canvas')
+    layer = @get('controller.layer')
+
+    $canvas = $('<canvas/>',{'class':''}).attr {width: layer.width, height:layer.height}
+    this.$().addClass('document-view')
+    this.$().append($canvas)
+
     context = $canvas[0].getContext('2d')
     context.fillRect(10,10,10,10)
-
+    @get('controller').set('context', context)
+    
     self.$().mousedown (e)->
-      self.get('document').send('startDrawing')
+      e.preventDefault()
+      if e.which is 1
+        self.get('controller').send('startDrawing')
     
     self.$().mouseup (e)->
-      self.get('document').send('stopDrawing')
+      if e.which is 1
+        self.get('controller').send('stopDrawing')
 
     self.$().mousemove (e)->
       x = e.pageX-$canvas.position().left
       y = e.pageY-$canvas.position().top
-      self.get('document').send('mouseMove', x, y)
+      if e.which is 1
+        self.get('controller').send('mouseMove', x, y)
 
     return
 
-doc = App.DocumentController.create()
+
+doc = App.DocumentController.create(
+  layer: new Layer(512, 512))
 
 
 App.EditorRoute = Ember.Route.extend
