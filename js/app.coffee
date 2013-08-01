@@ -40,6 +40,21 @@ GammaRenderer = (()->
   return {properties, renderLayer}
 )();
 
+BlendModes = 
+  add: [
+    genBlendFunc("intensity", "{dst} += {src} * intensity"),
+    genBlendFunc("intensity", "{dst} -= {src} * intensity"),
+  ]
+
+  blendTarget: [
+    (() ->
+      func = genBlendFunc("intensity, target", "{dst} = {dst} * (1 - intensity * {src}) + target * {src}");
+      return (pos, srcFb, dstFb, intensity, target)->
+        inttarget = intensity * target
+        func(pos, srcFb, dstFb, intensity, inttarget)
+    )()
+  ]
+
 
 getBrush = ()->
   brush = new StepBrush()
@@ -48,8 +63,9 @@ getBrush = ()->
   brushLayer = new Layer(32,32)
 
   fillLayer brushLayer, getRoundBrushFunc(0.8)
-  bfunc = genBlendFunc("intensity", "{dst} += {src} * intensity")
+  bfunc = BlendModes['blendTarget'][0]
 
+  target = 1.0
 
   brush.drawStep = (layer, pos, intensity, rect)->
     r = new Rect(
@@ -58,7 +74,7 @@ getBrush = ()->
       brushLayer.width,
       brushLayer.height).round()
 
-    bfunc(r.topLeft(), brushLayer, layer, intensity*0.1)
+    bfunc(r.topLeft(), brushLayer, layer, intensity*0.1, target)
     rect.extend(r)
 
   return brush
