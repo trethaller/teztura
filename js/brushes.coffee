@@ -31,12 +31,73 @@ class StepBrush
     @lastpos = pos
     return rect
 
-  beginStroke: () ->
+  beginDraw: () ->
     @drawing = true
     @accumulator = 0
     @nsteps = 0
-  endStroke: () ->
+  endDraw: () ->
     @lastpos = null
     @drawing = false
     console.log("#{@nsteps} steps drawn")
 
+
+BlendModes = 
+  add:        "{dst} += {src} * intensity"
+  sub:        "{dst} -= {src} * intensity"
+  multiply:   "{dst} *= 1 + {src} * intensity"
+  blend:      "{dst} = {dst} * (1 - intensity * {src}) + intensity * target * {src}"
+
+
+RoundBrush = (()->
+  properties = {
+    stepSize:
+      name: "Step size"
+      value: 4
+      range: [1, 20]
+    
+    hardness: 
+      name: "Hardness"
+      value: 1.0
+      range: [0.0, 10.0]
+
+    size:
+      name: "Size"
+      value: 40.0
+      range: [1.0, 256.0]
+
+    blendMode: 
+      name: "Blend mode"
+      value: "blend"
+      choices: ["blend", "add", "sub", "multiply"]
+    
+    intensity: 
+      name: "Intensity"
+      value: 0.1
+      range: [0.0, 1.0]
+  }  
+
+  genBrush = (env)->
+    sb = new StepBrush()
+    sb.stepSize = properties.stepSize.value
+    rad = properties.size.value
+
+    hardness = properties.hardness.value
+    hardnessPlus1 = hardness + 1.0
+    func = genBrushFunc("intensity, target, h, hp1", 
+      "var d = Math.min(1.0, Math.max(0.0, (Math.sqrt(x*x + y*y) * hp1 - h)));
+      {out} = Math.cos(d * Math.PI) * 0.5 + 0.5;",
+      BlendModes[properties.blendMode.value])
+
+    sb.drawStep = (layer, pos, intensity, rect)->
+      r = new Rect(
+        pos.x - rad * 0.5,
+        pos.y - rad * 0.5,
+        rad,
+        rad).round()
+
+      func(r, layer, intensity * properties.intensity.value, env.targetValue, hardness, hardnessPlus1)
+      rect.extend(r)
+    return sb
+
+  return {properties, genBrush}
+)();

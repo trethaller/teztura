@@ -39,13 +39,13 @@
 
             function testBrush(b, offset, step) {
                 b.stepSize = step;
-                b.beginStroke();
+                b.beginDraw();
                 b.draw(layer, offset.add(new Vector(0,0)), 1.0);
                 b.draw(layer, offset.add(new Vector(40,0)), 1.0);
                 b.draw(layer, offset.add(new Vector(100,0)), 1.0);
                 b.draw(layer, offset.add(new Vector(100,100)), 1.0);
                 b.draw(layer, offset.add(new Vector(50,50)), 1.0);
-                b.endStroke();
+                b.endDraw();
             }
             var b = new StepBrush();
             testBrush(b, new Vector(10,10), 1);

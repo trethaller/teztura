@@ -83,6 +83,11 @@ class Layer
   getBuffer: () ->
     return @data.fbuffer
 
+  getAt: (pos)->
+    ipos = pos.round()
+    return @data.fbuffer[ ipos.y * @width + ipos.x ]
+
+
 Bezier =
   quadratic: (pts, t)->
     lerp = (a, b, t) ->
@@ -98,55 +103,6 @@ Bezier =
       return new Vector f2(pts[0].x, pts[1].x, t), f2(pts[0].y, pts[1].y, t)
     else
       return new Vector f3(pts[0].x, pts[1].x, pts[2].x, t), f3(pts[0].y, pts[1].y, pts[2].y, t)
-
-
-class Brush
-  stroke: (layer, start, end, pressure) -> ;
-  move: (pos, intensity) -> ;
-  beginStroke: (pos) -> ;
-  endStroke: (pos) -> ;
-
-class StepBrush
-  drawing: false
-  lastpos: null
-  accumulator: 0.0
-  stepSize: 4.0
-  nsteps: 0
-
-  drawStep: (layer, pos, intensity, rect)->
-    fb = layer.getBuffer()
-    fb[ Math.floor(pos.x) + Math.floor(pos.y) * layer.width ] = intensity
-    rect.extend(pos)
-
-  move: (pos, intensity) ->;
-  draw: (layer, pos, intensity) ->
-    rect = new Rect(pos.x, pos.y, 1, 1)
-    if @lastpos?
-      delt = pos.sub(@lastpos)
-      length = delt.length()
-      dir = delt.scale(1.0 / length)
-      while(@accumulator + @stepSize <= length)
-        @accumulator += @stepSize
-        pt = @lastpos.add(dir.scale(@accumulator))
-        @drawStep(layer, pt, intensity, rect)
-        ++@nsteps
-      @accumulator -= length
-    else
-      @drawStep(layer, pos, intensity, rect)
-      ++@nsteps
-
-    @lastpos = pos
-    return rect
-
-  beginStroke: () ->
-    @drawing = true
-    @accumulator = 0
-    @nsteps = 0
-  endStroke: () ->
-    @lastpos = null
-    @drawing = false
-    console.log("#{@nsteps} steps drawn")
-
 
 GammaRenderer = (()->
   properties = 
@@ -223,11 +179,16 @@ genBlendFunc = (args, expression)->
         }
       }
     })"
+  #console.log("Generating blend function", str)
   return eval(str)
 
-genKernelFunc = (args, expression)->
-  expr = expression
+genBrushFunc = (args, brushExp, blendExp)->
+  blendExp = blendExp
     .replace(/{dst}/g, "dstData[dsti]")
+    .replace(/{src}/g, "_tmp")
+
+  brushExp = brushExp
+    .replace(/{out}/g, "_tmp")
 
   str = "
     (function (rect, dstFb, #{args}) {
@@ -239,15 +200,18 @@ genKernelFunc = (args, expression)->
       var invh = 2.0 / (rect.height - 1);
       var dstData = dstFb.getBuffer();
       for(var sy=miny; sy<sh; ++sy) {
-        var dsti = (pos.y + sy) * dstFb.width + pos.x + minx;
+        var dsti = (rect.y + sy) * dstFb.width + rect.x + minx;
         var y = sy * invh - 1.0;
         for(var sx=minx; sx<sw; ++sx) {
           var x = sx * invw - 1.0;
-          #{expr};
+          var _tmp = 0.0;
+          #{brushExp};
+          #{blendExp};
           ++dsti;
         }
       }
     })"
+  #console.log("Generating brush function", str)
   return eval(str)
 
 

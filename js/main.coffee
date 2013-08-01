@@ -78,10 +78,10 @@ refresh = () ->
 
 $mainCanvas.mouseup (e) ->
   drawing = false
-  brush.endStroke()
+  brush.endDraw()
 $mainCanvas.mousedown (e) ->
   drawing = true
-  brush.beginStroke()
+  brush.beginDraw()
   onDraw(e)
 $mainCanvas.mousemove (e) ->
   if drawing

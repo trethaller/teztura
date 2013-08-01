@@ -87,12 +87,12 @@ refresh = function() {
 
 $mainCanvas.mouseup(function(e) {
   drawing = false;
-  return brush.endStroke();
+  return brush.endDraw();
 });
 
 $mainCanvas.mousedown(function(e) {
   drawing = true;
-  brush.beginStroke();
+  brush.beginDraw();
   return onDraw(e);
 });
 

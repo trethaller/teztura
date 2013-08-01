@@ -1,76 +1,16 @@
 
-
 class Document
   constructor: (@width,@height)->
     @layer = new Layer(@width,@height)
 
-
-BlendModes = 
-  add: [
-    genBlendFunc("intensity", "{dst} += {src} * intensity"),
-    genBlendFunc("intensity", "{dst} -= {src} * intensity"),
-  ]
-
-  blendTarget: [
-    (() ->
-      func = genBlendFunc("intensity, target", "{dst} = {dst} * (1 - intensity * {src}) + target * {src}");
-      return (pos, srcFb, dstFb, intensity, target)->
-        inttarget = intensity * target
-        func(pos, srcFb, dstFb, intensity, inttarget)
-    )()
-  ]
-
-getBrush = ()->
-  brush = new StepBrush()
-  brush.stepSize = 4
-
-  brushLayer = new Layer(32,32)
-
-  fillLayer brushLayer, getRoundBrushFunc(0.8)
-  bfunc = BlendModes['blendTarget'][0]
-
-  target = 1.0
-
-  brush.drawStep = (layer, pos, intensity, rect)->
-    r = new Rect(
-      pos.x - brushLayer.width * 0.5,
-      pos.y - brushLayer.height * 0.5,
-      brushLayer.width,
-      brushLayer.height).round()
-
-    bfunc(r.topLeft(), brushLayer, layer, intensity*0.1, target)
-    rect.extend(r)
-
-  return brush
-
-getBrush2 = ()->
-  brush = new StepBrush()
-  brush.stepSize = 4
-
-  brushLayer = new Layer(32,32)
-
-  fillLayer brushLayer, getRoundBrushFunc(0.8)
-  bfunc = BlendModes['blendTarget'][0]
-
-  target = 1.0
-
-  brush.drawStep = (layer, pos, intensity, rect)->
-    r = new Rect(
-      pos.x - brushLayer.width * 0.5,
-      pos.y - brushLayer.height * 0.5,
-      brushLayer.width,
-      brushLayer.height).round()
-
-    bfunc(r.topLeft(), brushLayer, layer, intensity*0.1, target)
-    rect.extend(r)
-
-  return brush
-
-
 Editor = {
-  brush: getBrush2(),
+  brush: null
   renderer: GammaRenderer
+  targetValue: 1.0
 }
+
+Editor.brush = RoundBrush.genBrush(Editor)
+
 
 class DocumentView
   drawing: false
@@ -116,7 +56,7 @@ class DocumentView
       e.preventDefault()
       if e.which is 1
         self.drawing = true
-        Editor.brush.beginStroke()
+        Editor.brush.beginDraw()
         self.onDraw(getCanvasCoords(e))
 
       if e.which is 2
@@ -126,7 +66,7 @@ class DocumentView
 
     $container.mouseup (e)->
       if e.which is 1
-        Editor.brush.endStroke()
+        Editor.brush.endDraw()
         self.drawing = false
 
       if e.which is 2
@@ -167,11 +107,16 @@ class DocumentView
     if not rect.empty()
       dirtyRects.push(rect)
 
-    Editor.renderer.renderLayer(layer, this, dirtyRects)
-    for rect in dirtyRects
-      @backContext.drawImage(@canvas,
-        rect.x, rect.y, rect.width+1, rect.height+1,
-        rect.x, rect.y, rect.width+1, rect.height+1)
+    self = this
+
+    if true
+    #setTimeout (()->
+      Editor.renderer.renderLayer(layer, self, dirtyRects)
+      for rect in dirtyRects
+        self.backContext.drawImage(self.canvas,
+          rect.x, rect.y, rect.width+1, rect.height+1,
+          rect.x, rect.y, rect.width+1, rect.height+1)
+    #), 0
 
 # ---
 
@@ -189,6 +134,12 @@ getPenPressure = () ->
 
 $(document).ready ()->
   doc = new Document(512, 512)
+  fillLayer doc.layer, (x,y)->
+    x += 1.0
+    y += 1.0
+    return (Math.round(x*40) % 2) * 0.1 -
+        (Math.round(y*40) % 2) * 0.1
+
   view = new DocumentView($('.document-view'), doc)
   view.transformChanged()
   view.refreshAll()
