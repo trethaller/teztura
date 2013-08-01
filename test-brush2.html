@@ -67,9 +67,19 @@
             testBrush(230, 110, getRoundBrushFunc(5));
             testBrush(340, 110, getRoundBrushFunc(15));
 
-            renderLayer(layer,[new Rect(0,0,width,height)], 1.0);
-            $mainCanvas[0].getContext('2d').drawImage(layer.canvas, 0, 0);
+            $canvas = $('#canvas')
+            var canvas = $canvas[0] 
+            var context = $canvas[0].getContext('2d')
+            var imageData = context.getImageData(0,0,canvas.width,canvas.height);
 
+            var view = {
+                canvas: canvas,
+                context: context,
+                imageData: imageData
+            }
+
+            GammaRenderer.renderLayer(layer, view, [new Rect(0,0,width,height)])
+            context.drawImage(canvas, 0, 0);
 
         </script>
 

@@ -76,22 +76,12 @@ class FloatBuffer
 class Layer
   constructor: (@width, @height) ->
     @data = new FloatBuffer(@width, @height)
-    @canvas = @createCanvas(@width,@height)
-    @context = @canvas.getContext '2d'
-    @imageData = @context.getImageData(0,0,width,height)
 
   getRect: () ->
     return new Rect(0,0,@width,@height)
 
   getBuffer: () ->
     return @data.fbuffer
-
-  createCanvas: (width, height) ->
-    c = document.createElement('canvas')
-    c.width = width
-    c.height = height
-    return c
-
 
 Bezier =
   quadratic: (pts, t)->
@@ -158,34 +148,42 @@ class StepBrush
     console.log("#{@nsteps} steps drawn")
 
 
-`
-function renderLayer (layer, rects, gamma) {
-  var width = layer.width;
-  var height = layer.height;
-  var imgData = layer.imageData.data;
-  var fb = layer.getBuffer();
-  for(var i in rects) {
-    var r = rects[i];
-    var minX = r.x;
-    var minY = r.y;
-    var maxX = minX + r.width;
-    var maxY = minY + r.height;
-    for(var iy=minY; iy<=maxY; ++iy) {
-      var offset = iy * width;
-      for(var ix=minX; ix<=maxX; ++ix) {
-        var fval = fb[offset + ix];
-        var val = Math.pow((fval + 1.0) * 0.5, gamma) * 255.0;
-        var i = (offset + ix) << 2;
-        imgData[i] = val;
-        imgData[++i] = val;
-        imgData[++i] = val;
-        imgData[++i] = 0xff;
-      }
-    }
-    layer.context.putImageData(layer.imageData, 0, 0, r.x, r.y, r.width+1, r.height+1);
-  }
-}
+GammaRenderer = (()->
+  properties = 
+    gamma: 1.0
 
+  `function renderLayer (layer, view, rects) {
+    var width = layer.width;
+    var height = layer.height;
+    var imgData = view.imageData.data;
+    var fb = layer.getBuffer();
+    var gamma = properties.gamma;
+    for(var i in rects) {
+      var r = rects[i];
+      var minX = r.x;
+      var minY = r.y;
+      var maxX = minX + r.width;
+      var maxY = minY + r.height;
+      for(var iy=minY; iy<=maxY; ++iy) {
+        var offset = iy * width;
+        for(var ix=minX; ix<=maxX; ++ix) {
+          var fval = fb[offset + ix];
+          var val = Math.pow((fval + 1.0) * 0.5, gamma) * 255.0;
+          var i = (offset + ix) << 2;
+          imgData[i] = val;
+          imgData[++i] = val;
+          imgData[++i] = val;
+          imgData[++i] = 0xff;
+        }
+      }
+      view.context.putImageData(view.imageData, 0, 0, r.x, r.y, r.width+1, r.height+1);
+    }
+  }`
+
+  return {properties, renderLayer}
+)();
+
+`
 function fillLayer(layer, func) {
   var width = layer.width;
   var height = layer.height;
@@ -222,6 +220,31 @@ genBlendFunc = (args, expression)->
           #{expr};
           ++dsti;
           ++srci;
+        }
+      }
+    })"
+  return eval(str)
+
+genKernelFunc = (args, expression)->
+  expr = expression
+    .replace(/{dst}/g, "dstData[dsti]")
+
+  str = "
+    (function (rect, dstFb, #{args}) {
+      var minx = Math.max(0, -rect.x);
+      var miny = Math.max(0, -rect.y);
+      var sw = Math.min(rect.width, dstFb.width - rect.x);
+      var sh = Math.min(rect.height, dstFb.height - rect.y);
+      var invw = 2.0 / (rect.width - 1);
+      var invh = 2.0 / (rect.height - 1);
+      var dstData = dstFb.getBuffer();
+      for(var sy=miny; sy<sh; ++sy) {
+        var dsti = (pos.y + sy) * dstFb.width + pos.x + minx;
+        var y = sy * invh - 1.0;
+        for(var sx=minx; sx<sw; ++sx) {
+          var x = sx * invw - 1.0;
+          #{expr};
+          ++dsti;
         }
       }
     })"

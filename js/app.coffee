@@ -5,41 +5,6 @@ class Document
     @layer = new Layer(@width,@height)
 
 
-GammaRenderer = (()->
-  properties = 
-    gamma: 1.0
-
-  `function renderLayer (layer, view, rects) {
-    var width = layer.width;
-    var height = layer.height;
-    var imgData = view.imageData.data;
-    var fb = layer.getBuffer();
-    var gamma = properties.gamma;
-    for(var i in rects) {
-      var r = rects[i];
-      var minX = r.x;
-      var minY = r.y;
-      var maxX = minX + r.width;
-      var maxY = minY + r.height;
-      for(var iy=minY; iy<=maxY; ++iy) {
-        var offset = iy * width;
-        for(var ix=minX; ix<=maxX; ++ix) {
-          var fval = fb[offset + ix];
-          var val = Math.pow((fval + 1.0) * 0.5, gamma) * 255.0;
-          var i = (offset + ix) << 2;
-          imgData[i] = val;
-          imgData[++i] = val;
-          imgData[++i] = val;
-          imgData[++i] = 0xff;
-        }
-      }
-      view.context.putImageData(view.imageData, 0, 0, r.x, r.y, r.width+1, r.height+1);
-    }
-  }`
-
-  return {properties, renderLayer}
-)();
-
 BlendModes = 
   add: [
     genBlendFunc("intensity", "{dst} += {src} * intensity"),
@@ -54,7 +19,6 @@ BlendModes =
         func(pos, srcFb, dstFb, intensity, inttarget)
     )()
   ]
-
 
 getBrush = ()->
   brush = new StepBrush()
@@ -79,9 +43,32 @@ getBrush = ()->
 
   return brush
 
+getBrush2 = ()->
+  brush = new StepBrush()
+  brush.stepSize = 4
+
+  brushLayer = new Layer(32,32)
+
+  fillLayer brushLayer, getRoundBrushFunc(0.8)
+  bfunc = BlendModes['blendTarget'][0]
+
+  target = 1.0
+
+  brush.drawStep = (layer, pos, intensity, rect)->
+    r = new Rect(
+      pos.x - brushLayer.width * 0.5,
+      pos.y - brushLayer.height * 0.5,
+      brushLayer.width,
+      brushLayer.height).round()
+
+    bfunc(r.topLeft(), brushLayer, layer, intensity*0.1, target)
+    rect.extend(r)
+
+  return brush
+
 
 Editor = {
-  brush: getBrush(),
+  brush: getBrush2(),
   renderer: GammaRenderer
 }
 

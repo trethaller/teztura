@@ -60,10 +60,19 @@
             testBlend(200, "intensity", "{dst} *= 1 + {src} * intensity");
             testBlend(300, "intensity", "{dst} = {dst} * (1 - intensity*{src}) + 0.5 * intensity*{src}");
 
+            $canvas = $('#canvas')
+            var canvas = $canvas[0] 
+            var context = $canvas[0].getContext('2d')
+            var imageData = context.getImageData(0,0,canvas.width,canvas.height);
 
-            renderLayer(layer,[new Rect(0,0,width,height)], 1.0);
-            $mainCanvas[0].getContext('2d').drawImage(layer.canvas, 0, 0);
+            var view = {
+                canvas: canvas,
+                context: context,
+                imageData: imageData
+            }
 
+            GammaRenderer.renderLayer(layer, view, [new Rect(0,0,width,height)])
+            context.drawImage(canvas, 0, 0);
 
         </script>
 
