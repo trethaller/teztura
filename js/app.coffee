@@ -71,6 +71,7 @@ Editor = {
 
 class DocumentView
   drawing: false
+  panning: false
   imageData: null
   context: null
   canvas: null
@@ -96,40 +97,49 @@ class DocumentView
     @context.mozImageSmoothingEnabled = false
 
     self = this
+
     getCoords = (e)->
       x = e.pageX-$backCanvas.position().left
       y = e.pageY-$backCanvas.position().top
-      v = new Vector(x,y)
+      return new Vector(x,y)
+
+    getCanvasCoords = (e)->
+      v = getCoords(e)
       return self.screenToCanvas(v)
+
+    local = {}
 
     $container.mousedown (e)->
       e.preventDefault()
       if e.which is 1
-        self.startDrawing(getCoords(e))
-    
+        self.drawing = true
+        Editor.brush.beginStroke()
+        self.onDraw(getCanvasCoords(e))
+
+      if e.which is 2
+        self.panning = true
+        local.panningStart = getCoords(e)
+        local.offsetStart = self.offset
+
     $container.mouseup (e)->
       if e.which is 1
-        self.stopDrawing()
+        Editor.brush.endStroke()
+        self.drawing = false
+
+      if e.which is 2
+        self.panning = false
 
     $container.mousemove (e)->
-      if e.which is 1
-        self.mouseMove(getCoords(e))
+      if self.drawing
+        self.onDraw(getCanvasCoords(e))
+
+      if self.panning
+        curPos = getCoords(e)
+        self.offset = local.offsetStart.add(curPos.sub(local.panningStart))
+        self.transformChanged()
  
   screenToCanvas: (pt)->
     return pt.sub(@offset).scale(1.0/@scale)
-
-  stopDrawing: ()->
-    @drawing = false
-    Editor.brush.endStroke()
-
-  startDrawing: (pos)->
-    @drawing = true
-    Editor.brush.beginStroke()
-    @onDraw(pos)
-
-  mouseMove: (pos) ->
-    if @drawing
-      @onDraw(pos)
 
   refreshAll: ()->
     layer = @doc.layer
@@ -178,3 +188,4 @@ $(document).ready ()->
   doc = new Document(512, 512)
   view = new DocumentView($('.document-view'), doc)
   view.transformChanged()
+  view.refreshAll()

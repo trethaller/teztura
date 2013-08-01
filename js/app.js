@@ -74,6 +74,8 @@ Editor = {
 DocumentView = (function() {
   DocumentView.prototype.drawing = false;
 
+  DocumentView.prototype.panning = false;
+
   DocumentView.prototype.imageData = null;
 
   DocumentView.prototype.context = null;
@@ -89,7 +91,7 @@ DocumentView = (function() {
   DocumentView.prototype.scale = 1;
 
   function DocumentView($container, doc) {
-    var $backCanvas, $canvas, getCoords, self;
+    var $backCanvas, $canvas, getCanvasCoords, getCoords, local, self;
     console.log("DocumentView constructor");
     this.doc = doc;
     $container.empty();
@@ -113,49 +115,54 @@ DocumentView = (function() {
     this.context.mozImageSmoothingEnabled = false;
     self = this;
     getCoords = function(e) {
-      var v, x, y;
+      var x, y;
       x = e.pageX - $backCanvas.position().left;
       y = e.pageY - $backCanvas.position().top;
-      v = new Vector(x, y);
+      return new Vector(x, y);
+    };
+    getCanvasCoords = function(e) {
+      var v;
+      v = getCoords(e);
       return self.screenToCanvas(v);
     };
+    local = {};
     $container.mousedown(function(e) {
       e.preventDefault();
       if (e.which === 1) {
-        return self.startDrawing(getCoords(e));
+        self.drawing = true;
+        Editor.brush.beginStroke();
+        self.onDraw(getCanvasCoords(e));
+      }
+      if (e.which === 2) {
+        self.panning = true;
+        local.panningStart = getCoords(e);
+        return local.offsetStart = self.offset;
       }
     });
     $container.mouseup(function(e) {
       if (e.which === 1) {
-        return self.stopDrawing();
+        Editor.brush.endStroke();
+        self.drawing = false;
+      }
+      if (e.which === 2) {
+        return self.panning = false;
       }
     });
     $container.mousemove(function(e) {
-      if (e.which === 1) {
-        return self.mouseMove(getCoords(e));
+      var curPos;
+      if (self.drawing) {
+        self.onDraw(getCanvasCoords(e));
+      }
+      if (self.panning) {
+        curPos = getCoords(e);
+        self.offset = local.offsetStart.add(curPos.sub(local.panningStart));
+        return self.transformChanged();
       }
     });
   }
 
   DocumentView.prototype.screenToCanvas = function(pt) {
     return pt.sub(this.offset).scale(1.0 / this.scale);
-  };
-
-  DocumentView.prototype.stopDrawing = function() {
-    this.drawing = false;
-    return Editor.brush.endStroke();
-  };
-
-  DocumentView.prototype.startDrawing = function(pos) {
-    this.drawing = true;
-    Editor.brush.beginStroke();
-    return this.onDraw(pos);
-  };
-
-  DocumentView.prototype.mouseMove = function(pos) {
-    if (this.drawing) {
-      return this.onDraw(pos);
-    }
   };
 
   DocumentView.prototype.refreshAll = function() {
@@ -169,7 +176,7 @@ DocumentView = (function() {
     this.backContext.setTransform(1, 0, 0, 1, 0, 0);
     this.backContext.translate(this.offset.x, this.offset.y);
     this.backContext.scale(this.scale, this.scale);
-    return this.refreshAll();
+    return this.backContext.drawImage(this.canvas, 0, 0);
   };
 
   DocumentView.prototype.onDraw = function(pos) {
@@ -214,5 +221,6 @@ $(document).ready(function() {
   var doc, view;
   doc = new Document(512, 512);
   view = new DocumentView($('.document-view'), doc);
-  return view.transformChanged();
+  view.transformChanged();
+  return view.refreshAll();
 });
