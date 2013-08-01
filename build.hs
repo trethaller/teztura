@@ -46,5 +46,5 @@ compileCoffee = do
     system "coffee -c -b js/app.coffee js/core.coffee js/brushes.coffee js/main.coffee js/test/test.coffee"
 
 main = do
-    compileTemplates
+    -- compileTemplates
     compileCoffee

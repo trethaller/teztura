@@ -15,7 +15,7 @@ layer = new Layer(width, height);
 
 offset = new Vector(0, 0);
 
-scale = 1;
+scale = 1.5;
 
 brush = new StepBrush();
 
@@ -65,7 +65,7 @@ onDraw = function(e) {
     brushRects.push(rect);
   }
   if (true) {
-    StepBrushyer(layer, brushRects, gamma);
+    renderLayer(layer, brushRects, gamma);
     _results = [];
     for (_i = 0, _len = brushRects.length; _i < _len; _i++) {
       rect = brushRects[_i];

@@ -9,7 +9,7 @@ drawing = false
 gamma = 1.0
 layer = new Layer(width, height)
 offset = new Vector(0, 0)
-scale = 1
+scale = 1.5
 
 brush = new StepBrush()
 brush.stepSize = 4
@@ -58,7 +58,7 @@ onDraw = (e) ->
 
   #setTimeout(()->
   if true
-    StepBrushyer(layer,brushRects, gamma)
+    renderLayer(layer,brushRects, gamma)
     for rect in brushRects
       getMainContext().drawImage(layer.canvas,
         rect.x, rect.y, rect.width+1, rect.height+1,

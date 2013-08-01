@@ -1,30 +1,29 @@
-<!DOCTYPE html>
-<html>
+<!doctype html>
+<html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta http-equiv="pragma" content="no-cache" />
-  <meta http-equiv="cache-control" content="no-cache" />
-  <title>Teztura</title>
-  <link rel="stylesheet" href="css/bootstrap.css">
-  <link rel="stylesheet" href="css/style.css">
-  <script src="js/vendor/jquery-1.9.1.js"></script>
-  <script src="js/vendor/handlebars-1.0.0-rc.4.js"></script>
-  <script src="js/vendor/ember-1.0.0-rc.6.js"></script>
-  <script src="js/core.js"></script>
-  <script src="js/brushes.js"></script>
-  <script src="js/app.js"></script>
+<meta charset="utf-8">
+<title>Teztura</title>
+<link rel="stylesheet" href="css/bootstrap.css">
+<link rel="stylesheet" href="css/app.css">
+<script src="js/vendor/jquery-1.10.1.min.js"></script>
+<script src="js/core.js"></script>
+<script src="js/brushes.js"></script>
+<script src="js/app.js"></script>
 </head>
 <body>
-  <script type="text/x-handlebars" data-template-name="editor">
-Hahah
+    <div>
+        <div class="document-view">
+        </div>
+        <div id="tools">
+        </div>
+    </div>
 
-{{view App.DocumentView controllerBinding="document"}}
-Drawing: {{document.drawing}}</script>
-
-<script type="text/x-handlebars" data-template-name="document-view"></script>
-
-<script type="text/x-handlebars" data-template-name="application">{{outlet}}</script>
-
-
+    <!--[if IE]>
+    <object id='wtPlugin' classid='CLSID:092dfa86-5807-5a94-bf3b-5a53ba9e5308' WIDTH=1 HEIGHT=1 style="position:absolute; left:100px; top:100px">
+    </object>
+    <![endif]--><!--[if !IE]> <-->
+    <object id="wtPlugin" type="application/x-wacomtabletplugin" WIDTH=1 HEIGHT=1 style="position:absolute; left:100px; top:100px">
+        <!-- <param name="onload" value="pluginLoaded" /> -->
+    </object>
 </body>
 </html>
