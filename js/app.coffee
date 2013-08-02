@@ -9,7 +9,8 @@ Editor = {
   targetValue: 1.0
 }
 
-Editor.brush = RoundBrush.genBrush(Editor)
+Tools = [RoundBrush]
+Editor.tool = RoundBrush.genTool(Editor)
 
 
 class DocumentView
@@ -24,8 +25,6 @@ class DocumentView
   scale: 1
 
   constructor: ($container, doc)->
-    console.log "DocumentView constructor"
-
     @doc = doc
     $container.empty()
     $canvas = $('<canvas/>',{'class':''}).attr {width: doc.width, height:doc.height}
@@ -56,7 +55,7 @@ class DocumentView
       e.preventDefault()
       if e.which is 1
         self.drawing = true
-        Editor.brush.beginDraw()
+        Editor.tool.beginDraw()
         self.onDraw(getCanvasCoords(e))
 
       if e.which is 2
@@ -66,7 +65,7 @@ class DocumentView
 
     $container.mouseup (e)->
       if e.which is 1
-        Editor.brush.endDraw()
+        Editor.tool.endDraw()
         self.drawing = false
 
       if e.which is 2
@@ -100,7 +99,7 @@ class DocumentView
     dirtyRects = []
 
     layer = @doc.layer
-    brush = Editor.brush
+    brush = Editor.tool
 
     layerRect = layer.getRect()
     rect = brush.draw(layer, pos, pressure).round().intersect(layerRect)
@@ -120,9 +119,6 @@ class DocumentView
 
 # ---
 
-AppCtrl = ($scope)->
-  $scope.test = 'lol'
-
 getPenPressure = () ->
   plugin = document.getElementById('wtPlugin')
   penAPI = plugin.penAPI
@@ -132,6 +128,19 @@ getPenPressure = () ->
 
 # ---
 
+status = (txt)->
+  $('#status-bar').text(txt)
+
+createToolsUI = ($container)->
+  $container.empty()
+  for b in Tools
+    name = b.description.name
+    $btn = $('<button/>').attr({'class':'btn'}).text(name)
+    $btn.click (e)->
+      Editor.tool = b.genTool(Editor)
+      status("Active brush set to #{name}")
+    $container.append($btn)
+
 $(document).ready ()->
   doc = new Document(512, 512)
   fillLayer doc.layer, (x,y)->
@@ -139,6 +148,8 @@ $(document).ready ()->
     y += 1.0
     return (Math.round(x*40) % 2) * 0.1 -
         (Math.round(y*40) % 2) * 0.1
+
+  createToolsUI($('#tools'))
 
   view = new DocumentView($('.document-view'), doc)
   view.transformChanged()

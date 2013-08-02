@@ -49,6 +49,8 @@ BlendModes =
 
 
 RoundBrush = (()->
+  description =
+    name: 'Round'
   properties = {
     stepSize:
       name: "Step size"
@@ -76,7 +78,7 @@ RoundBrush = (()->
       range: [0.0, 1.0]
   }  
 
-  genBrush = (env)->
+  genTool = (env)->
     sb = new StepBrush()
     sb.stepSize = properties.stepSize.value
     rad = properties.size.value
@@ -99,5 +101,5 @@ RoundBrush = (()->
       rect.extend(r)
     return sb
 
-  return {properties, genBrush}
+  return {description, properties, genTool}
 )();

@@ -69,7 +69,10 @@ BlendModes = {
 };
 
 RoundBrush = (function() {
-  var genBrush, properties;
+  var description, genTool, properties;
+  description = {
+    name: 'Round'
+  };
   properties = {
     stepSize: {
       name: "Step size",
@@ -97,7 +100,7 @@ RoundBrush = (function() {
       range: [0.0, 1.0]
     }
   };
-  genBrush = function(env) {
+  genTool = function(env) {
     var func, hardness, hardnessPlus1, rad, sb;
     sb = new StepBrush();
     sb.stepSize = properties.stepSize.value;
@@ -114,7 +117,8 @@ RoundBrush = (function() {
     return sb;
   };
   return {
+    description: description,
     properties: properties,
-    genBrush: genBrush
+    genTool: genTool
   };
 })();
