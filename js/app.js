@@ -18,9 +18,9 @@ Editor = {
   targetValue: 1.0
 };
 
-Tools = [RoundBrush];
+Tools = [RoundBrush, Picker];
 
-Editor.tool = RoundBrush.genTool(Editor);
+Editor.tool = RoundBrush.createTool(Editor);
 
 DocumentView = (function() {
   DocumentView.prototype.drawing = false;
@@ -137,7 +137,7 @@ DocumentView = (function() {
     brush = Editor.tool;
     layerRect = layer.getRect();
     rect = brush.draw(layer, pos, pressure).round().intersect(layerRect);
-    if (!rect.empty()) {
+    if (!rect.isEmpty()) {
       dirtyRects.push(rect);
     }
     self = this;
@@ -171,22 +171,19 @@ status = function(txt) {
 };
 
 createToolsUI = function($container) {
-  var $btn, b, name, _i, _len, _results;
   $container.empty();
-  _results = [];
-  for (_i = 0, _len = Tools.length; _i < _len; _i++) {
-    b = Tools[_i];
+  return Tools.forEach(function(b) {
+    var $btn, name;
     name = b.description.name;
     $btn = $('<button/>').attr({
       'class': 'btn'
     }).text(name);
     $btn.click(function(e) {
-      Editor.tool = b.genTool(Editor);
+      Editor.tool = b.createTool(Editor);
       return status("Active brush set to " + name);
     });
-    _results.push($container.append($btn));
-  }
-  return _results;
+    return $container.append($btn);
+  });
 };
 
 $(document).ready(function() {

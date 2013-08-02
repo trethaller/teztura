@@ -75,7 +75,7 @@ Rect = (function() {
     return ret;
   };
 
-  Rect.prototype.empty = function() {
+  Rect.prototype.isEmpty = function() {
     return this.width <= 0 || this.height <= 0;
   };
 
@@ -114,6 +114,8 @@ Rect = (function() {
   return Rect;
 
 })();
+
+Rect.Empty = new Rect(0, 0, 0, 0);
 
 FloatBuffer = (function() {
   function FloatBuffer(width, height) {

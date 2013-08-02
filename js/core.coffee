@@ -36,7 +36,7 @@ class Rect
     ret.extend(rect.bottomRight())
     return ret
 
-  empty: ()->
+  isEmpty: ()->
     return @width<=0 or @height<=0
 
   round: ()->
@@ -66,6 +66,8 @@ class Rect
     return new Vector(@x,@y)
   bottomRight: ()->
     return new Vector(@x+@width, @y+@height)
+
+Rect.Empty = new Rect(0,0,0,0)
 
 class FloatBuffer
   constructor: (@width, @height) ->

@@ -9,8 +9,8 @@ Editor = {
   targetValue: 1.0
 }
 
-Tools = [RoundBrush]
-Editor.tool = RoundBrush.genTool(Editor)
+Tools = [RoundBrush, Picker]
+Editor.tool = RoundBrush.createTool(Editor)
 
 
 class DocumentView
@@ -103,7 +103,7 @@ class DocumentView
 
     layerRect = layer.getRect()
     rect = brush.draw(layer, pos, pressure).round().intersect(layerRect)
-    if not rect.empty()
+    if not rect.isEmpty()
       dirtyRects.push(rect)
 
     self = this
@@ -133,11 +133,11 @@ status = (txt)->
 
 createToolsUI = ($container)->
   $container.empty()
-  for b in Tools
+  Tools.forEach (b)->
     name = b.description.name
     $btn = $('<button/>').attr({'class':'btn'}).text(name)
     $btn.click (e)->
-      Editor.tool = b.genTool(Editor)
+      Editor.tool = b.createTool(Editor)
       status("Active brush set to #{name}")
     $container.append($btn)
 

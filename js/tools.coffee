@@ -48,6 +48,22 @@ BlendModes =
   blend:      "{dst} = {dst} * (1 - intensity * {src}) + intensity * target * {src}"
 
 
+Picker = (()->
+  description:
+    name: 'Picker'
+
+  properties: {}
+  
+  createTool: (env)->
+    beginDraw: ()->;
+    endDraw: ()->;
+    move: ()->;
+    draw: (layer, pos, intensity) ->
+      env.targetValue = layer.getAt(pos)
+      return Rect.Empty
+)()
+
+
 RoundBrush = (()->
   description =
     name: 'Round'
@@ -78,7 +94,7 @@ RoundBrush = (()->
       range: [0.0, 1.0]
   }  
 
-  genTool = (env)->
+  createTool = (env)->
     sb = new StepBrush()
     sb.stepSize = properties.stepSize.value
     rad = properties.size.value
@@ -101,5 +117,5 @@ RoundBrush = (()->
       rect.extend(r)
     return sb
 
-  return {description, properties, genTool}
+  return {description, properties, createTool}
 )();
