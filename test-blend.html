@@ -51,7 +51,7 @@
                 var nsteps = 30;
                 for(var i=0; i<nsteps; ++i) {
                     var pressure = (1.0 - Math.cos(2 * Math.PI * i / nsteps)) * 0.5;
-                    func(new Vector(i*500.0/nsteps - 50.0,y).round(), brush, layer, pressure);
+                    func(new Vec2(i*500.0/nsteps - 50.0,y).round(), brush, layer, pressure);
                 }                  
             }
 

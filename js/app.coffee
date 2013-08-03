@@ -21,7 +21,7 @@ class DocumentView
   canvas: null
   backContext: null
   doc: null
-  offset: new Vector(0.0, 0.0)
+  offset: new Vec2(0.0, 0.0)
   scale: 1
 
   constructor: ($container, doc)->
@@ -43,7 +43,7 @@ class DocumentView
     getCoords = (e)->
       x = e.pageX-$backCanvas.position().left
       y = e.pageY-$backCanvas.position().top
-      return new Vector(x,y)
+      return new Vec2(x,y)
 
     getCanvasCoords = (e)->
       v = getCoords(e)

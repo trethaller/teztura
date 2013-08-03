@@ -6,7 +6,7 @@ assertClose = (a,b)->
 
 
 V = (x,y)->
-  return new Core.Vector(x,y)
+  return new Core.Vec2(x,y)
 
 describe 'Rect', ()->
   it 'should intersect correctly', ()->
@@ -54,17 +54,17 @@ describe 'Rect', ()->
     a.extend(V(15,15))
     assert.deepEqual(a, new Core.Rect(10,10,10,10))
 
-describe 'Vector', ()->
+describe 'Vec2', ()->
   it 'should add and sub', ()->
-    va = new Core.Vector(1,2)
-    vb = new Core.Vector(2,3)
+    va = new Core.Vec2(1,2)
+    vb = new Core.Vec2(2,3)
     assertClose(va.add(vb).x, 3)
     assertClose(va.add(vb).y, 5)
     assertClose(va.sub(vb).x, -1)
     assertClose(va.sub(vb).y, -1)
   it 'should calculate length', ()->
-    v = new Core.Vector(3,4)
+    v = new Core.Vec2(3,4)
     assertClose(v.length(), 5)
   it 'should normalize', ()->
-    v = new Core.Vector(2,2)
+    v = new Core.Vec2(2,2)
     assertClose(v.normalized().length(), 1)

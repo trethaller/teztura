@@ -46,7 +46,7 @@
 
             function testBrush(x, y, func) {
                 fillLayer(brush, func);
-                copyBlend(new Vector(x,y), brush, layer, 0);
+                copyBlend(new Vec2(x,y), brush, layer, 0);
             }
 
             testBrush(10, 10, function() {

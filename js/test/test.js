@@ -10,7 +10,7 @@ assertClose = function(a, b) {
 };
 
 V = function(x, y) {
-  return new Core.Vector(x, y);
+  return new Core.Vec2(x, y);
 };
 
 describe('Rect', function() {
@@ -66,11 +66,11 @@ describe('Rect', function() {
   });
 });
 
-describe('Vector', function() {
+describe('Vec2', function() {
   it('should add and sub', function() {
     var va, vb;
-    va = new Core.Vector(1, 2);
-    vb = new Core.Vector(2, 3);
+    va = new Core.Vec2(1, 2);
+    vb = new Core.Vec2(2, 3);
     assertClose(va.add(vb).x, 3);
     assertClose(va.add(vb).y, 5);
     assertClose(va.sub(vb).x, -1);
@@ -78,12 +78,12 @@ describe('Vector', function() {
   });
   it('should calculate length', function() {
     var v;
-    v = new Core.Vector(3, 4);
+    v = new Core.Vec2(3, 4);
     return assertClose(v.length(), 5);
   });
   return it('should normalize', function() {
     var v;
-    v = new Core.Vector(2, 2);
+    v = new Core.Vec2(2, 2);
     return assertClose(v.normalized().length(), 1);
   });
 });

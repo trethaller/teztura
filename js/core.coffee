@@ -1,5 +1,5 @@
 
-class Vector
+class Vec2
   constructor: (@x, @y) ->;
   distanceTo: (v) ->
     return Math.sqrt(squareDistanceTo(v))
@@ -8,13 +8,13 @@ class Vector
     dy = @y - v.y
     return dx*dx + dy*dy
   round: ()->
-    return new Vector(Math.round(@x), Math.round(@y))
+    return new Vec2(Math.round(@x), Math.round(@y))
   add: (v) ->
-    return new Vector(@x+v.x, @y+v.y)
+    return new Vec2(@x+v.x, @y+v.y)
   sub: (v) ->
-    return new Vector(@x-v.x, @y-v.y)
+    return new Vec2(@x-v.x, @y-v.y)
   scale: (s) ->
-    return new Vector(@x*s, @y*s)
+    return new Vec2(@x*s, @y*s)
   length: () ->
     return Math.sqrt(@squareLength())
   squareLength: () ->
@@ -63,9 +63,9 @@ class Rect
         @height = Math.max(@height, obj.y - @y)
     
   topLeft: ()->
-    return new Vector(@x,@y)
+    return new Vec2(@x,@y)
   bottomRight: ()->
-    return new Vector(@x+@width, @y+@height)
+    return new Vec2(@x+@width, @y+@height)
 
 Rect.Empty = new Rect(0,0,0,0)
 
@@ -102,9 +102,9 @@ Bezier =
     if pts.length is 1
       return pts[0]
     else if pts.length is 2
-      return new Vector f2(pts[0].x, pts[1].x, t), f2(pts[0].y, pts[1].y, t)
+      return new Vec2 f2(pts[0].x, pts[1].x, t), f2(pts[0].y, pts[1].y, t)
     else
-      return new Vector f3(pts[0].x, pts[1].x, pts[2].x, t), f3(pts[0].y, pts[1].y, pts[2].y, t)
+      return new Vec2 f3(pts[0].x, pts[1].x, pts[2].x, t), f3(pts[0].y, pts[1].y, pts[2].y, t)
 
 GammaRenderer = (()->
   properties = 
@@ -224,4 +224,4 @@ getRoundBrushFunc = (hardness) ->
     return Math.cos(d * Math.PI) * 0.5 + 0.5
 
 if module?
-  module.exports = {Vector, Rect, FloatBuffer, Layer}
+  module.exports = {Vec2, Rect, FloatBuffer, Layer}

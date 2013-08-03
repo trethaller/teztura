@@ -37,7 +37,7 @@ DocumentView = (function() {
 
   DocumentView.prototype.doc = null;
 
-  DocumentView.prototype.offset = new Vector(0.0, 0.0);
+  DocumentView.prototype.offset = new Vec2(0.0, 0.0);
 
   DocumentView.prototype.scale = 1;
 
@@ -68,7 +68,7 @@ DocumentView = (function() {
       var x, y;
       x = e.pageX - $backCanvas.position().left;
       y = e.pageY - $backCanvas.position().top;
-      return new Vector(x, y);
+      return new Vec2(x, y);
     };
     getCanvasCoords = function(e) {
       var v;
