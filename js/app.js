@@ -14,6 +14,7 @@ Document = (function() {
 
 Editor = {
   brush: null,
+  tiling: true,
   renderer: GammaRenderer,
   targetValue: 1.0
 };
@@ -39,7 +40,7 @@ DocumentView = (function() {
 
   DocumentView.prototype.offset = new Vec2(0.0, 0.0);
 
-  DocumentView.prototype.scale = 1;
+  DocumentView.prototype.scale = 1.0;
 
   function DocumentView($container, doc) {
     var $backCanvas, $canvas, getCanvasCoords, getCoords, local, self;
@@ -86,7 +87,7 @@ DocumentView = (function() {
       if (e.which === 2) {
         self.panning = true;
         local.panningStart = getCoords(e);
-        return local.offsetStart = self.offset;
+        return local.offsetStart = self.offset.clone();
       }
     });
     $container.mouseup(function(e) {
@@ -99,14 +100,17 @@ DocumentView = (function() {
       }
     });
     $container.mousemove(function(e) {
-      var curPos;
+      var curPos, lim, o;
       if (self.drawing) {
         self.onDraw(getCanvasCoords(e));
       }
       if (self.panning) {
         curPos = getCoords(e);
-        self.offset = local.offsetStart.add(curPos.sub(local.panningStart));
-        return self.transformChanged();
+        o = local.offsetStart.add(curPos.sub(local.panningStart));
+        lim = 200.0;
+        self.offset.x = Math.min(Math.max(o.x, -lim), lim);
+        self.offset.y = Math.min(Math.max(o.y, -lim), lim);
+        return self.rePaint();
       }
     });
   }
@@ -115,31 +119,37 @@ DocumentView = (function() {
     return pt.sub(this.offset).scale(1.0 / this.scale);
   };
 
-  DocumentView.prototype.refreshAll = function() {
+  DocumentView.prototype.reRender = function() {
     var layer;
     layer = this.doc.layer;
     Editor.renderer.renderLayer(layer, this, [new Rect(0, 0, this.doc.width, this.doc.height)]);
-    return this.backContext.drawImage(this.canvas, 0, 0);
+    return this.rePaint();
   };
 
-  DocumentView.prototype.transformChanged = function() {
-    this.backContext.setTransform(1, 0, 0, 1, 0, 0);
-    this.backContext.translate(this.offset.x, this.offset.y);
-    this.backContext.scale(this.scale, this.scale);
-    return this.backContext.drawImage(this.canvas, 0, 0);
+  DocumentView.prototype.rePaint = function() {
+    var ctx;
+    ctx = this.backContext;
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.translate(this.offset.x, this.offset.y);
+    ctx.scale(this.scale, this.scale);
+    if (Editor.tiling) {
+      ctx.fillStyle = ctx.createPattern(this.canvas, "repeat");
+      return ctx.fillRect(-this.offset.x / this.scale, -this.offset.y / this.scale, this.canvas.width / this.scale, this.canvas.height / this.scale);
+    } else {
+      return ctx.drawImage(this.canvas, 0, 0);
+    }
   };
 
   DocumentView.prototype.onDraw = function(pos) {
-    var brush, dirtyRects, layer, layerRect, pressure, r, rect, self, tiling, xoff, yoff, _i, _j, _k, _len, _len1, _len2, _ref, _ref1, _results;
+    var brush, dirtyRects, layer, layerRect, pressure, r, self, xoff, yoff, _i, _j, _len, _len1, _ref, _ref1;
     self = this;
     pressure = getPenPressure();
     dirtyRects = [];
-    tiling = true;
     layer = this.doc.layer;
     brush = Editor.tool;
     layerRect = layer.getRect();
     r = brush.draw(layer, pos, pressure).round();
-    if (tiling) {
+    if (Editor.tiling) {
       _ref = [-1, 0, 1];
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
         xoff = _ref[_i];
@@ -157,15 +167,9 @@ DocumentView = (function() {
     }).filter(function(r) {
       return !r.isEmpty();
     });
-    status(dirtyRects.length);
     if (true) {
       Editor.renderer.renderLayer(layer, self, dirtyRects);
-      _results = [];
-      for (_k = 0, _len2 = dirtyRects.length; _k < _len2; _k++) {
-        rect = dirtyRects[_k];
-        _results.push(self.backContext.drawImage(self.canvas, rect.x, rect.y, rect.width + 1, rect.height + 1, rect.x, rect.y, rect.width + 1, rect.height + 1));
-      }
-      return _results;
+      return self.rePaint();
     }
   };
 
@@ -213,6 +217,6 @@ $(document).ready(function() {
   });
   createToolsUI($('#tools'));
   view = new DocumentView($('.document-view'), doc);
-  view.transformChanged();
-  return view.refreshAll();
+  view.rePaint();
+  return view.reRender();
 });

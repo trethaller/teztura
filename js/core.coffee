@@ -1,6 +1,8 @@
 
 class Vec2
   constructor: (@x, @y) ->;
+  clone: ()->
+    return new Vec2(@x,@y)
   distanceTo: (v) ->
     return Math.sqrt(squareDistanceTo(v))
   squareDistanceTo: (v) ->

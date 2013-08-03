@@ -5,6 +5,7 @@ class Document
 
 Editor = {
   brush: null
+  tiling: true
   renderer: GammaRenderer
   targetValue: 1.0
 }
@@ -22,7 +23,7 @@ class DocumentView
   backContext: null
   doc: null
   offset: new Vec2(0.0, 0.0)
-  scale: 1
+  scale: 1.0
 
   constructor: ($container, doc)->
     @doc = doc
@@ -61,7 +62,7 @@ class DocumentView
       if e.which is 2
         self.panning = true
         local.panningStart = getCoords(e)
-        local.offsetStart = self.offset
+        local.offsetStart = self.offset.clone()
 
     $container.mouseup (e)->
       if e.which is 1
@@ -77,29 +78,37 @@ class DocumentView
 
       if self.panning
         curPos = getCoords(e)
-        self.offset = local.offsetStart.add(curPos.sub(local.panningStart))
-        self.transformChanged()
+        o = local.offsetStart.add(curPos.sub(local.panningStart))
+        lim = 200.0
+        self.offset.x = Math.min(Math.max(o.x, -lim), lim)
+        self.offset.y = Math.min(Math.max(o.y, -lim), lim)
+        self.rePaint()
  
   screenToCanvas: (pt)->
     return pt.sub(@offset).scale(1.0/@scale)
 
-  refreshAll: ()->
+  reRender: ()->
     layer = @doc.layer
     Editor.renderer.renderLayer(layer, this, [new Rect(0,0,@doc.width,@doc.height)])
-    @backContext.drawImage(@canvas, 0, 0)
+    @rePaint()
 
-  transformChanged: ()->
-    @backContext.setTransform(1, 0, 0, 1, 0, 0)
-    @backContext.translate(@offset.x, @offset.y)
-    @backContext.scale(@scale, @scale)
-    @backContext.drawImage(@canvas, 0, 0)
+  rePaint: ()->
+    ctx = @backContext
+    ctx.setTransform(1, 0, 0, 1, 0, 0)
+    ctx.translate(@offset.x, @offset.y)
+    ctx.scale(@scale, @scale)
+    
+    if Editor.tiling
+      ctx.fillStyle = ctx.createPattern(@canvas,"repeat")
+      ctx.fillRect(-@offset.x / @scale,-@offset.y / @scale,@canvas.width / @scale, @canvas.height / @scale)
+    else
+      ctx.drawImage(@canvas, 0, 0)
 
   onDraw: (pos)->
     self = this
 
     pressure = getPenPressure()
     dirtyRects = []
-    tiling = true
 
     layer = @doc.layer
     brush = Editor.tool
@@ -108,7 +117,7 @@ class DocumentView
     
     r = brush.draw(layer, pos, pressure).round()
 
-    if tiling
+    if Editor.tiling
       for xoff in [-1,0,1]
         for yoff in [-1,0,1]
           dirtyRects.push(r.offset(new Vec2(xoff * layerRect.width, yoff * layerRect.height)))
@@ -119,14 +128,10 @@ class DocumentView
       .map((r)->r.intersect(layerRect))
       .filter((r)->not r.isEmpty())
 
-    status(dirtyRects.length)
     if true
     #setTimeout (()->
       Editor.renderer.renderLayer(layer, self, dirtyRects)
-      for rect in dirtyRects
-        self.backContext.drawImage(self.canvas,
-          rect.x, rect.y, rect.width+1, rect.height+1,
-          rect.x, rect.y, rect.width+1, rect.height+1)
+      self.rePaint()
     #), 0
 
 # ---
@@ -164,5 +169,5 @@ $(document).ready ()->
   createToolsUI($('#tools'))
 
   view = new DocumentView($('.document-view'), doc)
-  view.transformChanged()
-  view.refreshAll()
+  view.rePaint()
+  view.reRender()

@@ -7,6 +7,10 @@ Vec2 = (function() {
     this.y = y;
   }
 
+  Vec2.prototype.clone = function() {
+    return new Vec2(this.x, this.y);
+  };
+
   Vec2.prototype.distanceTo = function(v) {
     return Math.sqrt(squareDistanceTo(v));
   };
