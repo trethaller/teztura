@@ -59,6 +59,9 @@ class Rect
     ret.extend(rect.bottomRight())
     return ret
 
+  offset: (vec)->
+    return new Rect(@x+vec.x, @y+vec.y, @width, @height)
+
   isEmpty: ()->
     return @width<=0 or @height<=0
 
@@ -217,22 +220,23 @@ genBrushFunc = (args, brushExp, blendExp)->
 
   str = "
     (function (rect, dstFb, #{args}) {
-      var minx = Math.max(0, -rect.x);
-      var miny = Math.max(0, -rect.y);
-      var sw = Math.min(rect.width, dstFb.width - rect.x);
-      var sh = Math.min(rect.height, dstFb.height - rect.y);
+      var minx = rect.x;
+      var miny = rect.y;
+      var sw = rect.width;
+      var sh = rect.height;
       var invw = 2.0 / (rect.width - 1);
       var invh = 2.0 / (rect.height - 1);
+      var fbw = dstFb.width;
+      var fbh = dstFb.height;
       var dstData = dstFb.getBuffer();
-      for(var sy=miny; sy<sh; ++sy) {
-        var dsti = (rect.y + sy) * dstFb.width + rect.x + minx;
+      for(var sy=0; sy<sh; ++sy) {
         var y = sy * invh - 1.0;
-        for(var sx=minx; sx<sw; ++sx) {
+        for(var sx=0; sx<sw; ++sx) {
           var x = sx * invw - 1.0;
+          var dsti = (((sy + miny) + fbh) % fbh) * fbw + (((sx + minx) + fbw) % fbw);
           var _tmp = 0.0;
           #{brushExp};
           #{blendExp};
-          ++dsti;
         }
       }
     })"

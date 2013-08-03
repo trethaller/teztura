@@ -95,19 +95,31 @@ class DocumentView
     @backContext.drawImage(@canvas, 0, 0)
 
   onDraw: (pos)->
+    self = this
+
     pressure = getPenPressure()
     dirtyRects = []
+    tiling = true
 
     layer = @doc.layer
     brush = Editor.tool
 
     layerRect = layer.getRect()
-    rect = brush.draw(layer, pos, pressure).round().intersect(layerRect)
-    if not rect.isEmpty()
-      dirtyRects.push(rect)
+    
+    r = brush.draw(layer, pos, pressure).round()
 
-    self = this
+    if tiling
+      for xoff in [-1,0,1]
+        for yoff in [-1,0,1]
+          dirtyRects.push(r.offset(new Vec2(xoff * layerRect.width, yoff * layerRect.height)))
+    else
+      dirtyRects.push(r)
 
+    dirtyRects = dirtyRects
+      .map((r)->r.intersect(layerRect))
+      .filter((r)->not r.isEmpty())
+
+    status(dirtyRects.length)
     if true
     #setTimeout (()->
       Editor.renderer.renderLayer(layer, self, dirtyRects)

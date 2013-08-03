@@ -118,6 +118,10 @@ Rect = (function() {
     return ret;
   };
 
+  Rect.prototype.offset = function(vec) {
+    return new Rect(this.x + vec.x, this.y + vec.y, this.width, this.height);
+  };
+
   Rect.prototype.isEmpty = function() {
     return this.width <= 0 || this.height <= 0;
   };
@@ -285,7 +289,7 @@ genBrushFunc = function(args, brushExp, blendExp) {
   var str;
   blendExp = blendExp.replace(/{dst}/g, "dstData[dsti]").replace(/{src}/g, "_tmp");
   brushExp = brushExp.replace(/{out}/g, "_tmp");
-  str = "    (function (rect, dstFb, " + args + ") {      var minx = Math.max(0, -rect.x);      var miny = Math.max(0, -rect.y);      var sw = Math.min(rect.width, dstFb.width - rect.x);      var sh = Math.min(rect.height, dstFb.height - rect.y);      var invw = 2.0 / (rect.width - 1);      var invh = 2.0 / (rect.height - 1);      var dstData = dstFb.getBuffer();      for(var sy=miny; sy<sh; ++sy) {        var dsti = (rect.y + sy) * dstFb.width + rect.x + minx;        var y = sy * invh - 1.0;        for(var sx=minx; sx<sw; ++sx) {          var x = sx * invw - 1.0;          var _tmp = 0.0;          " + brushExp + ";          " + blendExp + ";          ++dsti;        }      }    })";
+  str = "    (function (rect, dstFb, " + args + ") {      var minx = rect.x;      var miny = rect.y;      var sw = rect.width;      var sh = rect.height;      var invw = 2.0 / (rect.width - 1);      var invh = 2.0 / (rect.height - 1);      var fbw = dstFb.width;      var fbh = dstFb.height;      var dstData = dstFb.getBuffer();      for(var sy=0; sy<sh; ++sy) {        var y = sy * invh - 1.0;        for(var sx=0; sx<sw; ++sx) {          var x = sx * invw - 1.0;          var dsti = (((sy + miny) + fbh) % fbh) * fbw + (((sx + minx) + fbw) % fbw);          var _tmp = 0.0;          " + brushExp + ";          " + blendExp + ";        }      }    })";
   return eval(str);
 };
 

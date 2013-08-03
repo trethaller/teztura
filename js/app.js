@@ -130,22 +130,39 @@ DocumentView = (function() {
   };
 
   DocumentView.prototype.onDraw = function(pos) {
-    var brush, dirtyRects, layer, layerRect, pressure, rect, self, _i, _len, _results;
+    var brush, dirtyRects, layer, layerRect, pressure, r, rect, self, tiling, xoff, yoff, _i, _j, _k, _len, _len1, _len2, _ref, _ref1, _results;
+    self = this;
     pressure = getPenPressure();
     dirtyRects = [];
+    tiling = true;
     layer = this.doc.layer;
     brush = Editor.tool;
     layerRect = layer.getRect();
-    rect = brush.draw(layer, pos, pressure).round().intersect(layerRect);
-    if (!rect.isEmpty()) {
-      dirtyRects.push(rect);
+    r = brush.draw(layer, pos, pressure).round();
+    if (tiling) {
+      _ref = [-1, 0, 1];
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        xoff = _ref[_i];
+        _ref1 = [-1, 0, 1];
+        for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
+          yoff = _ref1[_j];
+          dirtyRects.push(r.offset(new Vec2(xoff * layerRect.width, yoff * layerRect.height)));
+        }
+      }
+    } else {
+      dirtyRects.push(r);
     }
-    self = this;
+    dirtyRects = dirtyRects.map(function(r) {
+      return r.intersect(layerRect);
+    }).filter(function(r) {
+      return !r.isEmpty();
+    });
+    status(dirtyRects.length);
     if (true) {
       Editor.renderer.renderLayer(layer, self, dirtyRects);
       _results = [];
-      for (_i = 0, _len = dirtyRects.length; _i < _len; _i++) {
-        rect = dirtyRects[_i];
+      for (_k = 0, _len2 = dirtyRects.length; _k < _len2; _k++) {
+        rect = dirtyRects[_k];
         _results.push(self.backContext.drawImage(self.canvas, rect.x, rect.y, rect.width + 1, rect.height + 1, rect.x, rect.y, rect.width + 1, rect.height + 1));
       }
       return _results;
