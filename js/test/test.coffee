@@ -68,3 +68,15 @@ describe 'Vec2', ()->
   it 'should normalize', ()->
     v = new Core.Vec2(2,2)
     assertClose(v.normalized().length(), 1)
+
+V3 = Core.Vec3
+describe 'Vec3', ()->
+  it 'should add and sub', ()->
+    va = new V3(1,2,3)
+    vb = new V3(2,3,4)
+    assertClose(va.add(vb).x, 3)
+    assertClose(va.add(vb).y, 5)
+    assertClose(va.add(vb).z, 7)
+    assertClose(va.sub(vb).x, -1)
+    assertClose(va.sub(vb).y, -1)
+    assertClose(va.sub(vb).z, -1)

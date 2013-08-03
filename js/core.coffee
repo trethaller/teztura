@@ -22,6 +22,29 @@ class Vec2
   normalized: () ->
     return @scale(1.0 / @length())
 
+
+class Vec3
+  constructor: (@x, @y, @z) ->;
+  add: (v) ->
+    return new Vec3(@x+v.x, @y+v.y, @z+v.z)
+  sub: (v) ->
+    return new Vec3(@x-v.x, @y-v.y, @z-v.z)
+  scale: (s) ->
+    return new Vec3(@x*s, @y*s, @z*s)
+  length: () ->
+    return Math.sqrt(@squareLength())
+  squareLength: () ->
+    return @x*@x+@y*@y+@z*@z
+  normalized: () ->
+    return @scale(1.0 / @length())
+  cross: (v)->
+    return new Vec3(
+      (@y * v.z - @z * v.y),
+      (@z * v.x - @x * v.z),
+      (@x * v.y - @y * v.x))
+  dot: (v)->
+    return @x+v.x + @y+v.y + @z+v.z
+
 class Rect
   constructor: (@x, @y, @width, @height) -> ;
   intersect: (rect) ->
@@ -224,4 +247,4 @@ getRoundBrushFunc = (hardness) ->
     return Math.cos(d * Math.PI) * 0.5 + 0.5
 
 if module?
-  module.exports = {Vec2, Rect, FloatBuffer, Layer}
+  module.exports = {Vec2, Vec3, Rect, FloatBuffer, Layer}
