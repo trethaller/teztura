@@ -19,3 +19,15 @@ Brush
   BrushMode: 'add', 'blend', 'flatten', 'blur'...
   
 
+
+http://www.tartiflop.com/disp2norm/srcview/index.html
+
+Flatten brush
+http://mathworld.wolfram.com/Plane.html
+N = (a,b,c)
+O = (x0, y0, z0)
+d = -a.x0 - b.y0 - c.z0
+a.x + b.y + c.z + d = 0
+c.z = 0 - a.x - b.y - d
+z = (-a.x - b.y - d) / c
+
