@@ -5,7 +5,11 @@
 <title>Teztura</title>
 <link rel="stylesheet" href="css/bootstrap.css">
 <link rel="stylesheet" href="css/app.css">
+<link rel="stylesheet" href="css/ui-lightness/jquery-ui-1.10.3.custom.min.css">
 <script src="js/vendor/jquery-1.10.1.min.js"></script>
+<script src="js/vendor/jquery-ui-1.10.3.custom.js"></script>
+<script src="js/vendor/underscore-min.js"></script>
+<script src="js/vendor/backbone-min.js"></script>
 <script src="js/core.js"></script>
 <script src="js/tools.js"></script>
 <script src="js/app.js"></script>
@@ -14,17 +18,23 @@
     <div>
         <div class="document-view">
         </div>
-        <div id="tools"></div>
-        <div id="renderers"></div>
+        <div id="tools">
+            <div class="buttons"></div>
+            <div class="properties"></div>
+        </div>
+        <div id="renderers">
+            <div class="buttons"></div>
+            <div class="properties"></div>
+        </div>
         
         <div><pre id="status-bar"></pre></div>
     </div>
 
     <!--[if IE]>
-    <object id='wtPlugin' classid='CLSID:092dfa86-5807-5a94-bf3b-5a53ba9e5308' WIDTH=1 HEIGHT=1 style="position:absolute; left:100px; top:100px">
+    <object id='wtPlugin' classid='CLSID:092dfa86-5807-5a94-bf3b-5a53ba9e5308' WIDTH=1 HEIGHT=1 style="position:absolute; left:-100px; top:-100px">
     </object>
     <![endif]--><!--[if !IE]> <-->
-    <object id="wtPlugin" type="application/x-wacomtabletplugin" WIDTH=1 HEIGHT=1 style="position:absolute; left:100px; top:100px">
+    <object id="wtPlugin" type="application/x-wacomtabletplugin" width="1" height="1" style="position:absolute; left:-100px; top:100px">
         <!-- <param name="onload" value="pluginLoaded" /> -->
     </object>
 </body>

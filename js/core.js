@@ -201,6 +201,12 @@ Layer = (function() {
     return this.data.fbuffer[ipos.y * this.width + ipos.x];
   };
 
+  Layer.prototype.getNormalAt = function(pos) {
+    var fb, p;
+    p = pos.round();
+    return fb = this.data.fbuffer;
+  };
+
   return Layer;
 
 })();

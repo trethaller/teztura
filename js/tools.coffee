@@ -59,7 +59,23 @@ Picker = (()->
     endDraw: (pos)->;
     move: ()->;
     draw: (layer, pos, intensity) ->
-      env.targetValue = layer.getAt(pos)
+      env.set('targetValue', layer.getAt(pos))
+      return Rect.Empty
+)()
+
+
+Flatten = (()->
+  description:
+    name: 'Flatten'
+
+  properties: {}
+  
+  createTool: (env)->
+    beginDraw: (pos)->;
+    endDraw: (pos)->;
+    move: ()->;
+    draw: (layer, pos, intensity) ->
+      env.set('targetValue', layer.getAt(pos))
       return Rect.Empty
 )()
 
@@ -113,7 +129,7 @@ RoundBrush = (()->
         rad,
         rad).round()
 
-      func(r, layer, intensity * properties.intensity.value, env.targetValue, hardness, hardnessPlus1)
+      func(r, layer, intensity * properties.intensity.value, env.get('targetValue'), hardness, hardnessPlus1)
       rect.extend(r)
     return sb
 

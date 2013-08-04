@@ -3,18 +3,27 @@ class Document
   constructor: (@width,@height)->
     @layer = new Layer(@width,@height)
 
-Editor = {
-  brush: null
+Editor = Backbone.Model.extend({
+  toolObject: null
+  getToolObject: ()->
+    if @get('toolObject') is null
+      console.log "Creating brush of type " + @get("tool").description.name
+      o = @get('tool').createTool(this)
+      @set('toolObject', o)
+    return @get('toolObject')
+  setToolDirty: ()->
+    @set('toolObject', null)
+})
+
+editor = new Editor {
+  tool: null
+  renderer: null
   tiling: true
-  #renderer: GammaRenderer
-  renderer: NormalRenderer
   targetValue: 1.0
 }
 
 Renderers = [GammaRenderer, NormalRenderer]
 Tools = [RoundBrush, Picker]
-Editor.tool = RoundBrush.createTool(Editor)
-
 
 class DocumentView
   drawing: false
@@ -59,7 +68,7 @@ class DocumentView
       if e.which is 1
         self.drawing = true
         coords = getCanvasCoords(e)
-        Editor.tool.beginDraw(coords)
+        editor.getToolObject().beginDraw(coords)
         self.onDraw(coords)
 
       if e.which is 2
@@ -69,7 +78,7 @@ class DocumentView
 
     $container.mouseup (e)->
       if e.which is 1
-        Editor.tool.endDraw(getCanvasCoords(e))
+        editor.getToolObject().endDraw(getCanvasCoords(e))
         self.drawing = false
 
       if e.which is 2
@@ -92,7 +101,7 @@ class DocumentView
 
   reRender: ()->
     layer = @doc.layer
-    Editor.renderer.renderLayer(layer, this, [new Rect(0,0,@doc.width,@doc.height)])
+    editor.get('renderer').renderLayer(layer, this, [new Rect(0,0,@doc.width,@doc.height)])
     @rePaint()
 
   rePaint: ()->
@@ -101,7 +110,7 @@ class DocumentView
     ctx.translate(@offset.x, @offset.y)
     ctx.scale(@scale, @scale)
     
-    if Editor.tiling
+    if editor.get('tiling')
       ctx.fillStyle = ctx.createPattern(@canvas,"repeat")
       ctx.fillRect(-@offset.x / @scale,-@offset.y / @scale,@canvas.width / @scale, @canvas.height / @scale)
     else
@@ -114,13 +123,13 @@ class DocumentView
     dirtyRects = []
 
     layer = @doc.layer
-    brush = Editor.tool
+    tool = editor.getToolObject()
 
     layerRect = layer.getRect()
     
-    r = brush.draw(layer, pos, pressure).round()
+    r = tool.draw(layer, pos, pressure).round()
 
-    if Editor.tiling
+    if editor.get('tiling')
       for xoff in [-1,0,1]
         for yoff in [-1,0,1]
           dirtyRects.push(r.offset(new Vec2(xoff * layerRect.width, yoff * layerRect.height)))
@@ -133,7 +142,7 @@ class DocumentView
 
     if true
     #setTimeout (()->
-      Editor.renderer.renderLayer(layer, self, dirtyRects)
+      editor.get('renderer').renderLayer(layer, self, dirtyRects)
       self.rePaint()
     #), 0
 
@@ -153,26 +162,49 @@ status = (txt)->
 
 view = null
 
-createToolsUI = ($container)->
+
+editor.on 'change:tool', ()->
+  editor.setToolDirty()
+  tool = editor.get('tool')
+
+  # Create properties
+  $container = $('#tools > .properties')
+  $container.empty()
+  $.each tool.properties, (_,prop)->
+    $prop = $('<div/>').attr({'class':'property'}).appendTo($container)
+    $('<span/>').text(prop.name).appendTo($prop)
+    if prop.range?
+      $slider = $('<div/>').slider({
+        min: prop.range[0]
+        max: prop.range[1]
+        value: prop.value
+        step: 0.01
+        change: (evt, ui)->
+          prop.value = ui.value
+          editor.setToolDirty()
+      }).width(200).appendTo($prop)
+      $prop.append($slider)
+
+editor.on 'change:renderer', ()->
+  view.reRender()
+  view.rePaint()
+
+createToolsButtons = ($container)->
   $container.empty()
   Tools.forEach (b)->
     name = b.description.name
     $btn = $('<button/>').attr({'class':'btn'}).text(name)
     $btn.click (e)->
-      Editor.tool = b.createTool(Editor)
-      status("Active brush set to #{name}")
+      editor.set('tool', b)
     $container.append($btn)
 
-createRenderersUI = ($container)->
+createRenderersButtons = ($container)->
   $container.empty()
   Renderers.forEach (r)->
     name = r.description.name
     $btn = $('<button/>').attr({'class':'btn'}).text(name)
     $btn.click (e)->
-      Editor.renderer = r
-      view.reRender()
-      view.rePaint()
-      status("Renderer set to #{name}")
+      editor.set('renderer', r)
     $container.append($btn)
 
 $(document).ready ()->
@@ -183,9 +215,10 @@ $(document).ready ()->
     return (Math.round(x*40) % 2) * 0.1 -
         (Math.round(y*40) % 2) * 0.1
 
-  createToolsUI($('#tools'))
-  createRenderersUI($('#renderers'))
-
   view = new DocumentView($('.document-view'), doc)
-  view.reRender()
-  view.rePaint()
+
+  createToolsButtons($('#tools > .buttons'))
+  createRenderersButtons($('#renderers > .buttons'))
+
+  editor.set('tool', RoundBrush)
+  editor.set('renderer', GammaRenderer)
