@@ -6,10 +6,12 @@ class Document
 Editor = {
   brush: null
   tiling: true
-  renderer: GammaRenderer
+  #renderer: GammaRenderer
+  renderer: NormalRenderer
   targetValue: 1.0
 }
 
+Renderers = [GammaRenderer, NormalRenderer]
 Tools = [RoundBrush, Picker]
 Editor.tool = RoundBrush.createTool(Editor)
 
@@ -56,8 +58,9 @@ class DocumentView
       e.preventDefault()
       if e.which is 1
         self.drawing = true
-        Editor.tool.beginDraw()
-        self.onDraw(getCanvasCoords(e))
+        coords = getCanvasCoords(e)
+        Editor.tool.beginDraw(coords)
+        self.onDraw(coords)
 
       if e.which is 2
         self.panning = true
@@ -66,7 +69,7 @@ class DocumentView
 
     $container.mouseup (e)->
       if e.which is 1
-        Editor.tool.endDraw()
+        Editor.tool.endDraw(getCanvasCoords(e))
         self.drawing = false
 
       if e.which is 2
@@ -148,6 +151,8 @@ getPenPressure = () ->
 status = (txt)->
   $('#status-bar').text(txt)
 
+view = null
+
 createToolsUI = ($container)->
   $container.empty()
   Tools.forEach (b)->
@@ -156,6 +161,18 @@ createToolsUI = ($container)->
     $btn.click (e)->
       Editor.tool = b.createTool(Editor)
       status("Active brush set to #{name}")
+    $container.append($btn)
+
+createRenderersUI = ($container)->
+  $container.empty()
+  Renderers.forEach (r)->
+    name = r.description.name
+    $btn = $('<button/>').attr({'class':'btn'}).text(name)
+    $btn.click (e)->
+      Editor.renderer = r
+      view.reRender()
+      view.rePaint()
+      status("Renderer set to #{name}")
     $container.append($btn)
 
 $(document).ready ()->
@@ -167,7 +184,8 @@ $(document).ready ()->
         (Math.round(y*40) % 2) * 0.1
 
   createToolsUI($('#tools'))
+  createRenderersUI($('#renderers'))
 
   view = new DocumentView($('.document-view'), doc)
-  view.rePaint()
   view.reRender()
+  view.rePaint()

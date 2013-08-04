@@ -135,6 +135,9 @@ Bezier =
       return new Vec2 f3(pts[0].x, pts[1].x, pts[2].x, t), f3(pts[0].y, pts[1].y, pts[2].y, t)
 
 GammaRenderer = (()->
+  description = 
+    name: "Height map"
+
   properties = 
     gamma: 1.0
 
@@ -166,12 +169,15 @@ GammaRenderer = (()->
     }
   }`
 
-  return {properties, renderLayer}
+  return {description, properties, renderLayer}
 )();
 
 NormalRenderer = (()->
+  description =
+    name: "Normal map"
+
   properties = 
-    gain: 2.0
+    gain: 4.0
 
   sample = (res, x, y)->
     return "var #{res} = fb[ ((#{y} + height) % height) * width + ((#{x} + width) % width) ];\n"
@@ -211,7 +217,7 @@ NormalRenderer = (()->
   
   renderLayer = eval(str);
 
-  return {properties, renderLayer}
+  return {description, properties, renderLayer}
 )();
 
 `

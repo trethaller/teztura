@@ -45,13 +45,13 @@ StepBrush = (function() {
     return rect;
   };
 
-  StepBrush.prototype.beginDraw = function() {
+  StepBrush.prototype.beginDraw = function(pos) {
     this.drawing = true;
     this.accumulator = 0;
     return this.nsteps = 0;
   };
 
-  StepBrush.prototype.endDraw = function() {
+  StepBrush.prototype.endDraw = function(pos) {
     this.lastpos = null;
     this.drawing = false;
     return console.log("" + this.nsteps + " steps drawn");
@@ -76,8 +76,8 @@ Picker = (function() {
     properties: {},
     createTool: function(env) {
       return {
-        beginDraw: function() {},
-        endDraw: function() {},
+        beginDraw: function(pos) {},
+        endDraw: function(pos) {},
         move: function() {},
         draw: function(layer, pos, intensity) {
           env.targetValue = layer.getAt(pos);
@@ -101,7 +101,7 @@ RoundBrush = (function() {
     },
     hardness: {
       name: "Hardness",
-      value: 1.0,
+      value: 0.0,
       range: [0.0, 10.0]
     },
     size: {

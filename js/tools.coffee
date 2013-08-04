@@ -31,11 +31,11 @@ class StepBrush
     @lastpos = pos
     return rect
 
-  beginDraw: () ->
+  beginDraw: (pos) ->
     @drawing = true
     @accumulator = 0
     @nsteps = 0
-  endDraw: () ->
+  endDraw: (pos) ->
     @lastpos = null
     @drawing = false
     console.log("#{@nsteps} steps drawn")
@@ -55,8 +55,8 @@ Picker = (()->
   properties: {}
   
   createTool: (env)->
-    beginDraw: ()->;
-    endDraw: ()->;
+    beginDraw: (pos)->;
+    endDraw: (pos)->;
     move: ()->;
     draw: (layer, pos, intensity) ->
       env.targetValue = layer.getAt(pos)
@@ -75,7 +75,7 @@ RoundBrush = (()->
     
     hardness: 
       name: "Hardness"
-      value: 1.0
+      value: 0.0
       range: [0.0, 10.0]
 
     size:

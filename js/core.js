@@ -228,7 +228,10 @@ Bezier = {
 };
 
 GammaRenderer = (function() {
-  var properties;
+  var description, properties;
+  description = {
+    name: "Height map"
+  };
   properties = {
     gamma: 1.0
   };
@@ -260,15 +263,19 @@ GammaRenderer = (function() {
     }
   };
   return {
+    description: description,
     properties: properties,
     renderLayer: renderLayer
   };
 })();
 
 NormalRenderer = (function() {
-  var properties, renderLayer, sample, str;
+  var description, properties, renderLayer, sample, str;
+  description = {
+    name: "Normal map"
+  };
   properties = {
-    gain: 2.0
+    gain: 4.0
   };
   sample = function(res, x, y) {
     return "var " + res + " = fb[ ((" + y + " + height) % height) * width + ((" + x + " + width) % width) ];\n";
@@ -276,6 +283,7 @@ NormalRenderer = (function() {
   str = "(function renderLayer (layer, view, rects) {    var width = layer.width;    var height = layer.height;    var imgData = view.imageData.data;    var fb = layer.getBuffer();    var dz = 1.0 / (properties.gain);    for(var i in rects) {      var r = rects[i];      var minX = r.x;      var minY = r.y;      var maxX = minX + r.width;      var maxY = minY + r.height;      for(var iy=minY; iy<=maxY; ++iy) {        for(var ix=minX; ix<=maxX; ++ix) {          " + sample('sx1', 'ix-1', 'iy') + sample('sx2', 'ix+1', 'iy') + sample('sy1', 'ix', 'iy-1') + sample('sy2', 'ix', 'iy+1') + "          var dx = sx2 - sx1;          var dy = sy2 - sy1;          var fac = 128.0 / Math.sqrt(dx*dx + dy*dy + dz*dz);          var i = (iy * width + ix) << 2;          imgData[i]   = dx * fac + 127.0;          imgData[++i] = dy * fac + 127.0;          imgData[++i] = dz * fac + 127.0;          imgData[++i] = 0xff;        }      }      view.context.putImageData(view.imageData, 0, 0, r.x, r.y, r.width+1, r.height+1);    }  })";
   renderLayer = eval(str);
   return {
+    description: description,
     properties: properties,
     renderLayer: renderLayer
   };
