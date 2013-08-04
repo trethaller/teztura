@@ -171,7 +171,7 @@ GammaRenderer = (()->
 
 NormalRenderer = (()->
   properties = 
-    gain: 4.0
+    gain: 2.0
 
   sample = (res, x, y)->
     return "var #{res} = fb[ ((#{y} + height) % height) * width + ((#{x} + width) % width) ];\n"
@@ -197,7 +197,7 @@ NormalRenderer = (()->
           sample('sy2', 'ix',   'iy+1') + "
           var dx = sx2 - sx1;
           var dy = sy2 - sy1;
-          var fac = 255.0 / Math.sqrt(dx*dx + dy*dy + dz*dz);
+          var fac = 128.0 / Math.sqrt(dx*dx + dy*dy + dz*dz);
           var i = (iy * width + ix) << 2;
           imgData[i]   = dx * fac + 127.0;
           imgData[++i] = dy * fac + 127.0;
@@ -208,6 +208,7 @@ NormalRenderer = (()->
       view.context.putImageData(view.imageData, 0, 0, r.x, r.y, r.width+1, r.height+1);
     }
   })"
+  
   renderLayer = eval(str);
 
   return {properties, renderLayer}
