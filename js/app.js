@@ -15,7 +15,7 @@ Document = (function() {
 Editor = {
   brush: null,
   tiling: true,
-  renderer: GammaRenderer,
+  renderer: NormalRenderer,
   targetValue: 1.0
 };
 
