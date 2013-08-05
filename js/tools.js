@@ -73,7 +73,7 @@ Picker = (function() {
     description: {
       name: 'Picker'
     },
-    properties: {},
+    properties: [],
     createTool: function(env) {
       return {
         beginDraw: function(pos) {},
@@ -93,7 +93,7 @@ Flatten = (function() {
     description: {
       name: 'Flatten'
     },
-    properties: {},
+    properties: [],
     createTool: function(env) {
       return {
         beginDraw: function(pos) {},
@@ -109,56 +109,60 @@ Flatten = (function() {
 })();
 
 RoundBrush = (function() {
-  var createTool, description, properties;
+  var createTool, description, properties, self;
   description = {
     name: 'Round'
   };
-  properties = {
-    stepSize: {
+  properties = [
+    {
+      id: 'stepSize',
       name: "Step size",
-      value: 4,
+      defaultValue: 4,
       range: [1, 20]
-    },
-    hardness: {
+    }, {
+      id: 'hardness',
       name: "Hardness",
-      value: 0.0,
+      defaultValue: 0.0,
       range: [0.0, 10.0]
-    },
-    size: {
+    }, {
+      id: 'size',
       name: "Size",
-      value: 40.0,
+      defaultValue: 40.0,
       range: [1.0, 256.0]
-    },
-    blendMode: {
+    }, {
+      id: 'blendMode',
       name: "Blend mode",
-      value: "blend",
+      defaultValue: "blend",
       choices: ["blend", "add", "sub", "multiply"]
-    },
-    intensity: {
+    }, {
+      id: 'intensity',
       name: "Intensity",
-      value: 0.1,
+      defaultValue: 0.1,
       range: [0.0, 1.0]
     }
-  };
+  ];
+  self = new Backbone.Model;
   createTool = function(env) {
     var func, hardness, hardnessPlus1, rad, sb;
     sb = new StepBrush();
-    sb.stepSize = properties.stepSize.value;
-    rad = properties.size.value;
-    hardness = properties.hardness.value;
+    sb.stepSize = self.get('stepSize');
+    rad = self.get('size');
+    hardness = self.get('hardness');
     hardnessPlus1 = hardness + 1.0;
-    func = genBrushFunc("intensity, target, h, hp1", "var d = Math.min(1.0, Math.max(0.0, (Math.sqrt(x*x + y*y) * hp1 - h)));      {out} = Math.cos(d * Math.PI) * 0.5 + 0.5;", BlendModes[properties.blendMode.value]);
+    func = genBrushFunc("intensity, target, h, hp1", "var d = Math.min(1.0, Math.max(0.0, (Math.sqrt(x*x + y*y) * hp1 - h)));      {out} = Math.cos(d * Math.PI) * 0.5 + 0.5;", BlendModes[self.get('blendMode')]);
     sb.drawStep = function(layer, pos, intensity, rect) {
       var r;
       r = new Rect(pos.x - rad * 0.5, pos.y - rad * 0.5, rad, rad).round();
-      func(r, layer, intensity * properties.intensity.value, env.get('targetValue'), hardness, hardnessPlus1);
+      func(r, layer, intensity * self.get('intensity'), env.get('targetValue'), hardness, hardnessPlus1);
       return rect.extend(r);
     };
     return sb;
   };
-  return {
-    description: description,
-    properties: properties,
-    createTool: createTool
-  };
+  self.properties = properties;
+  self.description = description;
+  self.createTool = createTool;
+  properties.forEach(function(p) {
+    return self.set(p.id, p.defaultValue);
+  });
+  return self;
 })();

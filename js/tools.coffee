@@ -52,7 +52,7 @@ Picker = (()->
   description:
     name: 'Picker'
 
-  properties: {}
+  properties: []
   
   createTool: (env)->
     beginDraw: (pos)->;
@@ -68,7 +68,7 @@ Flatten = (()->
   description:
     name: 'Flatten'
 
-  properties: {}
+  properties: []
   
   createTool: (env)->
     beginDraw: (pos)->;
@@ -83,44 +83,52 @@ Flatten = (()->
 RoundBrush = (()->
   description =
     name: 'Round'
-  properties = {
-    stepSize:
+  properties = [
+    {
+      id: 'stepSize'
       name: "Step size"
-      value: 4
+      defaultValue: 4
       range: [1, 20]
-    
-    hardness: 
+    },
+    {
+      id: 'hardness'
       name: "Hardness"
-      value: 0.0
+      defaultValue: 0.0
       range: [0.0, 10.0]
-
-    size:
+    },
+    {
+      id: 'size'
       name: "Size"
-      value: 40.0
+      defaultValue: 40.0
       range: [1.0, 256.0]
-
-    blendMode: 
+    },
+    {
+      id: 'blendMode'
       name: "Blend mode"
-      value: "blend"
+      defaultValue: "blend"
       choices: ["blend", "add", "sub", "multiply"]
-    
-    intensity: 
+    },
+    {
+      id:'intensity'
       name: "Intensity"
-      value: 0.1
+      defaultValue: 0.1
       range: [0.0, 1.0]
-  }  
+    }
+  ]
+
+  self = new Backbone.Model
 
   createTool = (env)->
     sb = new StepBrush()
-    sb.stepSize = properties.stepSize.value
-    rad = properties.size.value
+    sb.stepSize = self.get('stepSize')
+    rad = self.get('size')
 
-    hardness = properties.hardness.value
+    hardness = self.get('hardness')
     hardnessPlus1 = hardness + 1.0
     func = genBrushFunc("intensity, target, h, hp1", 
       "var d = Math.min(1.0, Math.max(0.0, (Math.sqrt(x*x + y*y) * hp1 - h)));
       {out} = Math.cos(d * Math.PI) * 0.5 + 0.5;",
-      BlendModes[properties.blendMode.value])
+      BlendModes[self.get('blendMode')])
 
     sb.drawStep = (layer, pos, intensity, rect)->
       r = new Rect(
@@ -129,9 +137,15 @@ RoundBrush = (()->
         rad,
         rad).round()
 
-      func(r, layer, intensity * properties.intensity.value, env.get('targetValue'), hardness, hardnessPlus1)
+      func(r, layer, intensity * self.get('intensity'), env.get('targetValue'), hardness, hardnessPlus1)
       rect.extend(r)
     return sb
 
-  return {description, properties, createTool}
+  self.properties = properties
+  self.description = description
+  self.createTool = createTool
+
+  properties.forEach (p)->
+    self.set(p.id, p.defaultValue)
+  return self
 )();

@@ -156,34 +156,72 @@ getPenPressure = () ->
   return 1.0
 
 # ---
-
+ 
 status = (txt)->
   $('#status-bar').text(txt)
 
 view = null
 
 
-editor.on 'change:tool', ()->
-  editor.setToolDirty()
-  tool = editor.get('tool')
+PropertyView = Backbone.View.extend
+  className: "property"
 
-  # Create properties
-  $container = $('#tools > .properties')
-  $container.empty()
-  $.each tool.properties, (_,prop)->
-    $prop = $('<div/>').attr({'class':'property'}).appendTo($container)
-    $('<span/>').text(prop.name).appendTo($prop)
+  initialize: () ->
+    tool = @model.tool
+    prop = @model.prop
+
+    # Label
+    $('<span/>').text(prop.name).appendTo(@$el)
+
+    # Slider
     if prop.range?
       $slider = $('<div/>').slider({
         min: prop.range[0]
         max: prop.range[1]
-        value: prop.value
+        value: tool.get(prop.id)
         step: 0.01
         change: (evt, ui)->
-          prop.value = ui.value
+          tool.set(prop.id, ui.value)
           editor.setToolDirty()
-      }).width(200).appendTo($prop)
-      $prop.append($slider)
+      }).width(200).appendTo(@$el)
+
+      $val = $('<input/>')
+        .val(tool.get(prop.id))
+        .appendTo(@$el)
+        .change (evt)->
+          tool.set(prop.id, parseFloat($val.val()))
+
+      @listenTo @model.tool, "change:#{prop.id}", ()->
+        v = tool.get(prop.id)
+        $val.val(v)
+        $slider.slider("value", v)
+        
+# --
+class PropertyPanel
+  views: []
+  constructor: (@selector)-> ;
+  setTool: (tool)->
+    self = this
+    @removeViews()
+    tool.properties.forEach (prop)->
+      v = new PropertyView
+        model: {prop, tool}
+
+      $(self.selector).append(v.$el)
+      self.views.push(v)
+
+  removeViews: ()->
+    @views.forEach (v)->
+      v.remove()
+    @views = []
+
+
+toolsProperties = new PropertyPanel '#tools > .properties'
+
+editor.on 'change:tool', ()->
+  editor.setToolDirty()
+  tool = editor.get('tool')
+  toolsProperties.setTool(tool)
 
 editor.on 'change:renderer', ()->
   view.reRender()
