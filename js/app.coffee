@@ -3,18 +3,27 @@ class Document
   constructor: (@width,@height)->
     @layer = new Layer(@width,@height)
 
-Editor = {
-  brush: null
+Editor = Backbone.Model.extend({
+  toolObject: null
+  getToolObject: ()->
+    if @get('toolObject') is null
+      console.log "Creating brush of type " + @get("tool").description.name
+      o = @get('tool').createTool(this)
+      @set('toolObject', o)
+    return @get('toolObject')
+  setToolDirty: ()->
+    @set('toolObject', null)
+})
+
+editor = new Editor {
+  tool: null
+  renderer: null
   tiling: true
-  #renderer: GammaRenderer
-  renderer: NormalRenderer
   targetValue: 1.0
 }
 
 Renderers = [GammaRenderer, NormalRenderer]
 Tools = [RoundBrush, Picker]
-Editor.tool = RoundBrush.createTool(Editor)
-
 
 class DocumentView
   drawing: false
@@ -59,7 +68,7 @@ class DocumentView
       if e.which is 1
         self.drawing = true
         coords = getCanvasCoords(e)
-        Editor.tool.beginDraw(coords)
+        editor.getToolObject().beginDraw(coords)
         self.onDraw(coords)
 
       if e.which is 2
@@ -68,23 +77,26 @@ class DocumentView
         local.offsetStart = self.offset.clone()
 
     $container.mouseup (e)->
+      e.preventDefault()
       if e.which is 1
-        Editor.tool.endDraw(getCanvasCoords(e))
+        editor.getToolObject().endDraw(getCanvasCoords(e))
         self.drawing = false
 
       if e.which is 2
         self.panning = false
 
     $container.mousemove (e)->
+      e.preventDefault()
       if self.drawing
         self.onDraw(getCanvasCoords(e))
 
       if self.panning
         curPos = getCoords(e)
         o = local.offsetStart.add(curPos.sub(local.panningStart))
-        lim = 200.0
-        self.offset.x = Math.min(Math.max(o.x, -lim), lim)
-        self.offset.y = Math.min(Math.max(o.y, -lim), lim)
+        limW = self.doc.width / 3.0
+        limH = self.doc.height / 3.0
+        self.offset.x = Math.min(Math.max(o.x, -limW), limW)
+        self.offset.y = Math.min(Math.max(o.y, -limH), limH)
         self.rePaint()
  
   screenToCanvas: (pt)->
@@ -92,7 +104,7 @@ class DocumentView
 
   reRender: ()->
     layer = @doc.layer
-    Editor.renderer.renderLayer(layer, this, [new Rect(0,0,@doc.width,@doc.height)])
+    editor.get('renderer').renderLayer(layer, this, [new Rect(0,0,@doc.width,@doc.height)])
     @rePaint()
 
   rePaint: ()->
@@ -101,7 +113,7 @@ class DocumentView
     ctx.translate(@offset.x, @offset.y)
     ctx.scale(@scale, @scale)
     
-    if Editor.tiling
+    if editor.get('tiling')
       ctx.fillStyle = ctx.createPattern(@canvas,"repeat")
       ctx.fillRect(-@offset.x / @scale,-@offset.y / @scale,@canvas.width / @scale, @canvas.height / @scale)
     else
@@ -114,13 +126,13 @@ class DocumentView
     dirtyRects = []
 
     layer = @doc.layer
-    brush = Editor.tool
+    tool = editor.getToolObject()
 
     layerRect = layer.getRect()
     
-    r = brush.draw(layer, pos, pressure).round()
+    r = tool.draw(layer, pos, pressure).round()
 
-    if Editor.tiling
+    if editor.get('tiling')
       for xoff in [-1,0,1]
         for yoff in [-1,0,1]
           dirtyRects.push(r.offset(new Vec2(xoff * layerRect.width, yoff * layerRect.height)))
@@ -133,7 +145,7 @@ class DocumentView
 
     if true
     #setTimeout (()->
-      Editor.renderer.renderLayer(layer, self, dirtyRects)
+      editor.get('renderer').renderLayer(layer, self, dirtyRects)
       self.rePaint()
     #), 0
 
@@ -147,45 +159,116 @@ getPenPressure = () ->
   return 1.0
 
 # ---
-
+ 
 status = (txt)->
   $('#status-bar').text(txt)
 
 view = null
 
-createToolsUI = ($container)->
+
+PropertyView = Backbone.View.extend
+  className: "property"
+
+  initialize: () ->
+    tool = @model.tool
+    prop = @model.prop
+
+    # Label
+    $('<span/>').text(prop.name).appendTo(@$el)
+
+    # Slider
+    if prop.range?
+      step = if prop.type is 'int' then 1 else (prop.range[1]-prop.range[0]) / 100
+      $slider = $('<div/>').slider({
+        min: prop.range[0]
+        max: prop.range[1]
+        value: tool.get(prop.id)
+        step: step
+        change: (evt, ui)->
+          tool.set(prop.id, ui.value)
+          editor.setToolDirty()
+      }).width(200).appendTo(@$el)
+
+      $val = $('<input/>')
+        .val(tool.get(prop.id))
+        .appendTo(@$el)
+        .change (evt)->
+          if prop.type is 'int'
+            tool.set(prop.id, parseInt($val.val()))
+          else
+            tool.set(prop.id, parseFloat($val.val()))
+
+      @listenTo @model.tool, "change:#{prop.id}", ()->
+        v = tool.get(prop.id)
+        $val.val(v)
+        $slider.slider("value", v)
+        
+# --
+class PropertyPanel
+  views: []
+  constructor: (@selector)-> ;
+  setTool: (tool)->
+    self = this
+    @removeViews()
+    tool.properties.forEach (prop)->
+      v = new PropertyView
+        model: {prop, tool}
+
+      $(self.selector).append(v.$el)
+      self.views.push(v)
+
+  removeViews: ()->
+    @views.forEach (v)->
+      v.remove()
+    @views = []
+
+
+toolsProperties = new PropertyPanel '#tools > .properties'
+
+editor.on 'change:tool', ()->
+  editor.setToolDirty()
+  tool = editor.get('tool')
+  toolsProperties.setTool(tool)
+
+editor.on 'change:renderer', ()->
+  view.reRender()
+  view.rePaint()
+
+createToolsButtons = ($container)->
   $container.empty()
   Tools.forEach (b)->
     name = b.description.name
     $btn = $('<button/>').attr({'class':'btn'}).text(name)
     $btn.click (e)->
-      Editor.tool = b.createTool(Editor)
-      status("Active brush set to #{name}")
+      editor.set('tool', b)
     $container.append($btn)
 
-createRenderersUI = ($container)->
+createRenderersButtons = ($container)->
   $container.empty()
   Renderers.forEach (r)->
     name = r.description.name
     $btn = $('<button/>').attr({'class':'btn'}).text(name)
     $btn.click (e)->
-      Editor.renderer = r
-      view.reRender()
-      view.rePaint()
-      status("Renderer set to #{name}")
+      editor.set('renderer', r)
     $container.append($btn)
 
 $(document).ready ()->
   doc = new Document(512, 512)
+
+  '''
   fillLayer doc.layer, (x,y)->
     x += 1.0
     y += 1.0
     return (Math.round(x*40) % 2) * 0.1 -
         (Math.round(y*40) % 2) * 0.1
-
-  createToolsUI($('#tools'))
-  createRenderersUI($('#renderers'))
+  '''
+  fillLayer doc.layer, (x,y)->
+    return -1
 
   view = new DocumentView($('.document-view'), doc)
-  view.reRender()
-  view.rePaint()
+
+  createToolsButtons($('#tools > .buttons'))
+  createRenderersButtons($('#renderers > .buttons'))
+
+  editor.set('tool', RoundBrush)
+  editor.set('renderer', GammaRenderer)

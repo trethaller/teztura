@@ -117,6 +117,9 @@ class Layer
     ipos = pos.round()
     return @data.fbuffer[ ipos.y * @width + ipos.x ]
 
+  getNormalAt: (pos)->
+    p = pos.round()
+    fb = @data.fbuffer
 
 Bezier =
   quadratic: (pts, t)->

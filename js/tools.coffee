@@ -11,9 +11,10 @@ class StepBrush
     fb[ Math.floor(pos.x) + Math.floor(pos.y) * layer.width ] = intensity
     rect.extend(pos)
 
-  move: (pos, intensity) ->;
-  draw: (layer, pos, intensity) ->
+  move: (pos, pressure) ->;
+  draw: (layer, pos, pressure) ->
     rect = new Rect(pos.x, pos.y, 1, 1)
+    intensity = pressure * @stepSize / 10.0
     if @lastpos?
       delt = pos.sub(@lastpos)
       length = delt.length()
@@ -52,14 +53,30 @@ Picker = (()->
   description:
     name: 'Picker'
 
-  properties: {}
+  properties: []
   
   createTool: (env)->
     beginDraw: (pos)->;
     endDraw: (pos)->;
     move: ()->;
     draw: (layer, pos, intensity) ->
-      env.targetValue = layer.getAt(pos)
+      env.set('targetValue', layer.getAt(pos))
+      return Rect.Empty
+)()
+
+
+Flatten = (()->
+  description:
+    name: 'Flatten'
+
+  properties: []
+  
+  createTool: (env)->
+    beginDraw: (pos)->;
+    endDraw: (pos)->;
+    move: ()->;
+    draw: (layer, pos, intensity) ->
+      env.set('targetValue', layer.getAt(pos))
       return Rect.Empty
 )()
 
@@ -67,44 +84,54 @@ Picker = (()->
 RoundBrush = (()->
   description =
     name: 'Round'
-  properties = {
-    stepSize:
+  properties = [
+    {
+      id: 'stepSize'
       name: "Step size"
-      value: 4
+      defaultValue: 3
       range: [1, 20]
-    
-    hardness: 
+      type: 'int'
+    },
+    {
+      id: 'hardness'
       name: "Hardness"
-      value: 0.0
+      defaultValue: 0.5
       range: [0.0, 10.0]
-
-    size:
+    },
+    {
+      id: 'size'
       name: "Size"
-      value: 40.0
+      defaultValue: 16.0
       range: [1.0, 256.0]
-
-    blendMode: 
+      type: 'int'
+    },
+    {
+      id: 'blendMode'
       name: "Blend mode"
-      value: "blend"
+      defaultValue: "blend"
       choices: ["blend", "add", "sub", "multiply"]
-    
-    intensity: 
+    },
+    {
+      id:'intensity'
       name: "Intensity"
-      value: 0.1
-      range: [0.0, 1.0]
-  }  
+      defaultValue: 0.5
+      range: [0.0, 3.0]
+    }
+  ]
+
+  self = new Backbone.Model
 
   createTool = (env)->
     sb = new StepBrush()
-    sb.stepSize = properties.stepSize.value
-    rad = properties.size.value
+    sb.stepSize = self.get('stepSize')
+    rad = self.get('size')
 
-    hardness = properties.hardness.value
+    hardness = self.get('hardness')
     hardnessPlus1 = hardness + 1.0
     func = genBrushFunc("intensity, target, h, hp1", 
       "var d = Math.min(1.0, Math.max(0.0, (Math.sqrt(x*x + y*y) * hp1 - h)));
       {out} = Math.cos(d * Math.PI) * 0.5 + 0.5;",
-      BlendModes[properties.blendMode.value])
+      BlendModes[self.get('blendMode')])
 
     sb.drawStep = (layer, pos, intensity, rect)->
       r = new Rect(
@@ -113,9 +140,15 @@ RoundBrush = (()->
         rad,
         rad).round()
 
-      func(r, layer, intensity * properties.intensity.value, env.targetValue, hardness, hardnessPlus1)
+      func(r, layer, intensity * self.get('intensity'), env.get('targetValue'), hardness, hardnessPlus1)
       rect.extend(r)
     return sb
 
-  return {description, properties, createTool}
+  self.properties = properties
+  self.description = description
+  self.createTool = createTool
+
+  properties.forEach (p)->
+    self.set(p.id, p.defaultValue)
+  return self
 )();
