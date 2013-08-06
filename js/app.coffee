@@ -23,8 +23,9 @@ editor = new Editor {
   targetValue: 1.0
 }
 
-Renderers = [GammaRenderer, NormalRenderer]
+Renderers = [GammaRenderer, NormalRenderer, GradientRenderer]
 Tools = [RoundBrush, Picker]
+
 Commands = [
   {
     name: "Fill"
@@ -292,6 +293,24 @@ createPalette = ($container)->
   editor.on 'change:targetValue', ()->
     $slider.slider 
       value: editor.get('targetValue')
+
+
+loadGradient = (name, url)->
+  $canvas = $('<canvas/>').attr {width: 512, height:1}
+  ctx = $canvas[0].getContext('2d')
+  imageObj = new Image()
+  imageObj.onload = ()->
+    ctx.drawImage(this, 0, 0);
+    imageData = ctx.getImageData(0,0,512,1)
+    data = new Uint32Array(imageData.data.buffer)
+    GradientRenderer.properties.gradient = {
+      lut: data
+    }
+  imageObj.src = url
+
+# --
+
+loadGradient('g1', 'img/gradient-1.png')
 
 $(document).ready ()->
   doc = new Document(512, 512)

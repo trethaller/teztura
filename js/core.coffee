@@ -147,7 +147,7 @@ GammaRenderer = (()->
   `function renderLayer (layer, view, rects) {
     var width = layer.width;
     var height = layer.height;
-    var imgData = view.imageData.data;
+    var destBuffer = new Uint32Array(view.imageData.data.buffer)
     var fb = layer.getBuffer();
     var gamma = properties.gamma;
     for(var i in rects) {
@@ -160,12 +160,56 @@ GammaRenderer = (()->
         var offset = iy * width;
         for(var ix=minX; ix<=maxX; ++ix) {
           var fval = fb[offset + ix];
-          var val = Math.pow((fval + 1.0) * 0.5, gamma) * 255.0;
-          var i = (offset + ix) << 2;
-          imgData[i] = val;
-          imgData[++i] = val;
-          imgData[++i] = val;
-          imgData[++i] = 0xff;
+          var val = Math.round(Math.pow((fval + 1.0) * 0.5, gamma) * 255.0);
+          destBuffer[offset + ix] =
+            (val) | (val << 8) | (val << 16) | 0xff000000;
+        }
+      }
+      view.context.putImageData(view.imageData, 0, 0, r.x, r.y, r.width+1, r.height+1);
+    }
+  }`
+
+  return {description, properties, renderLayer}
+)();
+
+GradientRenderer = (()->
+  description = 
+    name: "Gradient"
+
+  properties = 
+    gradient: null
+
+  `function renderLayer (layer, view, rects) {
+    if(properties.gradient == null)
+      return;
+    var width = layer.width;
+    var height = layer.height;
+    var imgData = view.imageData.data;
+    var destBuffer = new Uint32Array(view.imageData.data.buffer)
+    var fb = layer.getBuffer();
+    var gamma = properties.gamma;
+    var lut = properties.gradient.lut
+    for(var i in rects) {
+      var r = rects[i];
+      var minX = r.x;
+      var minY = r.y;
+      var maxX = minX + r.width;
+      var maxY = minY + r.height;
+      for(var iy=minY; iy<=maxY; ++iy) {
+        var offset = iy * width;
+        for(var ix=minX; ix<=maxX; ++ix) {
+          var fval = fb[offset + ix];
+          var lookup = lut[
+            Math.round(
+              Math.min(511,
+                Math.max(0,
+                  256.0 * (1.0 + fval)
+                )
+              )
+            )
+          ];
+          var i = (offset + ix);
+          destBuffer[i] = lookup;
         }
       }
       view.context.putImageData(view.imageData, 0, 0, r.x, r.y, r.width+1, r.height+1);
