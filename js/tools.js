@@ -26,7 +26,7 @@ StepBrush = (function() {
   StepBrush.prototype.draw = function(layer, pos, pressure) {
     var delt, dir, intensity, length, pt, rect;
     rect = new Rect(pos.x, pos.y, 1, 1);
-    intensity = pressure * this.stepSize / 10.0;
+    intensity = pressure;
     if (this.lastpos != null) {
       delt = pos.sub(this.lastpos);
       length = delt.length();
@@ -117,14 +117,14 @@ RoundBrush = (function() {
     {
       id: 'stepSize',
       name: "Step size",
-      defaultValue: 3,
-      range: [1, 20],
+      defaultValue: 2,
+      range: [1, 10],
       type: 'int'
     }, {
       id: 'hardness',
       name: "Hardness",
-      defaultValue: 0.5,
-      range: [0.0, 10.0]
+      defaultValue: 0.2,
+      range: [0.0, 1.0]
     }, {
       id: 'size',
       name: "Size",
@@ -139,24 +139,24 @@ RoundBrush = (function() {
     }, {
       id: 'intensity',
       name: "Intensity",
-      defaultValue: 0.5,
-      range: [0.0, 3.0]
+      defaultValue: 1.0,
+      range: [0.0, 1.0]
     }
   ];
   self = new Backbone.Model;
   createTool = function(env) {
-    var func, hardness, hardnessPlus1, rad, sb;
+    var func, hardness, hardnessPlus1, sb, size;
     sb = new StepBrush();
     sb.stepSize = self.get('stepSize');
-    rad = self.get('size');
-    hardness = self.get('hardness');
+    size = self.get('size');
+    hardness = Math.pow(self.get('hardness'), 2.0) * 8.0;
     hardnessPlus1 = hardness + 1.0;
     func = genBrushFunc("intensity, target, h, hp1", "var d = Math.min(1.0, Math.max(0.0, (Math.sqrt(x*x + y*y) * hp1 - h)));      {out} = Math.cos(d * Math.PI) * 0.5 + 0.5;", BlendModes[self.get('blendMode')]);
     sb.drawStep = function(layer, pos, intensity, rect) {
       var r;
-      r = new Rect(pos.x - rad * 0.5, pos.y - rad * 0.5, rad, rad).round();
+      r = new Rect(pos.x - size * 0.5, pos.y - size * 0.5, size, size);
       func(r, layer, intensity * self.get('intensity'), env.get('targetValue'), hardness, hardnessPlus1);
-      return rect.extend(r);
+      return rect.extend(r.round());
     };
     return sb;
   };

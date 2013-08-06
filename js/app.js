@@ -108,7 +108,7 @@ DocumentView = (function() {
       return self.screenToCanvas(v);
     };
     local = {};
-    $container.mousedown(function(e) {
+    $backCanvas.mousedown(function(e) {
       var coords;
       e.preventDefault();
       if (e.which === 1) {

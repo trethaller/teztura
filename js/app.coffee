@@ -75,7 +75,7 @@ class DocumentView
 
     local = {}
 
-    $container.mousedown (e)->
+    $backCanvas.mousedown (e)->
       e.preventDefault()
       if e.which is 1
         self.drawing = true

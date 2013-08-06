@@ -320,27 +320,28 @@ genBrushFunc = (args, brushExp, blendExp)->
 
   str = "
     (function (rect, dstFb, #{args}) {
-      var minx = rect.x;
-      var miny = rect.y;
-      var sw = rect.width;
-      var sh = rect.height;
+      var sw = Math.round(rect.width);
+      var sh = Math.round(rect.height);
       var invw = 2.0 / (rect.width - 1);
       var invh = 2.0 / (rect.height - 1);
+      var offx = -(rect.x % 1.0) * invw - 1.0;
+      var offy = -(rect.y % 1.0) * invh - 1.0;
       var fbw = dstFb.width;
       var fbh = dstFb.height;
+      var minx = Math.floor(rect.x) + fbw;
+      var miny = Math.floor(rect.y) + fbh;
       var dstData = dstFb.getBuffer();
       for(var sy=0; sy<sh; ++sy) {
-        var y = sy * invh - 1.0;
+        var y = sy * invh + offy;
         for(var sx=0; sx<sw; ++sx) {
-          var x = sx * invw - 1.0;
-          var dsti = (((sy + miny) + fbh) % fbh) * fbw + (((sx + minx) + fbw) % fbw);
+          var x = sx * invw + offx;
+          var dsti = ((sy + miny) % fbh) * fbw + ((sx + minx) % fbw);
           var _tmp = 0.0;
           #{brushExp};
           #{blendExp};
         }
       }
     })"
-  #console.log("Generating brush function", str)
   return eval(str)
 
 
