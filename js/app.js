@@ -109,6 +109,7 @@ DocumentView = (function() {
       }
     });
     $container.mouseup(function(e) {
+      e.preventDefault();
       if (e.which === 1) {
         editor.getToolObject().endDraw(getCanvasCoords(e));
         self.drawing = false;
@@ -118,16 +119,18 @@ DocumentView = (function() {
       }
     });
     $container.mousemove(function(e) {
-      var curPos, lim, o;
+      var curPos, limH, limW, o;
+      e.preventDefault();
       if (self.drawing) {
         self.onDraw(getCanvasCoords(e));
       }
       if (self.panning) {
         curPos = getCoords(e);
         o = local.offsetStart.add(curPos.sub(local.panningStart));
-        lim = 200.0;
-        self.offset.x = Math.min(Math.max(o.x, -lim), lim);
-        self.offset.y = Math.min(Math.max(o.y, -lim), lim);
+        limW = self.doc.width / 3.0;
+        limH = self.doc.height / 3.0;
+        self.offset.x = Math.min(Math.max(o.x, -limW), limW);
+        self.offset.y = Math.min(Math.max(o.y, -limH), limH);
         return self.rePaint();
       }
     });
@@ -214,23 +217,28 @@ view = null;
 PropertyView = Backbone.View.extend({
   className: "property",
   initialize: function() {
-    var $slider, $val, prop, tool;
+    var $slider, $val, prop, step, tool;
     tool = this.model.tool;
     prop = this.model.prop;
     $('<span/>').text(prop.name).appendTo(this.$el);
     if (prop.range != null) {
+      step = prop.type === 'int' ? 1 : (prop.range[1] - prop.range[0]) / 100;
       $slider = $('<div/>').slider({
         min: prop.range[0],
         max: prop.range[1],
         value: tool.get(prop.id),
-        step: 0.01,
+        step: step,
         change: function(evt, ui) {
           tool.set(prop.id, ui.value);
           return editor.setToolDirty();
         }
       }).width(200).appendTo(this.$el);
       $val = $('<input/>').val(tool.get(prop.id)).appendTo(this.$el).change(function(evt) {
-        return tool.set(prop.id, parseFloat($val.val()));
+        if (prop.type === 'int') {
+          return tool.set(prop.id, parseInt($val.val()));
+        } else {
+          return tool.set(prop.id, parseFloat($val.val()));
+        }
       });
       return this.listenTo(this.model.tool, "change:" + prop.id, function() {
         var v;
@@ -324,10 +332,9 @@ createRenderersButtons = function($container) {
 $(document).ready(function() {
   var doc;
   doc = new Document(512, 512);
+  'fillLayer doc.layer, (x,y)->\n  x += 1.0\n  y += 1.0\n  return (Math.round(x*40) % 2) * 0.1 -\n      (Math.round(y*40) % 2) * 0.1';
   fillLayer(doc.layer, function(x, y) {
-    x += 1.0;
-    y += 1.0;
-    return (Math.round(x * 40) % 2) * 0.1 - (Math.round(y * 40) % 2) * 0.1;
+    return -1;
   });
   view = new DocumentView($('.document-view'), doc);
   createToolsButtons($('#tools > .buttons'));

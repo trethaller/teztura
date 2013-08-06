@@ -77,6 +77,7 @@ class DocumentView
         local.offsetStart = self.offset.clone()
 
     $container.mouseup (e)->
+      e.preventDefault()
       if e.which is 1
         editor.getToolObject().endDraw(getCanvasCoords(e))
         self.drawing = false
@@ -85,15 +86,17 @@ class DocumentView
         self.panning = false
 
     $container.mousemove (e)->
+      e.preventDefault()
       if self.drawing
         self.onDraw(getCanvasCoords(e))
 
       if self.panning
         curPos = getCoords(e)
         o = local.offsetStart.add(curPos.sub(local.panningStart))
-        lim = 200.0
-        self.offset.x = Math.min(Math.max(o.x, -lim), lim)
-        self.offset.y = Math.min(Math.max(o.y, -lim), lim)
+        limW = self.doc.width / 3.0
+        limH = self.doc.height / 3.0
+        self.offset.x = Math.min(Math.max(o.x, -limW), limW)
+        self.offset.y = Math.min(Math.max(o.y, -limH), limH)
         self.rePaint()
  
   screenToCanvas: (pt)->
@@ -175,11 +178,12 @@ PropertyView = Backbone.View.extend
 
     # Slider
     if prop.range?
+      step = if prop.type is 'int' then 1 else (prop.range[1]-prop.range[0]) / 100
       $slider = $('<div/>').slider({
         min: prop.range[0]
         max: prop.range[1]
         value: tool.get(prop.id)
-        step: 0.01
+        step: step
         change: (evt, ui)->
           tool.set(prop.id, ui.value)
           editor.setToolDirty()
@@ -189,7 +193,10 @@ PropertyView = Backbone.View.extend
         .val(tool.get(prop.id))
         .appendTo(@$el)
         .change (evt)->
-          tool.set(prop.id, parseFloat($val.val()))
+          if prop.type is 'int'
+            tool.set(prop.id, parseInt($val.val()))
+          else
+            tool.set(prop.id, parseFloat($val.val()))
 
       @listenTo @model.tool, "change:#{prop.id}", ()->
         v = tool.get(prop.id)
@@ -247,11 +254,16 @@ createRenderersButtons = ($container)->
 
 $(document).ready ()->
   doc = new Document(512, 512)
+
+  '''
   fillLayer doc.layer, (x,y)->
     x += 1.0
     y += 1.0
     return (Math.round(x*40) % 2) * 0.1 -
         (Math.round(y*40) % 2) * 0.1
+  '''
+  fillLayer doc.layer, (x,y)->
+    return -1
 
   view = new DocumentView($('.document-view'), doc)
 

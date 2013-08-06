@@ -21,11 +21,12 @@ StepBrush = (function() {
     return rect.extend(pos);
   };
 
-  StepBrush.prototype.move = function(pos, intensity) {};
+  StepBrush.prototype.move = function(pos, pressure) {};
 
-  StepBrush.prototype.draw = function(layer, pos, intensity) {
-    var delt, dir, length, pt, rect;
+  StepBrush.prototype.draw = function(layer, pos, pressure) {
+    var delt, dir, intensity, length, pt, rect;
     rect = new Rect(pos.x, pos.y, 1, 1);
+    intensity = pressure * this.stepSize / 10.0;
     if (this.lastpos != null) {
       delt = pos.sub(this.lastpos);
       length = delt.length();
@@ -117,18 +118,20 @@ RoundBrush = (function() {
     {
       id: 'stepSize',
       name: "Step size",
-      defaultValue: 4,
-      range: [1, 20]
+      defaultValue: 3,
+      range: [1, 20],
+      type: 'int'
     }, {
       id: 'hardness',
       name: "Hardness",
-      defaultValue: 0.0,
+      defaultValue: 0.5,
       range: [0.0, 10.0]
     }, {
       id: 'size',
       name: "Size",
-      defaultValue: 40.0,
-      range: [1.0, 256.0]
+      defaultValue: 16.0,
+      range: [1.0, 256.0],
+      type: 'int'
     }, {
       id: 'blendMode',
       name: "Blend mode",
@@ -137,8 +140,8 @@ RoundBrush = (function() {
     }, {
       id: 'intensity',
       name: "Intensity",
-      defaultValue: 0.1,
-      range: [0.0, 1.0]
+      defaultValue: 0.5,
+      range: [0.0, 3.0]
     }
   ];
   self = new Backbone.Model;

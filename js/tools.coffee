@@ -11,9 +11,10 @@ class StepBrush
     fb[ Math.floor(pos.x) + Math.floor(pos.y) * layer.width ] = intensity
     rect.extend(pos)
 
-  move: (pos, intensity) ->;
-  draw: (layer, pos, intensity) ->
+  move: (pos, pressure) ->;
+  draw: (layer, pos, pressure) ->
     rect = new Rect(pos.x, pos.y, 1, 1)
+    intensity = pressure * @stepSize / 10.0
     if @lastpos?
       delt = pos.sub(@lastpos)
       length = delt.length()
@@ -87,20 +88,22 @@ RoundBrush = (()->
     {
       id: 'stepSize'
       name: "Step size"
-      defaultValue: 4
+      defaultValue: 3
       range: [1, 20]
+      type: 'int'
     },
     {
       id: 'hardness'
       name: "Hardness"
-      defaultValue: 0.0
+      defaultValue: 0.5
       range: [0.0, 10.0]
     },
     {
       id: 'size'
       name: "Size"
-      defaultValue: 40.0
+      defaultValue: 16.0
       range: [1.0, 256.0]
+      type: 'int'
     },
     {
       id: 'blendMode'
@@ -111,8 +114,8 @@ RoundBrush = (()->
     {
       id:'intensity'
       name: "Intensity"
-      defaultValue: 0.1
-      range: [0.0, 1.0]
+      defaultValue: 0.5
+      range: [0.0, 3.0]
     }
   ]
 
