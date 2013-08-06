@@ -35,6 +35,58 @@ Commands = [
         return val
       refresh()
   },
+  {
+    name: "Invert"
+    func: (doc)->
+      buf = doc.layer.getBuffer()
+      len = buf.length
+      `for(var i=0; i<len; ++i) {
+        buf[i] = -buf[i];
+      }
+      `      
+      refresh()
+  },
+  {
+    name: "Flip H"
+    func: (doc)->
+      buf = doc.layer.getBuffer()
+      len = buf.length
+      height = doc.layer.height
+      width = doc.layer.width
+      halfw = Math.floor(doc.layer.width / 2.0)
+      maxx = doc.layer.width - 1;
+      tmp = 0.0
+      `for(var iy=0; iy<height; ++iy) {
+        var offset = iy * width
+        for(var ix=0; ix<halfw; ++ix) {
+          tmp = buf[offset + ix];
+          buf[offset + ix] = buf[offset + maxx - ix];
+          buf[offset + maxx - ix] = tmp;
+        }
+      }
+      `      
+      refresh()
+  },
+  {
+    name: "Flip V"
+    func: (doc)->
+      buf = doc.layer.getBuffer()
+      len = buf.length
+      height = doc.layer.height
+      width = doc.layer.width
+      halfh = Math.floor(doc.layer.width / 2.0)
+      maxy = doc.layer.width - 1;
+      tmp = 0.0
+      `for(var iy=0; iy<halfh; ++iy) {
+        for(var ix=0; ix<width; ++ix) {
+          tmp = buf[iy*width + ix];
+          buf[iy*width + ix] = buf[(maxy - iy)*width + ix];
+          buf[(maxy - iy)*width + ix] = tmp;
+        }
+      }
+      `      
+      refresh()
+  },
 ]
 
 class DocumentView
