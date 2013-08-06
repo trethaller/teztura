@@ -39,8 +39,6 @@ class StepBrush
   endDraw: (pos) ->
     @lastpos = null
     @drawing = false
-    console.log("#{@nsteps} steps drawn")
-
 
 BlendModes = 
   add:        "{dst} += {src} * intensity"

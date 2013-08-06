@@ -54,8 +54,7 @@ StepBrush = (function() {
 
   StepBrush.prototype.endDraw = function(pos) {
     this.lastpos = null;
-    this.drawing = false;
-    return console.log("" + this.nsteps + " steps drawn");
+    return this.drawing = false;
   };
 
   return StepBrush;

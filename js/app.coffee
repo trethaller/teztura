@@ -16,6 +16,7 @@ Editor = Backbone.Model.extend({
 })
 
 editor = new Editor {
+  doc: null
   tool: null
   renderer: null
   tiling: true
@@ -24,6 +25,16 @@ editor = new Editor {
 
 Renderers = [GammaRenderer, NormalRenderer]
 Tools = [RoundBrush, Picker]
+Commands = [
+  {
+    name: "Fill"
+    func: (doc)->
+      val = editor.get('targetValue')
+      fillLayer doc.layer, (x,y)->
+        return val
+      refresh()
+  },
+]
 
 class DocumentView
   drawing: false
@@ -159,12 +170,17 @@ getPenPressure = () ->
   return 1.0
 
 # ---
- 
+
+
 status = (txt)->
   $('#status-bar').text(txt)
 
 view = null
 
+
+refresh = ()->
+  view.reRender()
+  view.rePaint()
 
 PropertyView = Backbone.View.extend
   className: "property"
@@ -234,6 +250,8 @@ editor.on 'change:renderer', ()->
   view.reRender()
   view.rePaint()
 
+
+
 createToolsButtons = ($container)->
   $container.empty()
   Tools.forEach (b)->
@@ -252,16 +270,31 @@ createRenderersButtons = ($container)->
       editor.set('renderer', r)
     $container.append($btn)
 
+createCommandsButtons = ($container)->
+  Commands.forEach (cmd)->
+    $btn = $('<button/>').
+      attr({'class':'btn'}).
+      text(cmd.name).
+      appendTo($container)
+    $btn.click (e)->
+      cmd.func(editor.get('doc'))
+
+createPalette = ($container)->
+  $slider = $('<div/>').slider({
+    min: -1.0
+    max: 1.0
+    value: 0
+    step: 0.005
+    change: (evt, ui)->
+      editor.set('targetValue', ui.value)
+  }).appendTo($container)
+
+  editor.on 'change:targetValue', ()->
+    $slider.slider 
+      value: editor.get('targetValue')
+
 $(document).ready ()->
   doc = new Document(512, 512)
-
-  '''
-  fillLayer doc.layer, (x,y)->
-    x += 1.0
-    y += 1.0
-    return (Math.round(x*40) % 2) * 0.1 -
-        (Math.round(y*40) % 2) * 0.1
-  '''
   fillLayer doc.layer, (x,y)->
     return -1
 
@@ -269,6 +302,10 @@ $(document).ready ()->
 
   createToolsButtons($('#tools > .buttons'))
   createRenderersButtons($('#renderers > .buttons'))
-
+  createPalette($('#palette'))
+  createCommandsButtons($('#commands'))
+  
+  editor.set('doc', doc)
   editor.set('tool', RoundBrush)
   editor.set('renderer', GammaRenderer)
+  editor.set('targetValue', 0.0)
