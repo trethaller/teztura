@@ -23,7 +23,10 @@ class Vec2
     return @x*@x+@y*@y
   normalized: () ->
     return @scale(1.0 / @length())
-
+  wrap: (w,h)->
+    return new Vec2(
+      (@x % w + w) % w,
+      (@y % h + h) % h)
 
 class Vec3
   constructor: (@x, @y, @z) ->;

@@ -157,10 +157,11 @@ class DocumentView
       if self.panning
         curPos = getCoords(e)
         o = local.offsetStart.add(curPos.sub(local.panningStart))
-        limW = self.doc.width / 3.0
-        limH = self.doc.height / 3.0
-        self.offset.x = Math.min(Math.max(o.x, -limW), limW)
-        self.offset.y = Math.min(Math.max(o.y, -limH), limH)
+        #limW = self.doc.width / 3.0
+        #limH = self.doc.height / 3.0
+        #self.offset.x = Math.min(Math.max(o.x, -limW), limW)
+        #self.offset.y = Math.min(Math.max(o.y, -limH), limH)
+        self.offset = o
         self.rePaint()
  
   screenToCanvas: (pt)->
@@ -206,6 +207,12 @@ class DocumentView
     dirtyRects = dirtyRects
       .map((r)->r.intersect(layerRect))
       .filter((r)->not r.isEmpty())
+
+    if false # Log dirty rects
+      totalArea = dirtyRects
+        .map((r)-> r.width * r.height)
+        .reduce((a,b)-> a+b)
+      console.log "#{dirtyRects.length} rects, #{Math.round(Math.sqrt(totalArea))} px²"
 
     if true
     #setTimeout (()->

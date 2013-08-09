@@ -50,6 +50,10 @@ Vec2 = (function() {
     return this.scale(1.0 / this.length());
   };
 
+  Vec2.prototype.wrap = function(w, h) {
+    return new Vec2((this.x % w + w) % w, (this.y % h + h) % h);
+  };
+
   return Vec2;
 
 })();

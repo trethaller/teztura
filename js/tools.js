@@ -2,6 +2,8 @@
 var BlendModes, Flatten, Picker, RoundBrush, StepBrush;
 
 StepBrush = (function() {
+  var mod;
+
   function StepBrush() {}
 
   StepBrush.prototype.drawing = false;
@@ -21,11 +23,16 @@ StepBrush = (function() {
     return rect.extend(pos);
   };
 
+  mod = function(val, size) {
+    return (val % size + size) % size;
+  };
+
   StepBrush.prototype.move = function(pos, pressure) {};
 
   StepBrush.prototype.draw = function(layer, pos, pressure) {
-    var delt, dir, intensity, length, pt, rect;
-    rect = new Rect(pos.x, pos.y, 1, 1);
+    var delt, dir, intensity, length, pt, rect, wpos;
+    wpos = pos.wrap(layer.width, layer.height);
+    rect = new Rect(wpos.x, wpos.y, 1, 1);
     intensity = pressure;
     if (this.lastpos != null) {
       delt = pos.sub(this.lastpos);
@@ -33,13 +40,13 @@ StepBrush = (function() {
       dir = delt.scale(1.0 / length);
       while (this.accumulator + this.stepSize <= length) {
         this.accumulator += this.stepSize;
-        pt = this.lastpos.add(dir.scale(this.accumulator));
+        pt = this.lastpos.add(dir.scale(this.accumulator)).wrap(layer.width, layer.height);
         this.drawStep(layer, pt, intensity, rect);
         ++this.nsteps;
       }
       this.accumulator -= length;
     } else {
-      this.drawStep(layer, pos, intensity, rect);
+      this.drawStep(layer, wpos, intensity, rect);
       ++this.nsteps;
     }
     this.lastpos = pos;

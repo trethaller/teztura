@@ -189,7 +189,7 @@ DocumentView = (function() {
       }
     });
     $container.mousemove(function(e) {
-      var curPos, limH, limW, o;
+      var curPos, o;
       e.preventDefault();
       if (self.drawing) {
         self.onDraw(getCanvasCoords(e));
@@ -197,10 +197,7 @@ DocumentView = (function() {
       if (self.panning) {
         curPos = getCoords(e);
         o = local.offsetStart.add(curPos.sub(local.panningStart));
-        limW = self.doc.width / 3.0;
-        limH = self.doc.height / 3.0;
-        self.offset.x = Math.min(Math.max(o.x, -limW), limW);
-        self.offset.y = Math.min(Math.max(o.y, -limH), limH);
+        self.offset = o;
         return self.rePaint();
       }
     });
@@ -232,7 +229,7 @@ DocumentView = (function() {
   };
 
   DocumentView.prototype.onDraw = function(pos) {
-    var dirtyRects, layer, layerRect, pressure, r, self, tool, xoff, yoff, _i, _j, _len, _len1, _ref, _ref1;
+    var dirtyRects, layer, layerRect, pressure, r, self, tool, totalArea, xoff, yoff, _i, _j, _len, _len1, _ref, _ref1;
     self = this;
     pressure = getPenPressure();
     dirtyRects = [];
@@ -258,6 +255,14 @@ DocumentView = (function() {
     }).filter(function(r) {
       return !r.isEmpty();
     });
+    if (false) {
+      totalArea = dirtyRects.map(function(r) {
+        return r.width * r.height;
+      }).reduce(function(a, b) {
+        return a + b;
+      });
+      console.log("" + dirtyRects.length + " rects, " + (Math.round(Math.sqrt(totalArea))) + " px²");
+    }
     if (true) {
       editor.get('renderer').renderLayer(layer, self, dirtyRects);
       return self.rePaint();
@@ -452,6 +457,10 @@ loadGradient = function(name, url) {
     };
   };
   return imageObj.src = url;
+};
+
+_.templateSettings = {
+  interpolate: /\{\{(.+?)\}\}/g
 };
 
 loadGradient('g1', 'img/gradient-1.png');

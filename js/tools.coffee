@@ -11,9 +11,12 @@ class StepBrush
     fb[ Math.floor(pos.x) + Math.floor(pos.y) * layer.width ] = intensity
     rect.extend(pos)
 
+  mod = (val, size)-> (val % size + size) % size
+
   move: (pos, pressure) ->;
   draw: (layer, pos, pressure) ->
-    rect = new Rect(pos.x, pos.y, 1, 1)
+    wpos = pos.wrap(layer.width, layer.height)
+    rect = new Rect(wpos.x, wpos.y, 1, 1)
     intensity = pressure
     if @lastpos?
       delt = pos.sub(@lastpos)
@@ -21,12 +24,14 @@ class StepBrush
       dir = delt.scale(1.0 / length)
       while(@accumulator + @stepSize <= length)
         @accumulator += @stepSize
-        pt = @lastpos.add(dir.scale(@accumulator))
+        pt = @lastpos
+          .add(dir.scale(@accumulator))
+          .wrap(layer.width, layer.height)
         @drawStep(layer, pt, intensity, rect)
         ++@nsteps
       @accumulator -= length
     else
-      @drawStep(layer, pos, intensity, rect)
+      @drawStep(layer, wpos, intensity, rect)
       ++@nsteps
 
     @lastpos = pos
