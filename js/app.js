@@ -31,9 +31,11 @@ Editor = Backbone.Model.extend({
 editor = new Editor({
   doc: null,
   tool: null,
+  preset: null,
   renderer: null,
   tiling: true,
-  targetValue: 1.0
+  targetValue: 1.0,
+  altkeyDown: false
 });
 
 Renderers = [GammaRenderer, NormalRenderer, GradientRenderer];
@@ -374,6 +376,19 @@ editor.on('change:tool', function() {
   return toolsProperties.setTool(tool);
 });
 
+editor.on('change:preset', function() {
+  var p;
+  p = editor.get('preset');
+  return editor.set('tool', p.tools[0]);
+});
+
+editor.on('change:altkeyDown', function() {
+  var idx, p;
+  idx = editor.get('altkeyDown') ? 1 : 0;
+  p = editor.get('preset');
+  return editor.set('tool', p.tools[idx]);
+});
+
 editor.on('change:renderer', function() {
   view.reRender();
   return view.rePaint();
@@ -465,6 +480,18 @@ _.templateSettings = {
 
 loadGradient('g1', 'img/gradient-1.png');
 
+$(window).keydown(function(e) {
+  if (e.key === 'Control') {
+    return editor.set('altkeyDown', true);
+  }
+});
+
+$(window).keyup(function(e) {
+  if (e.key === 'Control') {
+    return editor.set('altkeyDown', false);
+  }
+});
+
 $(document).ready(function() {
   var doc;
   doc = new Document(512, 512);
@@ -477,7 +504,9 @@ $(document).ready(function() {
   createPalette($('#palette'));
   createCommandsButtons($('#commands'));
   editor.set('doc', doc);
-  editor.set('tool', RoundBrush);
+  editor.set('preset', {
+    tools: [RoundBrush, Picker]
+  });
   editor.set('renderer', GammaRenderer);
   return editor.set('targetValue', 0.0);
 });

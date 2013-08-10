@@ -18,9 +18,11 @@ Editor = Backbone.Model.extend({
 editor = new Editor {
   doc: null
   tool: null
+  preset: null
   renderer: null
   tiling: true
   targetValue: 1.0
+  altkeyDown: false
 }
 
 Renderers = [GammaRenderer, NormalRenderer, GradientRenderer]
@@ -306,10 +308,18 @@ editor.on 'change:tool', ()->
   tool = editor.get('tool')
   toolsProperties.setTool(tool)
 
+editor.on 'change:preset', ->
+  p = editor.get('preset')
+  editor.set('tool', p.tools[0])
+
+editor.on 'change:altkeyDown', ->
+  idx = if editor.get('altkeyDown') then 1 else 0
+  p = editor.get('preset')
+  editor.set('tool', p.tools[idx])
+
 editor.on 'change:renderer', ()->
   view.reRender()
   view.rePaint()
-
 
 
 createToolsButtons = ($container)->
@@ -369,7 +379,20 @@ loadGradient = (name, url)->
 
 # --
 
+_.templateSettings = {
+  interpolate : /\{\{(.+?)\}\}/g
+};
+
 loadGradient('g1', 'img/gradient-1.png')
+
+
+$(window).keydown (e)->
+  if e.key is 'Control'
+    editor.set('altkeyDown', true)
+
+$(window).keyup (e)->
+  if e.key is 'Control'
+    editor.set('altkeyDown', false)
 
 $(document).ready ()->
   doc = new Document(512, 512)
@@ -384,6 +407,9 @@ $(document).ready ()->
   createCommandsButtons($('#commands'))
   
   editor.set('doc', doc)
-  editor.set('tool', RoundBrush)
+  #editor.set('tool', RoundBrush)
+  editor.set('preset', {
+    tools: [RoundBrush, Picker]
+  })
   editor.set('renderer', GammaRenderer)
   editor.set('targetValue', 0.0)
