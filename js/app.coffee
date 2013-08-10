@@ -256,30 +256,37 @@ PropertyView = Backbone.View.extend
 
     # Slider
     if prop.range?
-      step = if prop.type is 'int' then 1 else (prop.range[1]-prop.range[0]) / 100
+      power = prop.power or 1.0
+      conv = (v)-> Math.pow(v, power)
+      invconv = (v)-> Math.pow(v, 1.0 / power)
+      
+      rmin = invconv(prop.range[0])
+      rmax = invconv(prop.range[1])
+      step = if prop.type is 'int' then 1 else (rmax-rmin) / 100
+
       $slider = $('<div/>').slider({
-        min: prop.range[0]
-        max: prop.range[1]
-        value: tool.get(prop.id)
+        min: rmin
+        max: rmax
+        value: invconv(tool.get(prop.id))
         step: step
         change: (evt, ui)->
-          tool.set(prop.id, ui.value)
+          tool.set(prop.id, conv(ui.value))
           editor.setToolDirty()
       }).width(200).appendTo(@$el)
 
-      $val = $('<input/>')
+      $input = $('<input/>')
         .val(tool.get(prop.id))
         .appendTo(@$el)
         .change (evt)->
           if prop.type is 'int'
-            tool.set(prop.id, parseInt($val.val()))
+            tool.set(prop.id, parseInt($input.val()))
           else
-            tool.set(prop.id, parseFloat($val.val()))
+            tool.set(prop.id, parseFloat($input.val()))
 
       @listenTo @model.tool, "change:#{prop.id}", ()->
         v = tool.get(prop.id)
-        $val.val(v)
-        $slider.slider("value", v)
+        $input.val(v)
+        $slider.slider("value", invconv(v))
         
 # --
 class PropertyPanel

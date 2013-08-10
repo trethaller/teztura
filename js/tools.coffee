@@ -119,6 +119,7 @@ RoundBrush = (()->
       name: "Intensity"
       defaultValue: 1.0
       range: [0.0, 1.0]
+      power: 2.0
     }
   ]
 

@@ -299,34 +299,43 @@ refresh = function() {
 PropertyView = Backbone.View.extend({
   className: "property",
   initialize: function() {
-    var $slider, $val, prop, step, tool;
+    var $input, $slider, conv, invconv, power, prop, rmax, rmin, step, tool;
     tool = this.model.tool;
     prop = this.model.prop;
     $('<span/>').text(prop.name).appendTo(this.$el);
     if (prop.range != null) {
-      step = prop.type === 'int' ? 1 : (prop.range[1] - prop.range[0]) / 100;
+      power = prop.power || 1.0;
+      conv = function(v) {
+        return Math.pow(v, power);
+      };
+      invconv = function(v) {
+        return Math.pow(v, 1.0 / power);
+      };
+      rmin = invconv(prop.range[0]);
+      rmax = invconv(prop.range[1]);
+      step = prop.type === 'int' ? 1 : (rmax - rmin) / 100;
       $slider = $('<div/>').slider({
-        min: prop.range[0],
-        max: prop.range[1],
-        value: tool.get(prop.id),
+        min: rmin,
+        max: rmax,
+        value: invconv(tool.get(prop.id)),
         step: step,
         change: function(evt, ui) {
-          tool.set(prop.id, ui.value);
+          tool.set(prop.id, conv(ui.value));
           return editor.setToolDirty();
         }
       }).width(200).appendTo(this.$el);
-      $val = $('<input/>').val(tool.get(prop.id)).appendTo(this.$el).change(function(evt) {
+      $input = $('<input/>').val(tool.get(prop.id)).appendTo(this.$el).change(function(evt) {
         if (prop.type === 'int') {
-          return tool.set(prop.id, parseInt($val.val()));
+          return tool.set(prop.id, parseInt($input.val()));
         } else {
-          return tool.set(prop.id, parseFloat($val.val()));
+          return tool.set(prop.id, parseFloat($input.val()));
         }
       });
       return this.listenTo(this.model.tool, "change:" + prop.id, function() {
         var v;
         v = tool.get(prop.id);
-        $val.val(v);
-        return $slider.slider("value", v);
+        $input.val(v);
+        return $slider.slider("value", invconv(v));
       });
     }
   }
