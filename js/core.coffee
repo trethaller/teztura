@@ -117,7 +117,7 @@ class Layer
     return @data.fbuffer
 
   getAt: (pos)->
-    ipos = pos.round()
+    ipos = pos.wrap(@width, @height).round()
     return @data.fbuffer[ ipos.y * @width + ipos.x ]
 
   getNormalAt: (pos)->

@@ -201,7 +201,7 @@ Layer = (function() {
 
   Layer.prototype.getAt = function(pos) {
     var ipos;
-    ipos = pos.round();
+    ipos = pos.wrap(this.width, this.height).round();
     return this.data.fbuffer[ipos.y * this.width + ipos.x];
   };
 
