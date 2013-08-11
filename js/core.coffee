@@ -163,6 +163,7 @@ GammaRenderer = (()->
         var offset = iy * width;
         for(var ix=minX; ix<=maxX; ++ix) {
           var fval = fb[offset + ix];
+          fval = fval > 1.0 ? 1.0 : (fval < -1.0 ? -1.0 : fval)
           var val = Math.round(Math.pow((fval + 1.0) * 0.5, gamma) * 255.0);
           destBuffer[offset + ix] =
             (val) | (val << 8) | (val << 16) | 0xff000000;
@@ -310,30 +311,31 @@ genBlendFunc = (args, expression)->
         }
       }
     })"
-  #console.log("Generating blend function", str)
   return eval(str)
 
-genBrushFunc = (args, brushExp, blendExp)->
-  blendExp = blendExp
+genBrushFunc = (opts)->
+  blendExp = opts.blendExp
     .replace(/{dst}/g, "dstData[dsti]")
     .replace(/{src}/g, "_tmp")
 
-  brushExp = brushExp
+  brushExp = opts.brushExp
     .replace(/{out}/g, "_tmp")
 
-  str = "
-    (function (rect, dstFb, #{args}) {
-      var sw = Math.round(rect.width);
-      var sh = Math.round(rect.height);
-      var invw = 2.0 / (rect.width - 1);
-      var invh = 2.0 / (rect.height - 1);
-      var offx = -(rect.x % 1.0) * invw - 1.0;
-      var offy = -(rect.y % 1.0) * invh - 1.0;
-      var fbw = dstFb.width;
-      var fbh = dstFb.height;
+  str = "(function (rect, dstFb, #{opts.args}) {
+    var invw = 2.0 / (rect.width - 1);
+    var invh = 2.0 / (rect.height - 1);
+    var offx = -(rect.x % 1.0) * invw - 1.0;
+    var offy = -(rect.y % 1.0) * invh - 1.0;
+    var fbw = dstFb.width;
+    var fbh = dstFb.height;
+    var dstData = dstFb.getBuffer();"
+      
+  str += if opts.tiling then "
       var minx = Math.floor(rect.x) + fbw;
       var miny = Math.floor(rect.y) + fbh;
-      var dstData = dstFb.getBuffer();
+      var sw = Math.round(rect.width);
+      var sh = Math.round(rect.height);
+      
       for(var sy=0; sy<sh; ++sy) {
         var y = sy * invh + offy;
         for(var sx=0; sx<sw; ++sx) {
@@ -343,10 +345,26 @@ genBrushFunc = (args, brushExp, blendExp)->
           #{brushExp};
           #{blendExp};
         }
-      }
-    })"
-  return eval(str)
+      }"
+  else "
+      var minx = Math.floor(Math.max(0, -rect.x));
+      var miny = Math.floor(Math.max(0, -rect.y));
+      var sw = Math.round(Math.min(rect.width, fbw - rect.x));
+      var sh = Math.round(Math.min(rect.height, fbh - rect.y));
+      for(var sy=miny; sy<sh; ++sy) {
+        var dsti = (Math.floor(rect.y) + sy) * dstFb.width + Math.floor(rect.x) + minx;
+        var y = sy * invh + offy;
+        for(var sx=minx; sx<sw; ++sx) {
+          var x = sx * invw + offx;
+          var _tmp = 0.0;
+          #{brushExp};
+          #{blendExp};
+          ++dsti;
+        }
+      }"
+  str += "});"
 
+  return eval(str)
 
 getRoundBrushFunc = (hardness) ->
   hardnessPlus1 = hardness + 1.0

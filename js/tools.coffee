@@ -5,6 +5,7 @@ class StepBrush
   accumulator: 0.0
   stepSize: 4.0
   nsteps: 0
+  tiling: false
 
   drawStep: (layer, pos, intensity, rect)->
     fb = layer.getBuffer()
@@ -15,7 +16,7 @@ class StepBrush
 
   move: (pos, pressure) ->;
   draw: (layer, pos, pressure) ->
-    wpos = pos.wrap(layer.width, layer.height)
+    wpos = if @tiling then pos.wrap(layer.width, layer.height) else pos
     rect = new Rect(wpos.x, wpos.y, 1, 1)
     intensity = pressure
     if @lastpos?
@@ -26,7 +27,8 @@ class StepBrush
         @accumulator += @stepSize
         pt = @lastpos
           .add(dir.scale(@accumulator))
-          .wrap(layer.width, layer.height)
+        if @tiling
+          pt = pt.wrap(layer.width, layer.height)
         @drawStep(layer, pt, intensity, rect)
         ++@nsteps
       @accumulator -= length
@@ -128,21 +130,24 @@ RoundBrush = (()->
   createTool = (env)->
     sb = new StepBrush()
     sb.stepSize = self.get('stepSize')
+    sb.tiling = env.get('tiling')
     size = self.get('size')
 
     hardness = Math.pow(self.get('hardness'), 2.0) * 8.0;
     hardnessPlus1 = hardness + 1.0
-    func = genBrushFunc("intensity, target, h, hp1", 
-      "var d = Math.min(1.0, Math.max(0.0, (Math.sqrt(x*x + y*y) * hp1 - h)));
-      {out} = Math.cos(d * Math.PI) * 0.5 + 0.5;",
-      BlendModes[self.get('blendMode')])
+    func = genBrushFunc {
+      args: "intensity, target, h, hp1"
+      tiling: env.get('tiling')
+      blendExp: BlendModes[self.get('blendMode')]
+      brushExp: "var d = Math.min(1.0, Math.max(0.0, (Math.sqrt(x*x + y*y) * hp1 - h)));
+                {out} = Math.cos(d * Math.PI) * 0.5 + 0.5;"
+    }
 
     sb.drawStep = (layer, pos, intensity, rect)->
       r = new Rect(
         pos.x - size * 0.5,
         pos.y - size * 0.5,
         size, size)
-
       func(r, layer, intensity * self.get('intensity'), env.get('targetValue'), hardness, hardnessPlus1)
       rect.extend(r.round())
     return sb

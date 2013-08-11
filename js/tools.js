@@ -16,6 +16,8 @@ StepBrush = (function() {
 
   StepBrush.prototype.nsteps = 0;
 
+  StepBrush.prototype.tiling = false;
+
   StepBrush.prototype.drawStep = function(layer, pos, intensity, rect) {
     var fb;
     fb = layer.getBuffer();
@@ -31,7 +33,7 @@ StepBrush = (function() {
 
   StepBrush.prototype.draw = function(layer, pos, pressure) {
     var delt, dir, intensity, length, pt, rect, wpos;
-    wpos = pos.wrap(layer.width, layer.height);
+    wpos = this.tiling ? pos.wrap(layer.width, layer.height) : pos;
     rect = new Rect(wpos.x, wpos.y, 1, 1);
     intensity = pressure;
     if (this.lastpos != null) {
@@ -40,7 +42,10 @@ StepBrush = (function() {
       dir = delt.scale(1.0 / length);
       while (this.accumulator + this.stepSize <= length) {
         this.accumulator += this.stepSize;
-        pt = this.lastpos.add(dir.scale(this.accumulator)).wrap(layer.width, layer.height);
+        pt = this.lastpos.add(dir.scale(this.accumulator));
+        if (this.tiling) {
+          pt = pt.wrap(layer.width, layer.height);
+        }
         this.drawStep(layer, pt, intensity, rect);
         ++this.nsteps;
       }
@@ -156,10 +161,16 @@ RoundBrush = (function() {
     var func, hardness, hardnessPlus1, sb, size;
     sb = new StepBrush();
     sb.stepSize = self.get('stepSize');
+    sb.tiling = env.get('tiling');
     size = self.get('size');
     hardness = Math.pow(self.get('hardness'), 2.0) * 8.0;
     hardnessPlus1 = hardness + 1.0;
-    func = genBrushFunc("intensity, target, h, hp1", "var d = Math.min(1.0, Math.max(0.0, (Math.sqrt(x*x + y*y) * hp1 - h)));      {out} = Math.cos(d * Math.PI) * 0.5 + 0.5;", BlendModes[self.get('blendMode')]);
+    func = genBrushFunc({
+      args: "intensity, target, h, hp1",
+      tiling: env.get('tiling'),
+      blendExp: BlendModes[self.get('blendMode')],
+      brushExp: "var d = Math.min(1.0, Math.max(0.0, (Math.sqrt(x*x + y*y) * hp1 - h)));                {out} = Math.cos(d * Math.PI) * 0.5 + 0.5;"
+    });
     sb.drawStep = function(layer, pos, intensity, rect) {
       var r;
       r = new Rect(pos.x - size * 0.5, pos.y - size * 0.5, size, size);

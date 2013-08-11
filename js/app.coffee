@@ -175,7 +175,7 @@ class DocumentView
         for yoff in [-1,0,1]
           dirtyRects.push(r.offset(new Vec2(xoff * layerRect.width, yoff * layerRect.height)))
     else
-      dirtyRects.push(r)
+      dirtyRects.push(r.intersect(layerRect))
 
     dirtyRects = dirtyRects
       .map((r)->r.intersect(layerRect))
@@ -331,7 +331,7 @@ refresh = ()->
 
 
 editor = null
-toolsProperties = new PropertyPanel '#tools > .properties'
+toolsProperties = null
 
 
 createToolsButtons = ($container)->
@@ -390,11 +390,6 @@ loadGradient = (name, url)->
   imageObj.src = url
 
 # --
-
-_.templateSettings = {
-  interpolate : /\{\{(.+?)\}\}/g
-};
-
 loadGradient('g1', 'img/gradient-1.png')
 
 
@@ -409,9 +404,11 @@ $(window).keyup (e)->
 
 $(document).ready ()->
 
+  toolsProperties = new PropertyPanel '#tools > .properties'
   editor = new Editor()
   editor.createDoc(512, 512)
   
+
   createToolsButtons($('#tools > .buttons'))
   createRenderersButtons($('#renderers > .buttons'))
   createPalette($('#palette'))

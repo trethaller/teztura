@@ -225,7 +225,7 @@ DocumentView = (function() {
         }
       }
     } else {
-      dirtyRects.push(r);
+      dirtyRects.push(r.intersect(layerRect));
     }
     dirtyRects = dirtyRects.map(function(r) {
       return r.intersect(layerRect);
@@ -428,7 +428,7 @@ refresh = function() {
 
 editor = null;
 
-toolsProperties = new PropertyPanel('#tools > .properties');
+toolsProperties = null;
 
 createToolsButtons = function($container) {
   $container.empty();
@@ -510,10 +510,6 @@ loadGradient = function(name, url) {
   return imageObj.src = url;
 };
 
-_.templateSettings = {
-  interpolate: /\{\{(.+?)\}\}/g
-};
-
 loadGradient('g1', 'img/gradient-1.png');
 
 $(window).keydown(function(e) {
@@ -529,6 +525,7 @@ $(window).keyup(function(e) {
 });
 
 $(document).ready(function() {
+  toolsProperties = new PropertyPanel('#tools > .properties');
   editor = new Editor();
   editor.createDoc(512, 512);
   createToolsButtons($('#tools > .buttons'));
