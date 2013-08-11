@@ -2,6 +2,50 @@
 class Document
   constructor: (@width,@height)->
     @layer = new Layer(@width,@height)
+    @backup = new Layer(@width,@height)
+    @history = []
+    @histIndex = -1
+
+  afterEdit: (rect)->
+    if @histIndex > 0
+      @history.splice 0, @histIndex
+
+    @history.splice 0, 0, {
+      data: @backup.getCopy(rect)
+      rect: rect
+    }
+    @backup.getBuffer().set(@layer.getBuffer())
+    histSize = 10
+    if @history.length > histSize
+      @history.splice(histSize)
+
+    @histIndex = -1
+    console.log "History len: #{this.history.length}"
+
+  undo: ->
+    if @histIndex >= @history.length - 1
+      return
+
+    if @histIndex is -1
+      @afterEdit(@history[0].rect)
+      @histIndex = 1
+    else 
+      @histIndex++
+
+    console.log "History idx: #{this.histIndex}"
+    @restore( @history[ @histIndex ] )
+
+  redo: ->
+    if @histIndex <= 0
+      return
+    @histIndex--
+    console.log "History idx: #{this.histIndex}"
+    @restore( @history[ @histIndex ] )
+
+
+  restore: (histItem)->
+    @layer.setData(histItem.data, histItem.rect)
+
 
 Renderers = [GammaRenderer, NormalRenderer, GradientRenderer]
 Tools = [RoundBrush, Picker]
@@ -110,6 +154,7 @@ class DocumentView
       e.preventDefault()
       if e.which is 1
         @drawing = true
+        @actionDirtyRect = null
         coords = getCanvasCoords(e)
         editor.getToolObject().beginDraw(coords)
         @onDraw(coords)
@@ -124,6 +169,8 @@ class DocumentView
       if e.which is 1
         editor.getToolObject().endDraw(getCanvasCoords(e))
         @drawing = false
+        if @actionDirtyRect?
+          doc.afterEdit(@actionDirtyRect)
 
       if e.which is 2
         @panning = false
@@ -180,6 +227,12 @@ class DocumentView
     dirtyRects = dirtyRects
       .map((r)->r.intersect(layerRect))
       .filter((r)->not r.isEmpty())
+
+    dirtyRects.forEach (r)=>
+      if not @actionDirtyRect?
+        @actionDirtyRect = r.clone()
+      else
+        @actionDirtyRect.extend(r)
 
     if false # Log dirty rects
       totalArea = dirtyRects
@@ -401,6 +454,14 @@ $(window).keyup (e)->
   if e.key is 'Control'
     editor.set('altkeyDown', false)
 
+  if e.ctrlKey
+    switch e.keyCode 
+      when 90
+        editor.get('doc').undo()
+        editor.refresh()
+      when 89
+        editor.get('doc').redo()
+        editor.refresh()
 
 $(document).ready ()->
 

@@ -64,6 +64,9 @@ class Rect
     ret.extend(rect.bottomRight())
     return ret
 
+  clone: ->
+    return new Rect(@x, @y, @width, @height)
+
   offset: (vec)->
     return new Rect(@x+vec.x, @y+vec.y, @width, @height)
 
@@ -110,10 +113,10 @@ class Layer
   constructor: (@width, @height) ->
     @data = new FloatBuffer(@width, @height)
 
-  getRect: () ->
+  getRect: ->
     return new Rect(0,0,@width,@height)
 
-  getBuffer: () ->
+  getBuffer: ->
     return @data.fbuffer
 
   getAt: (pos)->
@@ -123,6 +126,28 @@ class Layer
   getNormalAt: (pos)->
     p = pos.round()
     fb = @data.fbuffer
+
+  getCopy: (rect)->
+    srcData = @data.buffer
+    dstData = new ArrayBuffer(rect.width * rect.height * 4)
+    `
+    for(var iy=0; iy<rect.height; ++iy) {
+      var src = new Uint32Array(srcData, 4 * ((iy + rect.y) * this.width + rect.x), rect.width);
+      var dst = new Uint32Array(dstData, 4 * iy * rect.width, rect.width);
+      dst.set(src);
+    }`
+    return dstData
+
+  setData: (buffer, rect)->
+    dstData = @data.buffer
+    `
+    for(var iy=0; iy<rect.height; ++iy) {
+      var src = new Uint32Array(buffer, 4 * iy * rect.width, rect.width);
+      var dstOff = 4 * ((iy + rect.y) * this.width + rect.x);
+      var dst = new Uint32Array(dstData, dstOff, rect.width);
+      dst.set(src);
+    }`
+    return
 
 Bezier =
   quadratic: (pts, t)->

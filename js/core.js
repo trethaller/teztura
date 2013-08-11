@@ -126,6 +126,10 @@ Rect = (function() {
     return ret;
   };
 
+  Rect.prototype.clone = function() {
+    return new Rect(this.x, this.y, this.width, this.height);
+  };
+
   Rect.prototype.offset = function(vec) {
     return new Rect(this.x + vec.x, this.y + vec.y, this.width, this.height);
   };
@@ -209,6 +213,31 @@ Layer = (function() {
     var fb, p;
     p = pos.round();
     return fb = this.data.fbuffer;
+  };
+
+  Layer.prototype.getCopy = function(rect) {
+    var dstData, srcData;
+    srcData = this.data.buffer;
+    dstData = new ArrayBuffer(rect.width * rect.height * 4);
+    
+    for(var iy=0; iy<rect.height; ++iy) {
+      var src = new Uint32Array(srcData, 4 * ((iy + rect.y) * this.width + rect.x), rect.width);
+      var dst = new Uint32Array(dstData, 4 * iy * rect.width, rect.width);
+      dst.set(src);
+    };
+    return dstData;
+  };
+
+  Layer.prototype.setData = function(buffer, rect) {
+    var dstData;
+    dstData = this.data.buffer;
+    
+    for(var iy=0; iy<rect.height; ++iy) {
+      var src = new Uint32Array(buffer, 4 * iy * rect.width, rect.width);
+      var dstOff = 4 * ((iy + rect.y) * this.width + rect.x);
+      var dst = new Uint32Array(dstData, dstOff, rect.width);
+      dst.set(src);
+    };
   };
 
   return Layer;

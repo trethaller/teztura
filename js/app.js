@@ -8,7 +8,55 @@ Document = (function() {
     this.width = width;
     this.height = height;
     this.layer = new Layer(this.width, this.height);
+    this.backup = new Layer(this.width, this.height);
+    this.history = [];
+    this.histIndex = -1;
   }
+
+  Document.prototype.afterEdit = function(rect) {
+    var histSize;
+    if (this.histIndex > 0) {
+      this.history.splice(0, this.histIndex);
+    }
+    this.history.splice(0, 0, {
+      data: this.backup.getCopy(rect),
+      rect: rect
+    });
+    this.backup.getBuffer().set(this.layer.getBuffer());
+    histSize = 10;
+    if (this.history.length > histSize) {
+      this.history.splice(histSize);
+    }
+    this.histIndex = -1;
+    return console.log("History len: " + this.history.length);
+  };
+
+  Document.prototype.undo = function() {
+    if (this.histIndex >= this.history.length - 1) {
+      return;
+    }
+    if (this.histIndex === -1) {
+      this.afterEdit(this.history[0].rect);
+      this.histIndex = 1;
+    } else {
+      this.histIndex++;
+    }
+    console.log("History idx: " + this.histIndex);
+    return this.restore(this.history[this.histIndex]);
+  };
+
+  Document.prototype.redo = function() {
+    if (this.histIndex <= 0) {
+      return;
+    }
+    this.histIndex--;
+    console.log("History idx: " + this.histIndex);
+    return this.restore(this.history[this.histIndex]);
+  };
+
+  Document.prototype.restore = function(histItem) {
+    return this.layer.setData(histItem.data, histItem.rect);
+  };
 
   return Document;
 
@@ -146,6 +194,7 @@ DocumentView = (function() {
       e.preventDefault();
       if (e.which === 1) {
         _this.drawing = true;
+        _this.actionDirtyRect = null;
         coords = getCanvasCoords(e);
         editor.getToolObject().beginDraw(coords);
         _this.onDraw(coords);
@@ -161,6 +210,9 @@ DocumentView = (function() {
       if (e.which === 1) {
         editor.getToolObject().endDraw(getCanvasCoords(e));
         _this.drawing = false;
+        if (_this.actionDirtyRect != null) {
+          doc.afterEdit(_this.actionDirtyRect);
+        }
       }
       if (e.which === 2) {
         return _this.panning = false;
@@ -207,7 +259,8 @@ DocumentView = (function() {
   };
 
   DocumentView.prototype.onDraw = function(pos) {
-    var dirtyRects, layer, layerRect, pressure, r, tool, totalArea, xoff, yoff, _i, _j, _len, _len1, _ref, _ref1;
+    var dirtyRects, layer, layerRect, pressure, r, tool, totalArea, xoff, yoff, _i, _j, _len, _len1, _ref, _ref1,
+      _this = this;
     pressure = getPenPressure();
     dirtyRects = [];
     layer = this.doc.layer;
@@ -231,6 +284,13 @@ DocumentView = (function() {
       return r.intersect(layerRect);
     }).filter(function(r) {
       return !r.isEmpty();
+    });
+    dirtyRects.forEach(function(r) {
+      if (_this.actionDirtyRect == null) {
+        return _this.actionDirtyRect = r.clone();
+      } else {
+        return _this.actionDirtyRect.extend(r);
+      }
     });
     if (false) {
       totalArea = dirtyRects.map(function(r) {
@@ -520,7 +580,17 @@ $(window).keydown(function(e) {
 
 $(window).keyup(function(e) {
   if (e.key === 'Control') {
-    return editor.set('altkeyDown', false);
+    editor.set('altkeyDown', false);
+  }
+  if (e.ctrlKey) {
+    switch (e.keyCode) {
+      case 90:
+        editor.get('doc').undo();
+        return editor.refresh();
+      case 89:
+        editor.get('doc').redo();
+        return editor.refresh();
+    }
   }
 });
 
