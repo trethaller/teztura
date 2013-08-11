@@ -3,28 +3,6 @@ class Document
   constructor: (@width,@height)->
     @layer = new Layer(@width,@height)
 
-Editor = Backbone.Model.extend({
-  toolObject: null
-  getToolObject: ()->
-    if @get('toolObject') is null
-      console.log "Creating brush of type " + @get("tool").description.name
-      o = @get('tool').createTool(this)
-      @set('toolObject', o)
-    return @get('toolObject')
-  setToolDirty: ()->
-    @set('toolObject', null)
-})
-
-editor = new Editor {
-  doc: null
-  tool: null
-  preset: null
-  renderer: null
-  tiling: true
-  targetValue: 1.0
-  altkeyDown: false
-}
-
 Renderers = [GammaRenderer, NormalRenderer, GradientRenderer]
 Tools = [RoundBrush, Picker]
 
@@ -159,10 +137,6 @@ class DocumentView
       if self.panning
         curPos = getCoords(e)
         o = local.offsetStart.add(curPos.sub(local.panningStart))
-        #limW = self.doc.width / 3.0
-        #limH = self.doc.height / 3.0
-        #self.offset.x = Math.min(Math.max(o.x, -limW), limW)
-        #self.offset.y = Math.min(Math.max(o.y, -limH), limH)
         self.offset = o
         self.rePaint()
  
@@ -224,25 +198,58 @@ class DocumentView
 
 # ---
 
-getPenPressure = () ->
-  plugin = document.getElementById('wtPlugin')
-  penAPI = plugin.penAPI
-  if penAPI and penAPI.pointerType > 0
-    return penAPI.pressure
-  return 1.0
+class Editor extends Backbone.Model
+  defaults: ->
+    doc: null
+    tool: null
+    preset: null
+    renderer: null
+    tiling: true
+    targetValue: 1.0
+    altkeyDown: false
 
-# ---
+  initialize: ->  
+    @toolObject = null
+    @on 'change:tool', ()->
+      @setToolDirty()
+      tool = @get('tool')
+      toolsProperties.setTool(tool)
 
+    @on 'change:preset', ->
+      p = @get('preset')
+      @set('tool', p.tools[0])
 
-status = (txt)->
-  $('#status-bar').text(txt)
+    @on 'change:altkeyDown', ->
+      idx = if @get('altkeyDown') then 1 else 0
+      p = @get('preset')
+      @set('tool', p.tools[idx])
 
-view = null
+    @on 'change:renderer', ()->
+      @get('view').reRender()
+      @get('view').rePaint()
 
+  createDoc: (w,h)->
+    doc = new Document(512, 512)
+    fillLayer doc.layer, (x,y)->
+      return -1
 
-refresh = ()->
-  view.reRender()
-  view.rePaint()
+    @set('doc', doc)
+    @set('view', new DocumentView($('.document-view'), doc))
+
+  getToolObject: ->
+    if @get('toolObject') is null
+      console.log "Creating brush of type " + @get("tool").description.name
+      o = @get('tool').createTool(this)
+      @set('toolObject', o)
+    return @get('toolObject')
+
+  setToolDirty: ->
+    @set('toolObject', null)
+
+  refresh: ->
+    v = @get('view')
+    v.reRender()
+    v.rePaint()
 
 PropertyView = Backbone.View.extend
   className: "property"
@@ -307,26 +314,27 @@ class PropertyPanel
       v.remove()
     @views = []
 
+# ---
 
+getPenPressure = () ->
+  plugin = document.getElementById('wtPlugin')
+  penAPI = plugin.penAPI
+  if penAPI and penAPI.pointerType > 0
+    return penAPI.pressure
+  return 1.0
+
+
+status = (txt)->
+  $('#status-bar').text(txt)
+
+
+
+refresh = ()->
+  editor.refresh()
+
+
+editor = null
 toolsProperties = new PropertyPanel '#tools > .properties'
-
-editor.on 'change:tool', ()->
-  editor.setToolDirty()
-  tool = editor.get('tool')
-  toolsProperties.setTool(tool)
-
-editor.on 'change:preset', ->
-  p = editor.get('preset')
-  editor.set('tool', p.tools[0])
-
-editor.on 'change:altkeyDown', ->
-  idx = if editor.get('altkeyDown') then 1 else 0
-  p = editor.get('preset')
-  editor.set('tool', p.tools[idx])
-
-editor.on 'change:renderer', ()->
-  view.reRender()
-  view.rePaint()
 
 
 createToolsButtons = ($container)->
@@ -401,20 +409,17 @@ $(window).keyup (e)->
   if e.key is 'Control'
     editor.set('altkeyDown', false)
 
+
 $(document).ready ()->
-  doc = new Document(512, 512)
-  fillLayer doc.layer, (x,y)->
-    return -1
 
-  view = new DocumentView($('.document-view'), doc)
-
+  editor = new Editor()
+  editor.createDoc(512, 512)
+  
   createToolsButtons($('#tools > .buttons'))
   createRenderersButtons($('#renderers > .buttons'))
   createPalette($('#palette'))
   createCommandsButtons($('#commands'))
   
-  editor.set('doc', doc)
-  #editor.set('tool', RoundBrush)
   editor.set('preset', {
     tools: [RoundBrush, Picker]
   })
