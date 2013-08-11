@@ -94,51 +94,50 @@ class DocumentView
 
     @context.mozImageSmoothingEnabled = false
 
-    self = this
 
-    getCoords = (e)->
+    getCoords = (e)=>
       x = e.pageX-$backCanvas.position().left
       y = e.pageY-$backCanvas.position().top
       return new Vec2(x,y)
 
-    getCanvasCoords = (e)->
+    getCanvasCoords = (e)=>
       v = getCoords(e)
-      return self.screenToCanvas(v)
+      return @screenToCanvas(v)
 
     local = {}
 
-    $backCanvas.mousedown (e)->
+    $backCanvas.mousedown (e)=>
       e.preventDefault()
       if e.which is 1
-        self.drawing = true
+        @drawing = true
         coords = getCanvasCoords(e)
         editor.getToolObject().beginDraw(coords)
-        self.onDraw(coords)
+        @onDraw(coords)
 
       if e.which is 2
-        self.panning = true
+        @panning = true
         local.panningStart = getCoords(e)
-        local.offsetStart = self.offset.clone()
+        local.offsetStart = @offset.clone()
 
-    $container.mouseup (e)->
+    $container.mouseup (e)=>
       e.preventDefault()
       if e.which is 1
         editor.getToolObject().endDraw(getCanvasCoords(e))
-        self.drawing = false
+        @drawing = false
 
       if e.which is 2
-        self.panning = false
+        @panning = false
 
-    $container.mousemove (e)->
+    $container.mousemove (e)=>
       e.preventDefault()
-      if self.drawing
-        self.onDraw(getCanvasCoords(e))
+      if @drawing
+        @onDraw(getCanvasCoords(e))
 
-      if self.panning
+      if @panning
         curPos = getCoords(e)
         o = local.offsetStart.add(curPos.sub(local.panningStart))
-        self.offset = o
-        self.rePaint()
+        @offset = o
+        @rePaint()
  
   screenToCanvas: (pt)->
     return pt.sub(@offset).scale(1.0/@scale)
@@ -161,8 +160,6 @@ class DocumentView
       ctx.drawImage(@canvas, 0, 0)
 
   onDraw: (pos)->
-    self = this
-
     pressure = getPenPressure()
     dirtyRects = []
 
@@ -192,8 +189,8 @@ class DocumentView
 
     if true
     #setTimeout (()->
-      editor.get('renderer').renderLayer(layer, self, dirtyRects)
-      self.rePaint()
+      editor.get('renderer').renderLayer(layer, @, dirtyRects)
+      @rePaint()
     #), 0
 
 # ---
@@ -297,17 +294,17 @@ PropertyView = Backbone.View.extend
         
 # --
 class PropertyPanel
-  views: []
-  constructor: (@selector)-> ;
+  constructor: (@selector)->
+    @views = []
+
   setTool: (tool)->
-    self = this
     @removeViews()
-    tool.properties.forEach (prop)->
+    tool.properties.forEach (prop)=>
       v = new PropertyView
         model: {prop, tool}
 
-      $(self.selector).append(v.$el)
-      self.views.push(v)
+      $(@selector).append(v.$el)
+      @views.push(v)
 
   removeViews: ()->
     @views.forEach (v)->
@@ -368,7 +365,7 @@ createPalette = ($container)->
   $slider = $('<div/>').slider({
     min: -1.0
     max: 1.0
-    value: 0
+    value: editor.get('targetValue')
     step: 0.005
     change: (evt, ui)->
       editor.set('targetValue', ui.value)
@@ -424,4 +421,3 @@ $(document).ready ()->
     tools: [RoundBrush, Picker]
   })
   editor.set('renderer', GammaRenderer)
-  editor.set('targetValue', 0.0)

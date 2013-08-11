@@ -107,7 +107,8 @@ DocumentView = (function() {
   DocumentView.prototype.scale = 1.0;
 
   function DocumentView($container, doc) {
-    var $backCanvas, $canvas, getCanvasCoords, getCoords, local, self;
+    var $backCanvas, $canvas, getCanvasCoords, getCoords, local,
+      _this = this;
     this.doc = doc;
     $container.empty();
     $canvas = $('<canvas/>', {
@@ -128,7 +129,6 @@ DocumentView = (function() {
     this.context = $canvas[0].getContext('2d');
     this.imageData = this.context.getImageData(0, 0, doc.width, doc.height);
     this.context.mozImageSmoothingEnabled = false;
-    self = this;
     getCoords = function(e) {
       var x, y;
       x = e.pageX - $backCanvas.position().left;
@@ -138,45 +138,45 @@ DocumentView = (function() {
     getCanvasCoords = function(e) {
       var v;
       v = getCoords(e);
-      return self.screenToCanvas(v);
+      return _this.screenToCanvas(v);
     };
     local = {};
     $backCanvas.mousedown(function(e) {
       var coords;
       e.preventDefault();
       if (e.which === 1) {
-        self.drawing = true;
+        _this.drawing = true;
         coords = getCanvasCoords(e);
         editor.getToolObject().beginDraw(coords);
-        self.onDraw(coords);
+        _this.onDraw(coords);
       }
       if (e.which === 2) {
-        self.panning = true;
+        _this.panning = true;
         local.panningStart = getCoords(e);
-        return local.offsetStart = self.offset.clone();
+        return local.offsetStart = _this.offset.clone();
       }
     });
     $container.mouseup(function(e) {
       e.preventDefault();
       if (e.which === 1) {
         editor.getToolObject().endDraw(getCanvasCoords(e));
-        self.drawing = false;
+        _this.drawing = false;
       }
       if (e.which === 2) {
-        return self.panning = false;
+        return _this.panning = false;
       }
     });
     $container.mousemove(function(e) {
       var curPos, o;
       e.preventDefault();
-      if (self.drawing) {
-        self.onDraw(getCanvasCoords(e));
+      if (_this.drawing) {
+        _this.onDraw(getCanvasCoords(e));
       }
-      if (self.panning) {
+      if (_this.panning) {
         curPos = getCoords(e);
         o = local.offsetStart.add(curPos.sub(local.panningStart));
-        self.offset = o;
-        return self.rePaint();
+        _this.offset = o;
+        return _this.rePaint();
       }
     });
   }
@@ -207,8 +207,7 @@ DocumentView = (function() {
   };
 
   DocumentView.prototype.onDraw = function(pos) {
-    var dirtyRects, layer, layerRect, pressure, r, self, tool, totalArea, xoff, yoff, _i, _j, _len, _len1, _ref, _ref1;
-    self = this;
+    var dirtyRects, layer, layerRect, pressure, r, tool, totalArea, xoff, yoff, _i, _j, _len, _len1, _ref, _ref1;
     pressure = getPenPressure();
     dirtyRects = [];
     layer = this.doc.layer;
@@ -242,8 +241,8 @@ DocumentView = (function() {
       console.log("" + dirtyRects.length + " rects, " + (Math.round(Math.sqrt(totalArea))) + " px²");
     }
     if (true) {
-      editor.get('renderer').renderLayer(layer, self, dirtyRects);
-      return self.rePaint();
+      editor.get('renderer').renderLayer(layer, this, dirtyRects);
+      return this.rePaint();
     }
   };
 
@@ -377,15 +376,13 @@ PropertyView = Backbone.View.extend({
 });
 
 PropertyPanel = (function() {
-  PropertyPanel.prototype.views = [];
-
   function PropertyPanel(selector) {
     this.selector = selector;
+    this.views = [];
   }
 
   PropertyPanel.prototype.setTool = function(tool) {
-    var self;
-    self = this;
+    var _this = this;
     this.removeViews();
     return tool.properties.forEach(function(prop) {
       var v;
@@ -395,8 +392,8 @@ PropertyPanel = (function() {
           tool: tool
         }
       });
-      $(self.selector).append(v.$el);
-      return self.views.push(v);
+      $(_this.selector).append(v.$el);
+      return _this.views.push(v);
     });
   };
 
@@ -480,7 +477,7 @@ createPalette = function($container) {
   $slider = $('<div/>').slider({
     min: -1.0,
     max: 1.0,
-    value: 0,
+    value: editor.get('targetValue'),
     step: 0.005,
     change: function(evt, ui) {
       return editor.set('targetValue', ui.value);
@@ -541,6 +538,5 @@ $(document).ready(function() {
   editor.set('preset', {
     tools: [RoundBrush, Picker]
   });
-  editor.set('renderer', GammaRenderer);
-  return editor.set('targetValue', 0.0);
+  return editor.set('renderer', GammaRenderer);
 });
