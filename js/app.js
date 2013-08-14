@@ -10,7 +10,7 @@ Document = (function() {
     this.layer = new Layer(this.width, this.height);
     this.backup = new Layer(this.width, this.height);
     this.history = [];
-    this.histIndex = -1;
+    this.histIndex = 0;
   }
 
   Document.prototype.afterEdit = function(rect) {
@@ -18,6 +18,7 @@ Document = (function() {
     if (this.histIndex > 0) {
       this.history.splice(0, this.histIndex);
     }
+    this.histIndex = 0;
     this.history.splice(0, 0, {
       data: this.backup.getCopy(rect),
       rect: rect
@@ -25,37 +26,35 @@ Document = (function() {
     this.backup.getBuffer().set(this.layer.getBuffer());
     histSize = 10;
     if (this.history.length > histSize) {
-      this.history.splice(histSize);
+      return this.history.splice(histSize);
     }
-    this.histIndex = -1;
-    return console.log("History len: " + this.history.length);
   };
 
   Document.prototype.undo = function() {
-    if (this.histIndex >= this.history.length - 1) {
+    if (this.histIndex >= this.history.length) {
       return;
     }
-    if (this.histIndex === -1) {
-      this.afterEdit(this.history[0].rect);
-      this.histIndex = 1;
-    } else {
-      this.histIndex++;
-    }
-    console.log("History idx: " + this.histIndex);
-    return this.restore(this.history[this.histIndex]);
+    this.restore();
+    return this.histIndex++;
   };
 
   Document.prototype.redo = function() {
-    if (this.histIndex <= 0) {
+    if (this.histIndex === 0) {
       return;
     }
     this.histIndex--;
-    console.log("History idx: " + this.histIndex);
-    return this.restore(this.history[this.histIndex]);
+    return this.restore();
   };
 
-  Document.prototype.restore = function(histItem) {
-    return this.layer.setData(histItem.data, histItem.rect);
+  Document.prototype.restore = function() {
+    var rect, toRestore;
+    toRestore = this.history[this.histIndex];
+    rect = toRestore.rect;
+    this.history[this.histIndex] = {
+      data: this.layer.getCopy(rect),
+      rect: rect
+    };
+    return this.layer.setData(toRestore.data, toRestore.rect);
   };
 
   return Document;

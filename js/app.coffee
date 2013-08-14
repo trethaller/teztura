@@ -4,47 +4,53 @@ class Document
     @layer = new Layer(@width,@height)
     @backup = new Layer(@width,@height)
     @history = []
-    @histIndex = -1
+    @histIndex = 0
 
   afterEdit: (rect)->
     if @histIndex > 0
+      # Discard obsolete history branch
       @history.splice 0, @histIndex
+    @histIndex = 0
 
+    # Insert item at the top
     @history.splice 0, 0, {
       data: @backup.getCopy(rect)
       rect: rect
     }
+
+    # Backup current layer
     @backup.getBuffer().set(@layer.getBuffer())
+
+    # Limit history
     histSize = 10
     if @history.length > histSize
       @history.splice(histSize)
 
-    @histIndex = -1
-    console.log "History len: #{this.history.length}"
-
   undo: ->
-    if @histIndex >= @history.length - 1
+    if @histIndex >= @history.length
       return
-
-    if @histIndex is -1
-      @afterEdit(@history[0].rect)
-      @histIndex = 1
-    else 
-      @histIndex++
-
-    console.log "History idx: #{this.histIndex}"
-    @restore( @history[ @histIndex ] )
+      
+    @restore()
+    @histIndex++
 
   redo: ->
-    if @histIndex <= 0
+    if @histIndex is 0
       return
+
     @histIndex--
-    console.log "History idx: #{this.histIndex}"
-    @restore( @history[ @histIndex ] )
+    @restore()
 
+  restore: ->
+    toRestore = @history[ @histIndex ]
 
-  restore: (histItem)->
-    @layer.setData(histItem.data, histItem.rect)
+    # Backup what we are going to undo
+    rect = toRestore.rect
+    @history[ @histIndex ] = {
+      data: @layer.getCopy(rect)
+      rect: rect
+    }
+
+    @layer.setData(toRestore.data, toRestore.rect)
 
 
 Renderers = [GammaRenderer, NormalRenderer, GradientRenderer]
