@@ -21,8 +21,7 @@
         </div> <!-- /container -->
 
         <script src="js/vendor/jquery-1.10.1.min.js"></script>
-        <script src="js/core.js"></script>
-        <script src="js/tools.js"></script>
+        <script src="js/teztura.js"></script>
 
         <script type="text/javascript">
 
@@ -36,29 +35,36 @@
             var layer = new Layer(width, height);
             var brush = new Layer(100, 100);
             
-            fillLayer(brush, getRoundBrushFunc(0.0));
 
             fillLayer(layer, function(x,y) {
-                x += 1.0
-                y += 1.0
-                return (Math.round(x*40) % 2) * 0.1 -
-                    (Math.round(y*40) % 2) * 0.1;
+                return 0;
             });
 
            
-            function testBlend(y, args, expr) {
-                func = genBlendFunc(args, expr);
-                var nsteps = 30;
-                for(var i=0; i<nsteps; ++i) {
-                    var pressure = (1.0 - Math.cos(2 * Math.PI * i / nsteps)) * 0.5;
-                    func(new Vec2(i*500.0/nsteps - 50.0,y).round(), brush, layer, pressure);
-                }                  
+            var copyBlend = genBlendFunc("_", "{dst} = {src}");
+
+            function testBrush(x, y, func) {
+                fillLayer(brush, func);
+                copyBlend(new Vec2(x,y), brush, layer, 0);
             }
 
-            testBlend(0, "intensity", "{dst} += {src} * intensity");
-            testBlend(100, "intensity", "{dst} = {src} * intensity");
-            testBlend(200, "intensity", "{dst} *= 1 + {src} * intensity");
-            testBlend(300, "intensity", "{dst} = {dst} * (1 - intensity*{src}) + 0.5 * intensity*{src}");
+            testBrush(10, 10, function() {
+                return function(x, y) {
+                    return Math.max(0, 1.0 - (x*x + y*y));
+                }
+            }());
+
+            testBrush(120, 10, function() {
+                return function(x, y) {
+                    return Math.max(0, 1.0 - Math.sqrt(x*x + y*y));
+                }
+            }());
+
+
+            testBrush(10, 110, getRoundBrushFunc(0));
+            testBrush(120, 110, getRoundBrushFunc(1));
+            testBrush(230, 110, getRoundBrushFunc(5));
+            testBrush(340, 110, getRoundBrushFunc(15));
 
             $canvas = $('#canvas')
             var canvas = $canvas[0] 

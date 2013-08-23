@@ -16,13 +16,12 @@
     <body>
         <div class="container">
             <div>
-                <canvas id="canvas" width="800" height="600"></canvas>
+                <canvas id="canvas" width="500" height="500"></canvas>
             </div>
         </div> <!-- /container -->
 
         <script src="js/vendor/jquery-1.10.1.min.js"></script>
-        <script src="js/core.js"></script>
-        <script src="js/tools.js"></script>
+        <script src="js/teztura.js"></script>
 
         <script type="text/javascript">
 
@@ -32,26 +31,33 @@
 
             var ctx = $('canvas')[0].getContext('2d');
             var layer = new Layer(width, height);
+
+            var layer = new Layer(width, height);
+            var brush = new Layer(100, 100);
             
+            fillLayer(brush, getRoundBrushFunc(0.0));
+
             fillLayer(layer, function(x,y) {
-                return -1;
+                x += 1.0
+                y += 1.0
+                return (Math.round(x*40) % 2) * 0.1 -
+                    (Math.round(y*40) % 2) * 0.1;
             });
 
-            function testBrush(b, offset, step) {
-                b.stepSize = step;
-                b.beginDraw();
-                b.draw(layer, offset.add(new Vec2(0,0)), 1.0);
-                b.draw(layer, offset.add(new Vec2(40,0)), 1.0);
-                b.draw(layer, offset.add(new Vec2(100,0)), 1.0);
-                b.draw(layer, offset.add(new Vec2(100,100)), 1.0);
-                b.draw(layer, offset.add(new Vec2(50,50)), 1.0);
-                b.endDraw();
+           
+            function testBlend(y, args, expr) {
+                func = genBlendFunc(args, expr);
+                var nsteps = 30;
+                for(var i=0; i<nsteps; ++i) {
+                    var pressure = (1.0 - Math.cos(2 * Math.PI * i / nsteps)) * 0.5;
+                    func(new Vec2(i*500.0/nsteps - 50.0,y).round(), brush, layer, pressure);
+                }                  
             }
-            var b = new StepBrush();
-            testBrush(b, new Vec2(10,10), 1);
-            testBrush(b, new Vec2(120,10), 4);
-            testBrush(b, new Vec2(230,10), 10);
-            testBrush(b, new Vec2(340,10), 23);
+
+            testBlend(0, "intensity", "{dst} += {src} * intensity");
+            testBlend(100, "intensity", "{dst} = {src} * intensity");
+            testBlend(200, "intensity", "{dst} *= 1 + {src} * intensity");
+            testBlend(300, "intensity", "{dst} = {dst} * (1 - intensity*{src}) + 0.5 * intensity*{src}");
 
             $canvas = $('#canvas')
             var canvas = $canvas[0] 
