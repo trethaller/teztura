@@ -4,7 +4,6 @@ Tools = null
 editor = null
 toolsProperties = null
 
-
 Commands = [
   {
     name: "Fill"
@@ -68,139 +67,6 @@ Commands = [
   },
 ]
 
-class DocumentView
-  drawing: false
-  panning: false
-  imageData: null
-  context: null
-  canvas: null
-  backContext: null
-  doc: null
-  offset: new Vec2(0.0, 0.0)
-  scale: 1.0
-
-  constructor: ($container, doc)->
-    @doc = doc
-    $container.empty()
-    $canvas = $('<canvas/>',{'class':''}).attr {width: doc.width, height:doc.height}
-    $backCanvas = $('<canvas/>',{'class':''}).attr {width: doc.width, height:doc.height}
-    $container.append($backCanvas)
-
-    @backContext = $backCanvas[0].getContext('2d')
-    @canvas = $canvas[0] 
-    @context = $canvas[0].getContext('2d')
-    @imageData = @context.getImageData(0,0,doc.width,doc.height)
-
-    @context.mozImageSmoothingEnabled = false
-
-
-    getCoords = (e)=>
-      x = e.pageX-$backCanvas.position().left
-      y = e.pageY-$backCanvas.position().top
-      return new Vec2(x,y)
-
-    getCanvasCoords = (e)=>
-      v = getCoords(e)
-      return @screenToCanvas(v)
-
-    local = {}
-
-    $backCanvas.mousedown (e)=>
-      e.preventDefault()
-      if e.which is 1
-        @drawing = true
-        @actionDirtyRect = null
-        coords = getCanvasCoords(e)
-        editor.getToolObject().beginDraw(coords)
-        @onDraw(coords)
-
-      if e.which is 2
-        @panning = true
-        local.panningStart = getCoords(e)
-        local.offsetStart = @offset.clone()
-
-    $container.mouseup (e)=>
-      e.preventDefault()
-      if e.which is 1
-        editor.getToolObject().endDraw(getCanvasCoords(e))
-        @drawing = false
-        if @actionDirtyRect?
-          doc.afterEdit(@actionDirtyRect)
-
-      if e.which is 2
-        @panning = false
-
-    $container.mousemove (e)=>
-      e.preventDefault()
-      if @drawing
-        @onDraw(getCanvasCoords(e))
-
-      if @panning
-        curPos = getCoords(e)
-        o = local.offsetStart.add(curPos.sub(local.panningStart))
-        @offset = o
-        @rePaint()
- 
-  screenToCanvas: (pt)->
-    return pt.sub(@offset).scale(1.0/@scale)
-
-  reRender: ()->
-    layer = @doc.layer
-    editor.get('renderer').renderLayer(layer, this, [new Rect(0,0,@doc.width,@doc.height)])
-    @rePaint()
-
-  rePaint: ()->
-    ctx = @backContext
-    ctx.setTransform(1, 0, 0, 1, 0, 0)
-    ctx.translate(@offset.x, @offset.y)
-    ctx.scale(@scale, @scale)
-    
-    if editor.get('tiling')
-      ctx.fillStyle = ctx.createPattern(@canvas,"repeat")
-      ctx.fillRect(-@offset.x / @scale,-@offset.y / @scale,@canvas.width / @scale, @canvas.height / @scale)
-    else
-      ctx.drawImage(@canvas, 0, 0)
-
-  onDraw: (pos)->
-    pressure = getPenPressure()
-    dirtyRects = []
-
-    layer = @doc.layer
-    tool = editor.getToolObject()
-
-    layerRect = layer.getRect()
-    
-    r = tool.draw(layer, pos, pressure).round()
-
-    if editor.get('tiling')
-      for xoff in [-1,0,1]
-        for yoff in [-1,0,1]
-          dirtyRects.push(r.offset(new Vec2(xoff * layerRect.width, yoff * layerRect.height)))
-    else
-      dirtyRects.push(r.intersect(layerRect))
-
-    dirtyRects = dirtyRects
-      .map((r)->r.intersect(layerRect))
-      .filter((r)->not r.isEmpty())
-
-    dirtyRects.forEach (r)=>
-      if not @actionDirtyRect?
-        @actionDirtyRect = r.clone()
-      else
-        @actionDirtyRect.extend(r)
-
-    if false # Log dirty rects
-      totalArea = dirtyRects
-        .map((r)-> r.width * r.height)
-        .reduce((a,b)-> a+b)
-      console.log "#{dirtyRects.length} rects, #{Math.round(Math.sqrt(totalArea))} px²"
-
-    if true
-    #setTimeout (()->
-      editor.get('renderer').renderLayer(layer, @, dirtyRects)
-      @rePaint()
-    #), 0
-
 # ---
 
 class Editor extends Backbone.Model
@@ -256,69 +122,6 @@ class Editor extends Backbone.Model
     v.reRender()
     v.rePaint()
 
-PropertyView = Backbone.View.extend
-  className: "property"
-
-  initialize: () ->
-    tool = @model.tool
-    prop = @model.prop
-
-    # Label
-    $('<span/>').text(prop.name).appendTo(@$el)
-
-    # Slider
-    if prop.range?
-      power = prop.power or 1.0
-      conv = (v)-> Math.pow(v, power)
-      invconv = (v)-> Math.pow(v, 1.0 / power)
-      
-      rmin = invconv(prop.range[0])
-      rmax = invconv(prop.range[1])
-      step = if prop.type is 'int' then 1 else (rmax-rmin) / 100
-
-      $slider = $('<div/>').slider({
-        min: rmin
-        max: rmax
-        value: invconv(tool.get(prop.id))
-        step: step
-        change: (evt, ui)->
-          tool.set(prop.id, conv(ui.value))
-          editor.setToolDirty()
-      }).width(200).appendTo(@$el)
-
-      $input = $('<input/>')
-        .val(tool.get(prop.id))
-        .appendTo(@$el)
-        .change (evt)->
-          if prop.type is 'int'
-            tool.set(prop.id, parseInt($input.val()))
-          else
-            tool.set(prop.id, parseFloat($input.val()))
-
-      @listenTo @model.tool, "change:#{prop.id}", ()->
-        v = tool.get(prop.id)
-        $input.val(v)
-        $slider.slider("value", invconv(v))
-        
-# --
-class PropertyPanel
-  constructor: (@selector)->
-    @views = []
-
-  setTool: (tool)->
-    @removeViews()
-    tool.properties.forEach (prop)=>
-      v = new PropertyView
-        model: {prop, tool}
-
-      $(@selector).append(v.$el)
-      @views.push(v)
-
-  removeViews: ()->
-    @views.forEach (v)->
-      v.remove()
-    @views = []
-
 # ---
 
 getPenPressure = () ->
@@ -328,17 +131,11 @@ getPenPressure = () ->
     return penAPI.pressure
   return 1.0
 
-
 status = (txt)->
   $('#status-bar').text(txt)
 
-
-
 refresh = ()->
   editor.refresh()
-
-
-
 
 createToolsButtons = ($container)->
   $container.empty()
@@ -436,3 +233,4 @@ $(document).ready ()->
     tools: [RoundBrush, Picker]
   })
   editor.set('renderer', GammaRenderer)
+

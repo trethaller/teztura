@@ -79,181 +79,6 @@ Commands = [
   }
 ];
 
-DocumentView = (function() {
-  DocumentView.prototype.drawing = false;
-
-  DocumentView.prototype.panning = false;
-
-  DocumentView.prototype.imageData = null;
-
-  DocumentView.prototype.context = null;
-
-  DocumentView.prototype.canvas = null;
-
-  DocumentView.prototype.backContext = null;
-
-  DocumentView.prototype.doc = null;
-
-  DocumentView.prototype.offset = new Vec2(0.0, 0.0);
-
-  DocumentView.prototype.scale = 1.0;
-
-  function DocumentView($container, doc) {
-    var $backCanvas, $canvas, getCanvasCoords, getCoords, local,
-      _this = this;
-    this.doc = doc;
-    $container.empty();
-    $canvas = $('<canvas/>', {
-      'class': ''
-    }).attr({
-      width: doc.width,
-      height: doc.height
-    });
-    $backCanvas = $('<canvas/>', {
-      'class': ''
-    }).attr({
-      width: doc.width,
-      height: doc.height
-    });
-    $container.append($backCanvas);
-    this.backContext = $backCanvas[0].getContext('2d');
-    this.canvas = $canvas[0];
-    this.context = $canvas[0].getContext('2d');
-    this.imageData = this.context.getImageData(0, 0, doc.width, doc.height);
-    this.context.mozImageSmoothingEnabled = false;
-    getCoords = function(e) {
-      var x, y;
-      x = e.pageX - $backCanvas.position().left;
-      y = e.pageY - $backCanvas.position().top;
-      return new Vec2(x, y);
-    };
-    getCanvasCoords = function(e) {
-      var v;
-      v = getCoords(e);
-      return _this.screenToCanvas(v);
-    };
-    local = {};
-    $backCanvas.mousedown(function(e) {
-      var coords;
-      e.preventDefault();
-      if (e.which === 1) {
-        _this.drawing = true;
-        _this.actionDirtyRect = null;
-        coords = getCanvasCoords(e);
-        editor.getToolObject().beginDraw(coords);
-        _this.onDraw(coords);
-      }
-      if (e.which === 2) {
-        _this.panning = true;
-        local.panningStart = getCoords(e);
-        return local.offsetStart = _this.offset.clone();
-      }
-    });
-    $container.mouseup(function(e) {
-      e.preventDefault();
-      if (e.which === 1) {
-        editor.getToolObject().endDraw(getCanvasCoords(e));
-        _this.drawing = false;
-        if (_this.actionDirtyRect != null) {
-          doc.afterEdit(_this.actionDirtyRect);
-        }
-      }
-      if (e.which === 2) {
-        return _this.panning = false;
-      }
-    });
-    $container.mousemove(function(e) {
-      var curPos, o;
-      e.preventDefault();
-      if (_this.drawing) {
-        _this.onDraw(getCanvasCoords(e));
-      }
-      if (_this.panning) {
-        curPos = getCoords(e);
-        o = local.offsetStart.add(curPos.sub(local.panningStart));
-        _this.offset = o;
-        return _this.rePaint();
-      }
-    });
-  }
-
-  DocumentView.prototype.screenToCanvas = function(pt) {
-    return pt.sub(this.offset).scale(1.0 / this.scale);
-  };
-
-  DocumentView.prototype.reRender = function() {
-    var layer;
-    layer = this.doc.layer;
-    editor.get('renderer').renderLayer(layer, this, [new Rect(0, 0, this.doc.width, this.doc.height)]);
-    return this.rePaint();
-  };
-
-  DocumentView.prototype.rePaint = function() {
-    var ctx;
-    ctx = this.backContext;
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
-    ctx.translate(this.offset.x, this.offset.y);
-    ctx.scale(this.scale, this.scale);
-    if (editor.get('tiling')) {
-      ctx.fillStyle = ctx.createPattern(this.canvas, "repeat");
-      return ctx.fillRect(-this.offset.x / this.scale, -this.offset.y / this.scale, this.canvas.width / this.scale, this.canvas.height / this.scale);
-    } else {
-      return ctx.drawImage(this.canvas, 0, 0);
-    }
-  };
-
-  DocumentView.prototype.onDraw = function(pos) {
-    var dirtyRects, layer, layerRect, pressure, r, tool, totalArea, xoff, yoff, _i, _j, _len, _len1, _ref, _ref1,
-      _this = this;
-    pressure = getPenPressure();
-    dirtyRects = [];
-    layer = this.doc.layer;
-    tool = editor.getToolObject();
-    layerRect = layer.getRect();
-    r = tool.draw(layer, pos, pressure).round();
-    if (editor.get('tiling')) {
-      _ref = [-1, 0, 1];
-      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        xoff = _ref[_i];
-        _ref1 = [-1, 0, 1];
-        for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
-          yoff = _ref1[_j];
-          dirtyRects.push(r.offset(new Vec2(xoff * layerRect.width, yoff * layerRect.height)));
-        }
-      }
-    } else {
-      dirtyRects.push(r.intersect(layerRect));
-    }
-    dirtyRects = dirtyRects.map(function(r) {
-      return r.intersect(layerRect);
-    }).filter(function(r) {
-      return !r.isEmpty();
-    });
-    dirtyRects.forEach(function(r) {
-      if (_this.actionDirtyRect == null) {
-        return _this.actionDirtyRect = r.clone();
-      } else {
-        return _this.actionDirtyRect.extend(r);
-      }
-    });
-    if (false) {
-      totalArea = dirtyRects.map(function(r) {
-        return r.width * r.height;
-      }).reduce(function(a, b) {
-        return a + b;
-      });
-      console.log("" + dirtyRects.length + " rects, " + (Math.round(Math.sqrt(totalArea))) + " px²");
-    }
-    if (true) {
-      editor.get('renderer').renderLayer(layer, this, dirtyRects);
-      return this.rePaint();
-    }
-  };
-
-  return DocumentView;
-
-})();
-
 Editor = (function(_super) {
   __extends(Editor, _super);
 
@@ -333,84 +158,6 @@ Editor = (function(_super) {
   return Editor;
 
 })(Backbone.Model);
-
-PropertyView = Backbone.View.extend({
-  className: "property",
-  initialize: function() {
-    var $input, $slider, conv, invconv, power, prop, rmax, rmin, step, tool;
-    tool = this.model.tool;
-    prop = this.model.prop;
-    $('<span/>').text(prop.name).appendTo(this.$el);
-    if (prop.range != null) {
-      power = prop.power || 1.0;
-      conv = function(v) {
-        return Math.pow(v, power);
-      };
-      invconv = function(v) {
-        return Math.pow(v, 1.0 / power);
-      };
-      rmin = invconv(prop.range[0]);
-      rmax = invconv(prop.range[1]);
-      step = prop.type === 'int' ? 1 : (rmax - rmin) / 100;
-      $slider = $('<div/>').slider({
-        min: rmin,
-        max: rmax,
-        value: invconv(tool.get(prop.id)),
-        step: step,
-        change: function(evt, ui) {
-          tool.set(prop.id, conv(ui.value));
-          return editor.setToolDirty();
-        }
-      }).width(200).appendTo(this.$el);
-      $input = $('<input/>').val(tool.get(prop.id)).appendTo(this.$el).change(function(evt) {
-        if (prop.type === 'int') {
-          return tool.set(prop.id, parseInt($input.val()));
-        } else {
-          return tool.set(prop.id, parseFloat($input.val()));
-        }
-      });
-      return this.listenTo(this.model.tool, "change:" + prop.id, function() {
-        var v;
-        v = tool.get(prop.id);
-        $input.val(v);
-        return $slider.slider("value", invconv(v));
-      });
-    }
-  }
-});
-
-PropertyPanel = (function() {
-  function PropertyPanel(selector) {
-    this.selector = selector;
-    this.views = [];
-  }
-
-  PropertyPanel.prototype.setTool = function(tool) {
-    var _this = this;
-    this.removeViews();
-    return tool.properties.forEach(function(prop) {
-      var v;
-      v = new PropertyView({
-        model: {
-          prop: prop,
-          tool: tool
-        }
-      });
-      $(_this.selector).append(v.$el);
-      return _this.views.push(v);
-    });
-  };
-
-  PropertyPanel.prototype.removeViews = function() {
-    this.views.forEach(function(v) {
-      return v.remove();
-    });
-    return this.views = [];
-  };
-
-  return PropertyPanel;
-
-})();
 
 getPenPressure = function() {
   var penAPI, plugin;
@@ -549,6 +296,181 @@ $(document).ready(function() {
   return editor.set('renderer', GammaRenderer);
 });
 
+DocumentView = (function() {
+  DocumentView.prototype.drawing = false;
+
+  DocumentView.prototype.panning = false;
+
+  DocumentView.prototype.imageData = null;
+
+  DocumentView.prototype.context = null;
+
+  DocumentView.prototype.canvas = null;
+
+  DocumentView.prototype.backContext = null;
+
+  DocumentView.prototype.doc = null;
+
+  DocumentView.prototype.offset = new Vec2(0.0, 0.0);
+
+  DocumentView.prototype.scale = 1.0;
+
+  function DocumentView($container, doc) {
+    var $backCanvas, $canvas, getCanvasCoords, getCoords, local,
+      _this = this;
+    this.doc = doc;
+    $container.empty();
+    $canvas = $('<canvas/>', {
+      'class': ''
+    }).attr({
+      width: doc.width,
+      height: doc.height
+    });
+    $backCanvas = $('<canvas/>', {
+      'class': ''
+    }).attr({
+      width: doc.width,
+      height: doc.height
+    });
+    $container.append($backCanvas);
+    this.backContext = $backCanvas[0].getContext('2d');
+    this.canvas = $canvas[0];
+    this.context = $canvas[0].getContext('2d');
+    this.imageData = this.context.getImageData(0, 0, doc.width, doc.height);
+    this.context.mozImageSmoothingEnabled = false;
+    getCoords = function(e) {
+      var x, y;
+      x = e.pageX - $backCanvas.position().left;
+      y = e.pageY - $backCanvas.position().top;
+      return new Vec2(x, y);
+    };
+    getCanvasCoords = function(e) {
+      var v;
+      v = getCoords(e);
+      return _this.screenToCanvas(v);
+    };
+    local = {};
+    $backCanvas.mousedown(function(e) {
+      var coords;
+      e.preventDefault();
+      if (e.which === 1) {
+        _this.drawing = true;
+        _this.actionDirtyRect = null;
+        coords = getCanvasCoords(e);
+        editor.getToolObject().beginDraw(coords);
+        _this.onDraw(coords);
+      }
+      if (e.which === 2) {
+        _this.panning = true;
+        local.panningStart = getCoords(e);
+        return local.offsetStart = _this.offset.clone();
+      }
+    });
+    $container.mouseup(function(e) {
+      e.preventDefault();
+      if (e.which === 1) {
+        editor.getToolObject().endDraw(getCanvasCoords(e));
+        _this.drawing = false;
+        if (_this.actionDirtyRect != null) {
+          doc.afterEdit(_this.actionDirtyRect);
+        }
+      }
+      if (e.which === 2) {
+        return _this.panning = false;
+      }
+    });
+    $container.mousemove(function(e) {
+      var curPos, o;
+      e.preventDefault();
+      if (_this.drawing) {
+        _this.onDraw(getCanvasCoords(e));
+      }
+      if (_this.panning) {
+        curPos = getCoords(e);
+        o = local.offsetStart.add(curPos.sub(local.panningStart));
+        _this.offset = o;
+        return _this.rePaint();
+      }
+    });
+  }
+
+  DocumentView.prototype.screenToCanvas = function(pt) {
+    return pt.sub(this.offset).scale(1.0 / this.scale);
+  };
+
+  DocumentView.prototype.reRender = function() {
+    var layer;
+    layer = this.doc.layer;
+    editor.get('renderer').renderLayer(layer, this, [new Rect(0, 0, this.doc.width, this.doc.height)]);
+    return this.rePaint();
+  };
+
+  DocumentView.prototype.rePaint = function() {
+    var ctx;
+    ctx = this.backContext;
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.translate(this.offset.x, this.offset.y);
+    ctx.scale(this.scale, this.scale);
+    if (editor.get('tiling')) {
+      ctx.fillStyle = ctx.createPattern(this.canvas, "repeat");
+      return ctx.fillRect(-this.offset.x / this.scale, -this.offset.y / this.scale, this.canvas.width / this.scale, this.canvas.height / this.scale);
+    } else {
+      return ctx.drawImage(this.canvas, 0, 0);
+    }
+  };
+
+  DocumentView.prototype.onDraw = function(pos) {
+    var dirtyRects, layer, layerRect, pressure, r, tool, totalArea, xoff, yoff, _i, _j, _len, _len1, _ref1, _ref2,
+      _this = this;
+    pressure = getPenPressure();
+    dirtyRects = [];
+    layer = this.doc.layer;
+    tool = editor.getToolObject();
+    layerRect = layer.getRect();
+    r = tool.draw(layer, pos, pressure).round();
+    if (editor.get('tiling')) {
+      _ref1 = [-1, 0, 1];
+      for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
+        xoff = _ref1[_i];
+        _ref2 = [-1, 0, 1];
+        for (_j = 0, _len1 = _ref2.length; _j < _len1; _j++) {
+          yoff = _ref2[_j];
+          dirtyRects.push(r.offset(new Vec2(xoff * layerRect.width, yoff * layerRect.height)));
+        }
+      }
+    } else {
+      dirtyRects.push(r.intersect(layerRect));
+    }
+    dirtyRects = dirtyRects.map(function(r) {
+      return r.intersect(layerRect);
+    }).filter(function(r) {
+      return !r.isEmpty();
+    });
+    dirtyRects.forEach(function(r) {
+      if (_this.actionDirtyRect == null) {
+        return _this.actionDirtyRect = r.clone();
+      } else {
+        return _this.actionDirtyRect.extend(r);
+      }
+    });
+    if (false) {
+      totalArea = dirtyRects.map(function(r) {
+        return r.width * r.height;
+      }).reduce(function(a, b) {
+        return a + b;
+      });
+      console.log("" + dirtyRects.length + " rects, " + (Math.round(Math.sqrt(totalArea))) + " px²");
+    }
+    if (true) {
+      editor.get('renderer').renderLayer(layer, this, dirtyRects);
+      return this.rePaint();
+    }
+  };
+
+  return DocumentView;
+
+})();
+
 Document = (function() {
   function Document(width, height) {
     this.width = width;
@@ -604,6 +526,84 @@ Document = (function() {
   };
 
   return Document;
+
+})();
+
+PropertyView = Backbone.View.extend({
+  className: "property",
+  initialize: function() {
+    var $input, $slider, conv, invconv, power, prop, rmax, rmin, step, tool;
+    tool = this.model.tool;
+    prop = this.model.prop;
+    $('<span/>').text(prop.name).appendTo(this.$el);
+    if (prop.range != null) {
+      power = prop.power || 1.0;
+      conv = function(v) {
+        return Math.pow(v, power);
+      };
+      invconv = function(v) {
+        return Math.pow(v, 1.0 / power);
+      };
+      rmin = invconv(prop.range[0]);
+      rmax = invconv(prop.range[1]);
+      step = prop.type === 'int' ? 1 : (rmax - rmin) / 100;
+      $slider = $('<div/>').slider({
+        min: rmin,
+        max: rmax,
+        value: invconv(tool.get(prop.id)),
+        step: step,
+        change: function(evt, ui) {
+          tool.set(prop.id, conv(ui.value));
+          return editor.setToolDirty();
+        }
+      }).width(200).appendTo(this.$el);
+      $input = $('<input/>').val(tool.get(prop.id)).appendTo(this.$el).change(function(evt) {
+        if (prop.type === 'int') {
+          return tool.set(prop.id, parseInt($input.val()));
+        } else {
+          return tool.set(prop.id, parseFloat($input.val()));
+        }
+      });
+      return this.listenTo(this.model.tool, "change:" + prop.id, function() {
+        var v;
+        v = tool.get(prop.id);
+        $input.val(v);
+        return $slider.slider("value", invconv(v));
+      });
+    }
+  }
+});
+
+PropertyPanel = (function() {
+  function PropertyPanel(selector) {
+    this.selector = selector;
+    this.views = [];
+  }
+
+  PropertyPanel.prototype.setTool = function(tool) {
+    var _this = this;
+    this.removeViews();
+    return tool.properties.forEach(function(prop) {
+      var v;
+      v = new PropertyView({
+        model: {
+          prop: prop,
+          tool: tool
+        }
+      });
+      $(_this.selector).append(v.$el);
+      return _this.views.push(v);
+    });
+  };
+
+  PropertyPanel.prototype.removeViews = function() {
+    this.views.forEach(function(v) {
+      return v.remove();
+    });
+    return this.views = [];
+  };
+
+  return PropertyPanel;
 
 })();
 
