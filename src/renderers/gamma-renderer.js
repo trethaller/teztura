@@ -1,5 +1,5 @@
 GammaRenderer = (function() {
-  
+
   var properties = {
     gamma: 1.0
   };
@@ -7,7 +7,7 @@ GammaRenderer = (function() {
   function renderLayer (layer, view, rects) {
     var width = layer.width;
     var height = layer.height;
-    var destBuffer = new Uint32Array(view.imageData.data.buffer);
+    var imgData = view.imageData.data;
     var fb = layer.getBuffer();
     var gamma = properties.gamma;
     for(var ri in rects) {
@@ -22,8 +22,11 @@ GammaRenderer = (function() {
           var fval = fb[offset + ix];
           fval = fval > 1.0 ? 1.0 : (fval < -1.0 ? -1.0 : fval);
           var val = Math.round(Math.pow((fval + 1.0) * 0.5, gamma) * 255.0);
-          destBuffer[offset + ix] =
-            (val) | (val << 8) | (val << 16) | 0xff000000;
+          var off = (offset + ix) << 2;
+          imgData[off] = val;
+          imgData[off+1] = val;
+          imgData[off+2] = val;
+          imgData[off+3] = 0xff;
         }
       }
       view.context.putImageData(view.imageData, 0, 0, r.x, r.y, r.width+1, r.height+1);

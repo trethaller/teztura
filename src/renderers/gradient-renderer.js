@@ -33,7 +33,11 @@ GradientRenderer = (function() {
               )
             )
           ];
-          destBuffer[offset + ix] = lookup;
+          var off = (offset + ix) << 2;
+          imgData[off] = lookup & 0xff;
+          imgData[off+1] = (lookup >> 8) & 0xff;
+          imgData[off+2] = (lookup >> 16) & 0xff;
+          imgData[off+3] = 0xff;
         }
       }
       view.context.putImageData(view.imageData, 0, 0, r.x, r.y, r.width+1, r.height+1);
