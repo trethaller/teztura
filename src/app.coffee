@@ -124,13 +124,6 @@ class Editor extends Backbone.Model
 
 # ---
 
-getPenPressure = () ->
-  plugin = document.getElementById('wtPlugin')
-  penAPI = plugin.penAPI
-  if penAPI and penAPI.pointerType > 0
-    return penAPI.pressure
-  return 1.0
-
 status = (txt)->
   $('#status-bar').text(txt)
 
@@ -199,10 +192,6 @@ $(window).keydown (e)->
   if e.key is 'Control'
     editor.set('altkeyDown', true)
 
-$(window).keyup (e)->
-  if e.key is 'Control'
-    editor.set('altkeyDown', false)
-
   if e.ctrlKey
     switch e.keyCode 
       when 90
@@ -212,9 +201,14 @@ $(window).keyup (e)->
         editor.get('doc').redo()
         editor.refresh()
 
+$(window).keyup (e)->
+  if e.key is 'Control'
+    editor.set('altkeyDown', false)
+
 $(document).ready ()->
 
   loadGradient('g1', 'img/gradient-1.png')
+  #loadGradient('g2', 'img/gradient-2.png')
 
   Renderers = [GammaRenderer, NormalRenderer, GradientRenderer]
   Tools = [RoundBrush, Picker]

@@ -1,4 +1,4 @@
-var BlendModes, Commands, Document, DocumentView, Editor, Flatten, Picker, PropertyPanel, PropertyView, Renderers, RoundBrush, StepBrush, Tools, createCommandsButtons, createPalette, createRenderersButtons, createToolsButtons, editor, getPenPressure, loadGradient, refresh, status, toolsProperties, _ref,
+var BlendModes, Commands, Document, DocumentView, Editor, Flatten, Picker, PropertyPanel, PropertyView, Renderers, RoundBrush, StepBrush, Tools, createCommandsButtons, createPalette, createRenderersButtons, createToolsButtons, editor, loadGradient, refresh, status, toolsProperties, _ref,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
@@ -159,16 +159,6 @@ Editor = (function(_super) {
 
 })(Backbone.Model);
 
-getPenPressure = function() {
-  var penAPI, plugin;
-  plugin = document.getElementById('wtPlugin');
-  penAPI = plugin.penAPI;
-  if (penAPI && penAPI.pointerType > 0) {
-    return penAPI.pressure;
-  }
-  return 1.0;
-};
-
 status = function(txt) {
   return $('#status-bar').text(txt);
 };
@@ -259,13 +249,7 @@ loadGradient = function(name, url) {
 
 $(window).keydown(function(e) {
   if (e.key === 'Control') {
-    return editor.set('altkeyDown', true);
-  }
-});
-
-$(window).keyup(function(e) {
-  if (e.key === 'Control') {
-    editor.set('altkeyDown', false);
+    editor.set('altkeyDown', true);
   }
   if (e.ctrlKey) {
     switch (e.keyCode) {
@@ -276,6 +260,12 @@ $(window).keyup(function(e) {
         editor.get('doc').redo();
         return editor.refresh();
     }
+  }
+});
+
+$(window).keyup(function(e) {
+  if (e.key === 'Control') {
+    return editor.set('altkeyDown', false);
   }
 });
 
@@ -316,7 +306,7 @@ DocumentView = (function() {
   DocumentView.prototype.scale = 1.0;
 
   function DocumentView($container, doc) {
-    var $backCanvas, $canvas, getCanvasCoords, getCoords, local,
+    var $backCanvas, $canvas, getCanvasCoords, getPenCoords, getPressure, local, penAPI, plugin,
       _this = this;
     this.doc = doc;
     $container.empty();
@@ -338,16 +328,32 @@ DocumentView = (function() {
     this.context = $canvas[0].getContext('2d');
     this.imageData = this.context.getImageData(0, 0, doc.width, doc.height);
     this.context.mozImageSmoothingEnabled = false;
-    getCoords = function(e) {
-      var x, y;
-      x = e.pageX - $backCanvas.position().left;
-      y = e.pageY - $backCanvas.position().top;
-      return new Vec2(x, y);
-    };
+    plugin = document.getElementById('wtPlugin');
+    penAPI = plugin != null ? plugin.penAPI : null;
     getCanvasCoords = function(e) {
       var v;
-      v = getCoords(e);
+      v = getPenCoords(e);
       return _this.screenToCanvas(v);
+    };
+    getPenCoords = function(e) {
+      var v;
+      v = new Vec2(e.pageX, e.pageY);
+      /*
+      penAPI = plugin.penAPI
+      if penAPI? and penAPI.pointerType > 0
+        v.x += penAPI.sysX - penAPI.posX
+        v.y += penAPI.sysY - penAPI.posY
+      */
+
+      v.x -= $backCanvas.position().left;
+      v.y -= $backCanvas.position().top;
+      return v;
+    };
+    getPressure = function() {
+      if ((penAPI != null) && penAPI.pointerType > 0) {
+        return penAPI.pressure;
+      }
+      return 1.0;
     };
     local = {};
     $backCanvas.mousedown(function(e) {
@@ -358,7 +364,8 @@ DocumentView = (function() {
         _this.actionDirtyRect = null;
         coords = getCanvasCoords(e);
         editor.getToolObject().beginDraw(coords);
-        _this.onDraw(coords);
+        doc.beginEdit();
+        _this.onDraw(coords, getPressure());
       }
       if (e.which === 2) {
         _this.panning = true;
@@ -383,7 +390,7 @@ DocumentView = (function() {
       var curPos, o;
       e.preventDefault();
       if (_this.drawing) {
-        _this.onDraw(getCanvasCoords(e));
+        _this.onDraw(getCanvasCoords(e), getPressure());
       }
       if (_this.panning) {
         curPos = getCoords(e);
@@ -419,10 +426,9 @@ DocumentView = (function() {
     }
   };
 
-  DocumentView.prototype.onDraw = function(pos) {
-    var dirtyRects, layer, layerRect, pressure, r, tool, totalArea, xoff, yoff, _i, _j, _len, _len1, _ref1, _ref2,
+  DocumentView.prototype.onDraw = function(pos, pressure) {
+    var dirtyRects, layer, layerRect, r, tool, totalArea, xoff, yoff, _i, _j, _len, _len1, _ref1, _ref2,
       _this = this;
-    pressure = getPenPressure();
     dirtyRects = [];
     layer = this.doc.layer;
     tool = editor.getToolObject();
@@ -478,22 +484,26 @@ Document = (function() {
     this.layer = new Layer(this.width, this.height);
     this.backup = new Layer(this.width, this.height);
     this.history = [];
-    this.histIndex = 0;
+    this.histIndex = 1;
   }
+
+  Document.prototype.beginEdit = function() {
+    if (this.histIndex > 0) {
+      this.history.splice(0, this.histIndex);
+      this.histIndex = 0;
+      return this.backup.getBuffer().set(this.layer.getBuffer());
+    }
+  };
 
   Document.prototype.afterEdit = function(rect) {
     var histSize;
-    if (this.histIndex > 0) {
-      this.history.splice(0, this.histIndex);
-    }
-    this.histIndex = 0;
     this.history.splice(0, 0, {
       data: this.backup.getCopy(rect),
       rect: rect
     });
     this.backup.getBuffer().set(this.layer.getBuffer());
     histSize = 10;
-    if (this.history.length > histSize) {
+    if (this.history.length >= histSize) {
       return this.history.splice(histSize);
     }
   };
@@ -746,7 +756,7 @@ RoundBrush = (function() {
     }, {
       id: 'size',
       name: "Size",
-      defaultValue: 16.0,
+      defaultValue: 8.0,
       range: [1.0, 256.0],
       type: 'int'
     }, {
@@ -757,7 +767,7 @@ RoundBrush = (function() {
     }, {
       id: 'intensity',
       name: "Intensity",
-      defaultValue: 1.0,
+      defaultValue: 0.6,
       range: [0.0, 1.0],
       power: 2.0
     }

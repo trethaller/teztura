@@ -24,26 +24,43 @@ class DocumentView
 
     @context.mozImageSmoothingEnabled = false
 
-
-    getCoords = (e)=>
-      x = e.pageX-$backCanvas.position().left
-      y = e.pageY-$backCanvas.position().top
-      return new Vec2(x,y)
+    plugin = document.getElementById('wtPlugin')
+    penAPI = if plugin? then plugin.penAPI else null
 
     getCanvasCoords = (e)=>
-      v = getCoords(e)
+      v = getPenCoords(e)
       return @screenToCanvas(v)
+
+    getPenCoords = (e)=>
+      v = new Vec2(e.pageX, e.pageY)
+
+      ###
+      penAPI = plugin.penAPI
+      if penAPI? and penAPI.pointerType > 0
+        v.x += penAPI.sysX - penAPI.posX
+        v.y += penAPI.sysY - penAPI.posY
+      ###
+      v.x -= $backCanvas.position().left
+      v.y -= $backCanvas.position().top
+      return v
+
+    getPressure = ()=>
+      if penAPI? and penAPI.pointerType > 0
+        return penAPI.pressure
+      return 1.0
 
     local = {}
 
     $backCanvas.mousedown (e)=>
       e.preventDefault()
+
       if e.which is 1
         @drawing = true
         @actionDirtyRect = null
         coords = getCanvasCoords(e)
         editor.getToolObject().beginDraw(coords)
-        @onDraw(coords)
+        doc.beginEdit()
+        @onDraw(coords, getPressure())
 
       if e.which is 2
         @panning = true
@@ -64,13 +81,14 @@ class DocumentView
     $container.mousemove (e)=>
       e.preventDefault()
       if @drawing
-        @onDraw(getCanvasCoords(e))
+        @onDraw(getCanvasCoords(e), getPressure())
 
       if @panning
         curPos = getCoords(e)
         o = local.offsetStart.add(curPos.sub(local.panningStart))
         @offset = o
         @rePaint()
+
  
   screenToCanvas: (pt)->
     return pt.sub(@offset).scale(1.0/@scale)
@@ -92,8 +110,7 @@ class DocumentView
     else
       ctx.drawImage(@canvas, 0, 0)
 
-  onDraw: (pos)->
-    pressure = getPenPressure()
+  onDraw: (pos, pressure)->
     dirtyRects = []
 
     layer = @doc.layer
@@ -131,3 +148,4 @@ class DocumentView
       editor.get('renderer').renderLayer(layer, @, dirtyRects)
       @rePaint()
     #), 0
+

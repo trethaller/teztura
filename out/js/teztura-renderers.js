@@ -53,7 +53,6 @@ GradientRenderer = (function() {
     var width = layer.width;
     var height = layer.height;
     var imgData = view.imageData.data;
-    var destBuffer = new Uint32Array(view.imageData.data.buffer);
     var fb = layer.getBuffer();
     var gamma = properties.gamma;
     var lut = properties.gradient.lut;

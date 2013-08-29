@@ -106,7 +106,7 @@ RoundBrush = (()->
     {
       id: 'size'
       name: "Size"
-      defaultValue: 16.0
+      defaultValue: 8.0
       range: [1.0, 256.0]
       type: 'int'
     },
@@ -119,7 +119,7 @@ RoundBrush = (()->
     {
       id:'intensity'
       name: "Intensity"
-      defaultValue: 1.0
+      defaultValue: 0.6
       range: [0.0, 1.0]
       power: 2.0
     }

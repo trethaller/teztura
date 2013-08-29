@@ -4,14 +4,19 @@ class Document
     @layer = new Layer(@width,@height)
     @backup = new Layer(@width,@height)
     @history = []
-    @histIndex = 0
+    @histIndex = 1
 
-  afterEdit: (rect)->
+  beginEdit: ->
     if @histIndex > 0
       # Discard obsolete history branch
       @history.splice 0, @histIndex
-    @histIndex = 0
+      @histIndex = 0
 
+      # Backup layer, which becomes the head
+      @backup.getBuffer().set(@layer.getBuffer())
+
+  afterEdit: (rect)->
+    
     # Insert item at the top
     @history.splice 0, 0, {
       data: @backup.getCopy(rect)
@@ -23,7 +28,7 @@ class Document
 
     # Limit history
     histSize = 10
-    if @history.length > histSize
+    if @history.length >= histSize
       @history.splice(histSize)
 
   undo: ->
