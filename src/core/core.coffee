@@ -22,6 +22,16 @@ class Layer
   getNormalAt: (pos)->
     p = pos.round()
     fb = @data.fbuffer
+    px = Math.round(pos.x)
+    py = Math.round(pos.y)
+    sx1 = fb[ py * @width + ((px-1)%@width) ]
+    sx2 = fb[ py * @width + ((px+1)%@width) ]
+    sy1 = fb[ ((py+1) % @height) * @width + px ]
+    sy2 = fb[ ((py-1) % @height) * @width + px ]
+    xvec = new Vec3(2, 0, sx2 - sx1)
+    yvec = new Vec3(0, 2, sy1 - sy2)
+    norm = xvec.cross(yvec).normalized()
+    return norm
 
   getCopy: (rect)->
     srcData = @data.buffer
@@ -112,14 +122,14 @@ genBrushFunc = (opts)->
   brushExp = opts.brushExp
     .replace(/{out}/g, "_tmp")
 
-  str = "(function (rect, dstFb, #{opts.args}) {
+  str = "(function (rect, layer, #{opts.args}) {
     var invw = 2.0 / (rect.width - 1);
     var invh = 2.0 / (rect.height - 1);
     var offx = -(rect.x % 1.0) * invw - 1.0;
     var offy = -(rect.y % 1.0) * invh - 1.0;
-    var fbw = dstFb.width;
-    var fbh = dstFb.height;
-    var dstData = dstFb.getBuffer();"
+    var fbw = layer.width;
+    var fbh = layer.height;
+    var dstData = layer.getBuffer();"
       
   str += if opts.tiling then "
       var minx = Math.floor(rect.x) + fbw;
@@ -143,7 +153,7 @@ genBrushFunc = (opts)->
       var sw = Math.round(Math.min(rect.width, fbw - rect.x));
       var sh = Math.round(Math.min(rect.height, fbh - rect.y));
       for(var sy=miny; sy<sh; ++sy) {
-        var dsti = (Math.floor(rect.y) + sy) * dstFb.width + Math.floor(rect.x) + minx;
+        var dsti = (Math.floor(rect.y) + sy) * layer.width + Math.floor(rect.x) + minx;
         var y = sy * invh + offy;
         for(var sx=minx; sx<sw; ++sx) {
           var x = sx * invw + offx;

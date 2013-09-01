@@ -12,8 +12,6 @@ class StepBrush
     fb[ Math.floor(pos.x) + Math.floor(pos.y) * layer.width ] = intensity
     rect.extend(pos)
 
-  mod = (val, size)-> (val % size + size) % size
-
   move: (pos, pressure) ->;
   draw: (layer, pos, pressure) ->
     wpos = if @tiling then pos.wrap(layer.width, layer.height) else pos
@@ -39,7 +37,7 @@ class StepBrush
     @lastpos = pos
     return rect
 
-  beginDraw: (pos) ->
+  beginDraw: (layer, pos) ->
     @drawing = true
     @accumulator = 0
     @nsteps = 0
@@ -61,30 +59,13 @@ Picker = (()->
   properties: []
   
   createTool: (env)->
-    beginDraw: (pos)->;
+    beginDraw: (layer, pos)->;
     endDraw: (pos)->;
     move: ()->;
     draw: (layer, pos, intensity) ->
       env.set('targetValue', layer.getAt(pos))
       return Rect.Empty
 )()
-
-
-Flatten = (()->
-  description:
-    name: 'Flatten'
-
-  properties: []
-  
-  createTool: (env)->
-    beginDraw: (pos)->;
-    endDraw: (pos)->;
-    move: ()->;
-    draw: (layer, pos, intensity) ->
-      env.set('targetValue', layer.getAt(pos))
-      return Rect.Empty
-)()
-
 
 RoundBrush = (()->
   description =
@@ -93,7 +74,7 @@ RoundBrush = (()->
     {
       id: 'stepSize'
       name: "Step size"
-      defaultValue: 2
+      defaultValue: 3
       range: [1, 10]
       type: 'int'
     },
@@ -106,7 +87,7 @@ RoundBrush = (()->
     {
       id: 'size'
       name: "Size"
-      defaultValue: 8.0
+      defaultValue: 30.0
       range: [1.0, 256.0]
       type: 'int'
     },
@@ -119,7 +100,7 @@ RoundBrush = (()->
     {
       id:'intensity'
       name: "Intensity"
-      defaultValue: 0.6
+      defaultValue: 0.4
       range: [0.0, 1.0]
       power: 2.0
     }
@@ -150,6 +131,7 @@ RoundBrush = (()->
         size, size)
       func(r, layer, intensity * self.get('intensity'), env.get('targetValue'), hardness, hardnessPlus1)
       rect.extend(r.round())
+
     return sb
 
   self.properties = properties
@@ -160,3 +142,91 @@ RoundBrush = (()->
     self.set(p.id, p.defaultValue)
   return self
 )();
+
+
+
+FlattenBrush = (()->
+  description =
+    name: 'Flatten'
+  properties = [
+    {
+      id: 'stepSize'
+      name: "Step size"
+      defaultValue: 2
+      range: [1, 10]
+      type: 'int'
+    },
+    {
+      id: 'hardness'
+      name: "Hardness"
+      defaultValue: 0.2
+      range: [0.0, 1.0]
+    },
+    {
+      id: 'size'
+      name: "Size"
+      defaultValue: 20.0
+      range: [1.0, 256.0]
+      type: 'int'
+    },
+    {
+      id:'intensity'
+      name: "Intensity"
+      defaultValue: 0.6
+      range: [0.0, 1.0]
+      power: 2.0
+    }
+  ]
+
+  self = new Backbone.Model
+
+  createTool = (env)->
+    sb = new StepBrush()
+    sb.stepSize = self.get('stepSize')
+    sb.tiling = env.get('tiling')
+    size = self.get('size')
+
+    hardness = Math.pow(self.get('hardness'), 2.0) * 8.0;
+    hardnessPlus1 = hardness + 1.0
+    func = genBrushFunc {
+      args: "intensity, h, normal, det"
+      tiling: env.get('tiling')
+      brushExp: "var d = Math.min(1.0, Math.max(0.0, (Math.sqrt(x*x + y*y) * (h+1) - h)));
+                {out} = Math.cos(d * Math.PI) * 0.5 + 0.5;"
+      blendExp: "var tar = (-normal.x * (rect.x + sx) - normal.y * (rect.y + sy) - det) / normal.z;
+                {dst} = {dst} * (1 - intensity * {src}) + intensity * tar * {src};"
+    }
+
+    sb.drawStep = (layer, pos, intensity, rect)->
+      r = new Rect(
+        pos.x - size * 0.5,
+        pos.y - size * 0.5,
+        size, size)
+
+      det = -self.normal.x * self.origin.x - self.normal.y * self.origin.y - self.normal.z * self.origin.z;
+      func(r, layer, intensity * self.get('intensity'), hardness, self.normal, det)
+      rect.extend(r.round())
+
+    return {
+      drawStep: ()-> StepBrush.prototype.drawStep.apply(sb, arguments)
+      draw: ()-> StepBrush.prototype.draw.apply(sb, arguments)
+      beginDraw: (layer, pos)->
+        self.normal = layer.getNormalAt(pos)
+        self.origin = new Vec3(pos.x, pos.y, layer.getAt(pos))
+        StepBrush.prototype.beginDraw.apply(sb, arguments)
+        ###
+        n = self.normal
+        o = self.origin
+        console.log n.toString(), o.toString()
+        ###
+      endDraw: ()-> StepBrush.prototype.endDraw.apply(sb, arguments)
+    }
+
+  self.properties = properties
+  self.description = description
+  self.createTool = createTool
+
+  properties.forEach (p)->
+    self.set(p.id, p.defaultValue)
+  return self
+)()

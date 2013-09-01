@@ -58,13 +58,13 @@ class DocumentView
         @drawing = true
         @actionDirtyRect = null
         coords = getCanvasCoords(e)
-        editor.getToolObject().beginDraw(coords)
+        editor.getToolObject().beginDraw(doc.layer, coords)
         doc.beginEdit()
         @onDraw(coords, getPressure())
 
       if e.which is 2
         @panning = true
-        local.panningStart = getCoords(e)
+        local.panningStart = getPenCoords(e)
         local.offsetStart = @offset.clone()
 
     $container.mouseup (e)=>
@@ -84,7 +84,7 @@ class DocumentView
         @onDraw(getCanvasCoords(e), getPressure())
 
       if @panning
-        curPos = getCoords(e)
+        curPos = getPenCoords(e)
         o = local.offsetStart.add(curPos.sub(local.panningStart))
         @offset = o
         @rePaint()

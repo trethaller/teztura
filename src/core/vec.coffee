@@ -27,6 +27,8 @@ class Vec2
     return new Vec2(
       (@x % w + w) % w,
       (@y % h + h) % h)
+  toString: ->
+    return @x + ", " + @y
 
 class Vec3
   constructor: (@x, @y, @z) ->;
@@ -50,3 +52,5 @@ class Vec3
   dot: (v)->
     return @x+v.x + @y+v.y + @z+v.z
 
+  toString: ->
+    return @x + ", " + @y + ", " + @z

@@ -211,7 +211,7 @@ $(document).ready ()->
   #loadGradient('g2', 'img/gradient-2.png')
 
   Renderers = [GammaRenderer, NormalRenderer, GradientRenderer]
-  Tools = [RoundBrush, Picker]
+  Tools = [RoundBrush, Picker, FlattenBrush]
 
   toolsProperties = new PropertyPanel '#tools > .properties'
   editor = new Editor()
@@ -224,7 +224,7 @@ $(document).ready ()->
   createCommandsButtons($('#commands'))
   
   editor.set('preset', {
-    tools: [RoundBrush, Picker]
+    tools: [RoundBrush, FlattenBrush]
   })
   editor.set('renderer', GammaRenderer)
 
