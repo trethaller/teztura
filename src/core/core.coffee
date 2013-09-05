@@ -19,17 +19,17 @@ class Layer
     ipos = pos.wrap(@width, @height).round()
     return @data.fbuffer[ ipos.y * @width + ipos.x ]
 
-  getNormalAt: (pos)->
+  getNormalAt: (pos, rad)->
     p = pos.round()
     fb = @data.fbuffer
     px = Math.round(pos.x)
     py = Math.round(pos.y)
-    sx1 = fb[ py * @width + ((px-1)%@width) ]
-    sx2 = fb[ py * @width + ((px+1)%@width) ]
-    sy1 = fb[ ((py+1) % @height) * @width + px ]
-    sy2 = fb[ ((py-1) % @height) * @width + px ]
-    xvec = new Vec3(2, 0, sx2 - sx1)
-    yvec = new Vec3(0, 2, sy1 - sy2)
+    sx1 = fb[ py * @width + ((px-rad)%@width) ]
+    sx2 = fb[ py * @width + ((px+rad)%@width) ]
+    sy1 = fb[ ((py-rad) % @height) * @width + px ]
+    sy2 = fb[ ((py+rad) % @height) * @width + px ]
+    xvec = new Vec3(rad*2, 0, sx2 - sx1)
+    yvec = new Vec3(0, rad*2, sy2 - sy1)
     norm = xvec.cross(yvec).normalized()
     return norm
 

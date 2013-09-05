@@ -33,18 +33,18 @@ Layer = (function() {
     return this.data.fbuffer[ipos.y * this.width + ipos.x];
   };
 
-  Layer.prototype.getNormalAt = function(pos) {
+  Layer.prototype.getNormalAt = function(pos, rad) {
     var fb, norm, p, px, py, sx1, sx2, sy1, sy2, xvec, yvec;
     p = pos.round();
     fb = this.data.fbuffer;
     px = Math.round(pos.x);
     py = Math.round(pos.y);
-    sx1 = fb[py * this.width + ((px - 1) % this.width)];
-    sx2 = fb[py * this.width + ((px + 1) % this.width)];
-    sy1 = fb[((py + 1) % this.height) * this.width + px];
-    sy2 = fb[((py - 1) % this.height) * this.width + px];
-    xvec = new Vec3(2, 0, sx2 - sx1);
-    yvec = new Vec3(0, 2, sy1 - sy2);
+    sx1 = fb[py * this.width + ((px - rad) % this.width)];
+    sx2 = fb[py * this.width + ((px + rad) % this.width)];
+    sy1 = fb[((py - rad) % this.height) * this.width + px];
+    sy2 = fb[((py + rad) % this.height) * this.width + px];
+    xvec = new Vec3(rad * 2, 0, sx2 - sx1);
+    yvec = new Vec3(0, rad * 2, sy2 - sy1);
     norm = xvec.cross(yvec).normalized();
     return norm;
   };

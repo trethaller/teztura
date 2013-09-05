@@ -152,27 +152,27 @@ FlattenBrush = (()->
     {
       id: 'stepSize'
       name: "Step size"
-      defaultValue: 2
+      defaultValue: 3
       range: [1, 10]
       type: 'int'
     },
     {
       id: 'hardness'
       name: "Hardness"
-      defaultValue: 0.2
+      defaultValue: 0.8
       range: [0.0, 1.0]
     },
     {
       id: 'size'
       name: "Size"
-      defaultValue: 20.0
+      defaultValue: 40.0
       range: [1.0, 256.0]
       type: 'int'
     },
     {
       id:'intensity'
       name: "Intensity"
-      defaultValue: 0.6
+      defaultValue: 0.2
       range: [0.0, 1.0]
       power: 2.0
     }
@@ -203,6 +203,8 @@ FlattenBrush = (()->
         pos.y - size * 0.5,
         size, size)
 
+      self.normal = layer.getNormalAt(pos, 4)
+      self.origin = new Vec3(pos.x, pos.y, layer.getAt(pos))
       det = -self.normal.x * self.origin.x - self.normal.y * self.origin.y - self.normal.z * self.origin.z;
       func(r, layer, intensity * self.get('intensity'), hardness, self.normal, det)
       rect.extend(r.round())
@@ -214,11 +216,6 @@ FlattenBrush = (()->
         self.normal = layer.getNormalAt(pos)
         self.origin = new Vec3(pos.x, pos.y, layer.getAt(pos))
         StepBrush.prototype.beginDraw.apply(sb, arguments)
-        ###
-        n = self.normal
-        o = self.origin
-        console.log n.toString(), o.toString()
-        ###
       endDraw: ()-> StepBrush.prototype.endDraw.apply(sb, arguments)
     }
 
