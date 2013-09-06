@@ -72,11 +72,10 @@ RoundBrush = (()->
     name: 'Round'
   properties = [
     {
-      id: 'stepSize'
-      name: "Step size"
-      defaultValue: 3
-      range: [1, 10]
-      type: 'int'
+      id: 'step'
+      name: "Step %"
+      defaultValue: 10
+      range: [0, 100]
     },
     {
       id: 'hardness'
@@ -110,9 +109,12 @@ RoundBrush = (()->
 
   createTool = (env)->
     sb = new StepBrush()
-    sb.stepSize = self.get('stepSize')
-    sb.tiling = env.get('tiling')
+
     size = self.get('size')
+    sb.stepSize = Math.round(self.get('step') * size / 100.0)
+    if sb.stepSize < 1
+      sb.stepSize = 1
+    sb.tiling = env.get('tiling')
 
     hardness = Math.pow(self.get('hardness'), 2.0) * 8.0;
     hardnessPlus1 = hardness + 1.0
@@ -150,11 +152,10 @@ FlattenBrush = (()->
     name: 'Flatten'
   properties = [
     {
-      id: 'stepSize'
-      name: "Step size"
-      defaultValue: 3
-      range: [1, 10]
-      type: 'int'
+      id: 'step'
+      name: "Step %"
+      defaultValue: 10
+      range: [0, 100]
     },
     {
       id: 'hardness'
@@ -182,9 +183,12 @@ FlattenBrush = (()->
 
   createTool = (env)->
     sb = new StepBrush()
-    sb.stepSize = self.get('stepSize')
-    sb.tiling = env.get('tiling')
     size = self.get('size')
+
+    sb.stepSize = Math.round(self.get('step') * size / 100.0)
+    if sb.stepSize < 1
+      sb.stepSize = 1
+    sb.tiling = env.get('tiling')
 
     hardness = Math.pow(self.get('hardness'), 2.0) * 8.0;
     hardnessPlus1 = hardness + 1.0

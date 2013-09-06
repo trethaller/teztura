@@ -229,8 +229,8 @@ $(document).ready ()->
 
   loadGradient('g1', 'img/gradient-1.png')
   loadMatcaps([
-    # {name: 'clay2', url: 'img/matcaps/clay_2.jpg'}
-    {name: 'clay1', url: 'img/matcaps/clay_1.0.png'}
+    {name: 'clay2', url: 'img/matcaps/clay_2.jpg'}
+    # {name: 'clay1', url: 'img/matcaps/clay_1.0.png'}
   ])
 
   #loadGradient('g2', 'img/gradient-2.png')

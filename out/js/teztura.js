@@ -299,8 +299,8 @@ $(document).ready(function() {
   loadGradient('g1', 'img/gradient-1.png');
   loadMatcaps([
     {
-      name: 'clay1',
-      url: 'img/matcaps/clay_1.0.png'
+      name: 'clay2',
+      url: 'img/matcaps/clay_2.jpg'
     }
   ]);
   Renderers = [GammaRenderer, GradientRenderer, NormalRenderer, MatcapRenderer];
@@ -761,11 +761,10 @@ RoundBrush = (function() {
   };
   properties = [
     {
-      id: 'stepSize',
-      name: "Step size",
-      defaultValue: 3,
-      range: [1, 10],
-      type: 'int'
+      id: 'step',
+      name: "Step %",
+      defaultValue: 10,
+      range: [0, 100]
     }, {
       id: 'hardness',
       name: "Hardness",
@@ -794,9 +793,12 @@ RoundBrush = (function() {
   createTool = function(env) {
     var func, hardness, hardnessPlus1, sb, size;
     sb = new StepBrush();
-    sb.stepSize = self.get('stepSize');
-    sb.tiling = env.get('tiling');
     size = self.get('size');
+    sb.stepSize = Math.round(self.get('step') * size / 100.0);
+    if (sb.stepSize < 1) {
+      sb.stepSize = 1;
+    }
+    sb.tiling = env.get('tiling');
     hardness = Math.pow(self.get('hardness'), 2.0) * 8.0;
     hardnessPlus1 = hardness + 1.0;
     func = genBrushFunc({
@@ -829,11 +831,10 @@ FlattenBrush = (function() {
   };
   properties = [
     {
-      id: 'stepSize',
-      name: "Step size",
-      defaultValue: 3,
-      range: [1, 10],
-      type: 'int'
+      id: 'step',
+      name: "Step %",
+      defaultValue: 10,
+      range: [0, 100]
     }, {
       id: 'hardness',
       name: "Hardness",
@@ -857,9 +858,12 @@ FlattenBrush = (function() {
   createTool = function(env) {
     var func, hardness, hardnessPlus1, sb, size;
     sb = new StepBrush();
-    sb.stepSize = self.get('stepSize');
-    sb.tiling = env.get('tiling');
     size = self.get('size');
+    sb.stepSize = Math.round(self.get('step') * size / 100.0);
+    if (sb.stepSize < 1) {
+      sb.stepSize = 1;
+    }
+    sb.tiling = env.get('tiling');
     hardness = Math.pow(self.get('hardness'), 2.0) * 8.0;
     hardnessPlus1 = hardness + 1.0;
     func = genBrushFunc({
