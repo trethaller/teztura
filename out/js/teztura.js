@@ -303,7 +303,7 @@ DocumentView = (function() {
 
   DocumentView.prototype.offset = new Vec2(0.0, 0.0);
 
-  DocumentView.prototype.scale = 1.0;
+  DocumentView.prototype.scale = 2.0;
 
   function DocumentView($container, doc) {
     var $backCanvas, $canvas, getCanvasCoords, getPenCoords, getPressure, local, penAPI, plugin,
@@ -369,7 +369,7 @@ DocumentView = (function() {
       }
       if (e.which === 2) {
         _this.panning = true;
-        local.panningStart = getCoords(e);
+        local.panningStart = getPenCoords(e);
         return local.offsetStart = _this.offset.clone();
       }
     });
@@ -393,11 +393,17 @@ DocumentView = (function() {
         _this.onDraw(getCanvasCoords(e), getPressure());
       }
       if (_this.panning) {
-        curPos = getCoords(e);
+        curPos = getPenCoords(e);
         o = local.offsetStart.add(curPos.sub(local.panningStart));
         _this.offset = o;
         return _this.rePaint();
       }
+    });
+    $container.mousewheel(function(e, delta, deltaX, deltaY) {
+      var mult;
+      mult = 1.0 + (deltaY * 0.25);
+      _this.scale *= mult;
+      return _this.rePaint();
     });
   }
 

@@ -69,6 +69,7 @@ Commands = [
 
 # ---
 
+
 class Editor extends Backbone.Model
   defaults: ->
     doc: null

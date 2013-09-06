@@ -8,7 +8,7 @@ class DocumentView
   backContext: null
   doc: null
   offset: new Vec2(0.0, 0.0)
-  scale: 1.0
+  scale: 2.0
 
   constructor: ($container, doc)->
     @doc = doc
@@ -64,7 +64,7 @@ class DocumentView
 
       if e.which is 2
         @panning = true
-        local.panningStart = getCoords(e)
+        local.panningStart = getPenCoords(e)
         local.offsetStart = @offset.clone()
 
     $container.mouseup (e)=>
@@ -84,10 +84,15 @@ class DocumentView
         @onDraw(getCanvasCoords(e), getPressure())
 
       if @panning
-        curPos = getCoords(e)
+        curPos = getPenCoords(e)
         o = local.offsetStart.add(curPos.sub(local.panningStart))
         @offset = o
         @rePaint()
+
+    $container.mousewheel (e, delta, deltaX, deltaY)=>
+      mult = 1.0 + (deltaY * 0.25)
+      @scale *= mult
+      @rePaint()
 
  
   screenToCanvas: (pt)->
