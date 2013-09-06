@@ -305,8 +305,10 @@ DocumentView = (function() {
 
   DocumentView.prototype.scale = 2.0;
 
+  DocumentView.prototype.penPos = new Vec2(0, 0);
+
   function DocumentView($container, doc) {
-    var $backCanvas, $canvas, getCanvasCoords, getPenCoords, getPressure, local, penAPI, plugin,
+    var $backCanvas, $canvas, getCanvasCoords, getMouseCoords, getPressure, local, penAPI, plugin, updatePen,
       _this = this;
     this.doc = doc;
     $container.empty();
@@ -330,12 +332,7 @@ DocumentView = (function() {
     this.context.mozImageSmoothingEnabled = false;
     plugin = document.getElementById('wtPlugin');
     penAPI = plugin != null ? plugin.penAPI : null;
-    getCanvasCoords = function(e) {
-      var v;
-      v = getPenCoords(e);
-      return _this.screenToCanvas(v);
-    };
-    getPenCoords = function(e) {
+    getMouseCoords = function(e) {
       var v;
       v = new Vec2(e.pageX, e.pageY);
       /*
@@ -355,6 +352,14 @@ DocumentView = (function() {
       }
       return 1.0;
     };
+    updatePen = function(e) {
+      var pos;
+      pos = getMouseCoords(e);
+      return _this.penPos = _this.penPos.add(pos.sub(_this.penPos).scale(0.6));
+    };
+    getCanvasCoords = function() {
+      return _this.screenToCanvas(_this.penPos);
+    };
     local = {};
     $backCanvas.mousedown(function(e) {
       var coords;
@@ -362,21 +367,21 @@ DocumentView = (function() {
       if (e.which === 1) {
         _this.drawing = true;
         _this.actionDirtyRect = null;
-        coords = getCanvasCoords(e);
+        coords = getCanvasCoords();
         editor.getToolObject().beginDraw(coords);
         doc.beginEdit();
         _this.onDraw(coords, getPressure());
       }
       if (e.which === 2) {
         _this.panning = true;
-        local.panningStart = getPenCoords(e);
+        local.panningStart = getMouseCoords(e);
         return local.offsetStart = _this.offset.clone();
       }
     });
     $container.mouseup(function(e) {
       e.preventDefault();
       if (e.which === 1) {
-        editor.getToolObject().endDraw(getCanvasCoords(e));
+        editor.getToolObject().endDraw(getCanvasCoords());
         _this.drawing = false;
         if (_this.actionDirtyRect != null) {
           doc.afterEdit(_this.actionDirtyRect);
@@ -389,11 +394,12 @@ DocumentView = (function() {
     $container.mousemove(function(e) {
       var curPos, o;
       e.preventDefault();
+      updatePen(e);
       if (_this.drawing) {
-        _this.onDraw(getCanvasCoords(e), getPressure());
+        _this.onDraw(getCanvasCoords(), getPressure());
       }
       if (_this.panning) {
-        curPos = getPenCoords(e);
+        curPos = getMouseCoords(e);
         o = local.offsetStart.add(curPos.sub(local.panningStart));
         _this.offset = o;
         return _this.rePaint();

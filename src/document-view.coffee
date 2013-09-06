@@ -9,6 +9,7 @@ class DocumentView
   doc: null
   offset: new Vec2(0.0, 0.0)
   scale: 2.0
+  penPos: new Vec2(0,0)
 
   constructor: ($container, doc)->
     @doc = doc
@@ -27,11 +28,8 @@ class DocumentView
     plugin = document.getElementById('wtPlugin')
     penAPI = if plugin? then plugin.penAPI else null
 
-    getCanvasCoords = (e)=>
-      v = getPenCoords(e)
-      return @screenToCanvas(v)
-
-    getPenCoords = (e)=>
+ 
+    getMouseCoords = (e)=>
       v = new Vec2(e.pageX, e.pageY)
 
       ###
@@ -49,6 +47,13 @@ class DocumentView
         return penAPI.pressure
       return 1.0
 
+    updatePen = (e)=>
+      pos = getMouseCoords(e)
+      @penPos = @penPos.add( pos.sub(@penPos).scale(0.6) )
+
+    getCanvasCoords = =>
+      return @screenToCanvas(@penPos)
+
     local = {}
 
     $backCanvas.mousedown (e)=>
@@ -57,20 +62,20 @@ class DocumentView
       if e.which is 1
         @drawing = true
         @actionDirtyRect = null
-        coords = getCanvasCoords(e)
+        coords = getCanvasCoords()
         editor.getToolObject().beginDraw(coords)
         doc.beginEdit()
         @onDraw(coords, getPressure())
 
       if e.which is 2
         @panning = true
-        local.panningStart = getPenCoords(e)
+        local.panningStart = getMouseCoords(e)
         local.offsetStart = @offset.clone()
 
     $container.mouseup (e)=>
       e.preventDefault()
       if e.which is 1
-        editor.getToolObject().endDraw(getCanvasCoords(e))
+        editor.getToolObject().endDraw(getCanvasCoords())
         @drawing = false
         if @actionDirtyRect?
           doc.afterEdit(@actionDirtyRect)
@@ -80,11 +85,13 @@ class DocumentView
 
     $container.mousemove (e)=>
       e.preventDefault()
+      updatePen(e)
+
       if @drawing
-        @onDraw(getCanvasCoords(e), getPressure())
+        @onDraw(getCanvasCoords(), getPressure())
 
       if @panning
-        curPos = getPenCoords(e)
+        curPos = getMouseCoords(e)
         o = local.offsetStart.add(curPos.sub(local.panningStart))
         @offset = o
         @rePaint()
