@@ -304,7 +304,7 @@ $(document).ready(function() {
     }
   ]);
   Renderers = [GammaRenderer, GradientRenderer, NormalRenderer, MatcapRenderer];
-  Tools = [RoundBrush, Picker];
+  Tools = [RoundBrush, Picker, FlattenBrush];
   toolsProperties = new PropertyPanel('#tools > .properties');
   editor = new Editor();
   editor.createDoc(512, 512);
@@ -313,7 +313,7 @@ $(document).ready(function() {
   createPalette($('#palette'));
   createCommandsButtons($('#commands'));
   editor.set('preset', {
-    tools: [RoundBrush, Picker]
+    tools: [RoundBrush, FlattenBrush]
   });
   return editor.set('renderer', GammaRenderer);
 });
@@ -400,13 +400,13 @@ DocumentView = (function() {
         _this.drawing = true;
         _this.actionDirtyRect = null;
         coords = getCanvasCoords();
-        editor.getToolObject().beginDraw(coords);
+        editor.getToolObject().beginDraw(doc.layer, coords);
         doc.beginEdit();
         _this.onDraw(coords, getPressure());
       }
       if (e.which === 2) {
         _this.panning = true;
-        local.panningStart = getMouseCoords(e);
+        local.panningStart = getCoords(e);
         return local.offsetStart = _this.offset.clone();
       }
     });
@@ -431,7 +431,7 @@ DocumentView = (function() {
         _this.onDraw(getCanvasCoords(), getPressure());
       }
       if (_this.panning) {
-        curPos = getMouseCoords(e);
+        curPos = getCoords(e);
         o = local.offsetStart.add(curPos.sub(local.panningStart));
         _this.offset = o;
         return _this.rePaint();
@@ -662,8 +662,6 @@ PropertyPanel = (function() {
 })();
 
 StepBrush = (function() {
-  var mod;
-
   function StepBrush() {}
 
   StepBrush.prototype.drawing = false;
@@ -683,10 +681,6 @@ StepBrush = (function() {
     fb = layer.getBuffer();
     fb[Math.floor(pos.x) + Math.floor(pos.y) * layer.width] = intensity;
     return rect.extend(pos);
-  };
-
-  mod = function(val, size) {
-    return (val % size + size) % size;
   };
 
   StepBrush.prototype.move = function(pos, pressure) {};
@@ -718,7 +712,7 @@ StepBrush = (function() {
     return rect;
   };
 
-  StepBrush.prototype.beginDraw = function(pos) {
+  StepBrush.prototype.beginDraw = function(layer, pos) {
     this.drawing = true;
     this.accumulator = 0;
     return this.nsteps = 0;
@@ -748,27 +742,7 @@ Picker = (function() {
     properties: [],
     createTool: function(env) {
       return {
-        beginDraw: function(pos) {},
-        endDraw: function(pos) {},
-        move: function() {},
-        draw: function(layer, pos, intensity) {
-          env.set('targetValue', layer.getAt(pos));
-          return Rect.Empty;
-        }
-      };
-    }
-  };
-})();
-
-Flatten = (function() {
-  return {
-    description: {
-      name: 'Flatten'
-    },
-    properties: [],
-    createTool: function(env) {
-      return {
-        beginDraw: function(pos) {},
+        beginDraw: function(layer, pos) {},
         endDraw: function(pos) {},
         move: function() {},
         draw: function(layer, pos, intensity) {
@@ -789,7 +763,7 @@ RoundBrush = (function() {
     {
       id: 'stepSize',
       name: "Step size",
-      defaultValue: 2,
+      defaultValue: 3,
       range: [1, 10],
       type: 'int'
     }, {
@@ -800,7 +774,7 @@ RoundBrush = (function() {
     }, {
       id: 'size',
       name: "Size",
-      defaultValue: 8.0,
+      defaultValue: 30.0,
       range: [1.0, 256.0],
       type: 'int'
     }, {
@@ -811,7 +785,7 @@ RoundBrush = (function() {
     }, {
       id: 'intensity',
       name: "Intensity",
-      defaultValue: 0.6,
+      defaultValue: 0.4,
       range: [0.0, 1.0],
       power: 2.0
     }
@@ -838,6 +812,87 @@ RoundBrush = (function() {
       return rect.extend(r.round());
     };
     return sb;
+  };
+  self.properties = properties;
+  self.description = description;
+  self.createTool = createTool;
+  properties.forEach(function(p) {
+    return self.set(p.id, p.defaultValue);
+  });
+  return self;
+})();
+
+FlattenBrush = (function() {
+  var createTool, description, properties, self;
+  description = {
+    name: 'Flatten'
+  };
+  properties = [
+    {
+      id: 'stepSize',
+      name: "Step size",
+      defaultValue: 3,
+      range: [1, 10],
+      type: 'int'
+    }, {
+      id: 'hardness',
+      name: "Hardness",
+      defaultValue: 0.8,
+      range: [0.0, 1.0]
+    }, {
+      id: 'size',
+      name: "Size",
+      defaultValue: 40.0,
+      range: [1.0, 256.0],
+      type: 'int'
+    }, {
+      id: 'intensity',
+      name: "Intensity",
+      defaultValue: 0.2,
+      range: [0.0, 1.0],
+      power: 2.0
+    }
+  ];
+  self = new Backbone.Model;
+  createTool = function(env) {
+    var func, hardness, hardnessPlus1, sb, size;
+    sb = new StepBrush();
+    sb.stepSize = self.get('stepSize');
+    sb.tiling = env.get('tiling');
+    size = self.get('size');
+    hardness = Math.pow(self.get('hardness'), 2.0) * 8.0;
+    hardnessPlus1 = hardness + 1.0;
+    func = genBrushFunc({
+      args: "intensity, h, normal, det",
+      tiling: env.get('tiling'),
+      brushExp: "var d = Math.min(1.0, Math.max(0.0, (Math.sqrt(x*x + y*y) * (h+1) - h)));                {out} = Math.cos(d * Math.PI) * 0.5 + 0.5;",
+      blendExp: "var tar = (-normal.x * (rect.x + sx) - normal.y * (rect.y + sy) - det) / normal.z;                {dst} = {dst} * (1 - intensity * {src}) + intensity * tar * {src};"
+    });
+    sb.drawStep = function(layer, pos, intensity, rect) {
+      var det, r;
+      r = new Rect(pos.x - size * 0.5, pos.y - size * 0.5, size, size);
+      self.normal = layer.getNormalAt(pos, 4);
+      self.origin = new Vec3(pos.x, pos.y, layer.getAt(pos));
+      det = -self.normal.x * self.origin.x - self.normal.y * self.origin.y - self.normal.z * self.origin.z;
+      func(r, layer, intensity * self.get('intensity'), hardness, self.normal, det);
+      return rect.extend(r.round());
+    };
+    return {
+      drawStep: function() {
+        return StepBrush.prototype.drawStep.apply(sb, arguments);
+      },
+      draw: function() {
+        return StepBrush.prototype.draw.apply(sb, arguments);
+      },
+      beginDraw: function(layer, pos) {
+        self.normal = layer.getNormalAt(pos);
+        self.origin = new Vec3(pos.x, pos.y, layer.getAt(pos));
+        return StepBrush.prototype.beginDraw.apply(sb, arguments);
+      },
+      endDraw: function() {
+        return StepBrush.prototype.endDraw.apply(sb, arguments);
+      }
+    };
   };
   self.properties = properties;
   self.description = description;
