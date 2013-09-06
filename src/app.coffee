@@ -207,6 +207,7 @@ loadMatcaps = (defs)->
 # --
 
 
+
 $(window).keydown (e)->
   if e.key is 'Control'
     editor.set('altkeyDown', true)
@@ -228,13 +229,13 @@ $(document).ready ()->
 
   loadGradient('g1', 'img/gradient-1.png')
   loadMatcaps([
-    {name: 'clay2', url: 'img/matcaps/clay_2.jpg'}
+    # {name: 'clay2', url: 'img/matcaps/clay_2.jpg'}
     {name: 'clay1', url: 'img/matcaps/clay_1.0.png'}
   ])
 
   #loadGradient('g2', 'img/gradient-2.png')
 
-  Renderers = [GammaRenderer, NormalRenderer, GradientRenderer, MatcapRenderer]
+  Renderers = [GammaRenderer, GradientRenderer, NormalRenderer, MatcapRenderer]
   Tools = [RoundBrush, Picker]
 
   toolsProperties = new PropertyPanel '#tools > .properties'
