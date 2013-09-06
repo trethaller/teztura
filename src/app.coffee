@@ -3,6 +3,7 @@ Renderers = null
 Tools = null
 editor = null
 toolsProperties = null
+Matcaps = []
 
 Commands = [
   {
@@ -180,11 +181,28 @@ loadGradient = (name, url)->
   imageObj.onload = ()->
     ctx.drawImage(this, 0, 0);
     imageData = ctx.getImageData(0,0,512,1)
-    data = new Uint32Array(imageData.data.buffer)
     GradientRenderer.properties.gradient = {
-      lut: data
+      lut: imageData.data
     }
   imageObj.src = url
+
+loadMatcaps = (defs)->
+  $canvas = $('<canvas/>').attr {width: 512, height:512}
+  ctx = $canvas[0].getContext('2d')
+  defs.forEach (matcapDef)->
+    imageObj = new Image()
+    imageObj.onload = ()->
+      console.log "Loaded matcap " + matcapDef.name
+      ctx.drawImage(this, 0, 0)
+      imageData = ctx.getImageData(0,0,512,512)
+      matcapDef.data = imageData.data
+      Matcaps.push(matcapDef)
+
+      # Set first by default
+      if not MatcapRenderer.properties.matcap?
+        MatcapRenderer.properties.matcap = matcapDef
+
+    imageObj.src = matcapDef.url
 
 # --
 
@@ -209,9 +227,14 @@ $(window).keyup (e)->
 $(document).ready ()->
 
   loadGradient('g1', 'img/gradient-1.png')
+  loadMatcaps([
+    {name: 'clay2', url: 'img/matcaps/clay_2.jpg'}
+    {name: 'clay1', url: 'img/matcaps/clay_1.0.png'}
+  ])
+
   #loadGradient('g2', 'img/gradient-2.png')
 
-  Renderers = [GammaRenderer, NormalRenderer, GradientRenderer]
+  Renderers = [GammaRenderer, NormalRenderer, GradientRenderer, MatcapRenderer]
   Tools = [RoundBrush, Picker]
 
   toolsProperties = new PropertyPanel '#tools > .properties'

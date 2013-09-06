@@ -1,4 +1,4 @@
-var BlendModes, Commands, Document, DocumentView, Editor, Flatten, Picker, PropertyPanel, PropertyView, Renderers, RoundBrush, StepBrush, Tools, createCommandsButtons, createPalette, createRenderersButtons, createToolsButtons, editor, loadGradient, refresh, status, toolsProperties, _ref,
+var BlendModes, Commands, Document, DocumentView, Editor, Flatten, Matcaps, Picker, PropertyPanel, PropertyView, Renderers, RoundBrush, StepBrush, Tools, createCommandsButtons, createPalette, createRenderersButtons, createToolsButtons, editor, loadGradient, loadMatcaps, refresh, status, toolsProperties, _ref,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
@@ -9,6 +9,8 @@ Tools = null;
 editor = null;
 
 toolsProperties = null;
+
+Matcaps = [];
 
 Commands = [
   {
@@ -236,15 +238,39 @@ loadGradient = function(name, url) {
   ctx = $canvas[0].getContext('2d');
   imageObj = new Image();
   imageObj.onload = function() {
-    var data, imageData;
+    var imageData;
     ctx.drawImage(this, 0, 0);
     imageData = ctx.getImageData(0, 0, 512, 1);
-    data = new Uint32Array(imageData.data.buffer);
     return GradientRenderer.properties.gradient = {
-      lut: data
+      lut: imageData.data
     };
   };
   return imageObj.src = url;
+};
+
+loadMatcaps = function(defs) {
+  var $canvas, ctx;
+  $canvas = $('<canvas/>').attr({
+    width: 512,
+    height: 512
+  });
+  ctx = $canvas[0].getContext('2d');
+  return defs.forEach(function(matcapDef) {
+    var imageObj;
+    imageObj = new Image();
+    imageObj.onload = function() {
+      var imageData;
+      console.log("Loaded matcap " + matcapDef.name);
+      ctx.drawImage(this, 0, 0);
+      imageData = ctx.getImageData(0, 0, 512, 512);
+      matcapDef.data = imageData.data;
+      Matcaps.push(matcapDef);
+      if (MatcapRenderer.properties.matcap == null) {
+        return MatcapRenderer.properties.matcap = matcapDef;
+      }
+    };
+    return imageObj.src = matcapDef.url;
+  });
 };
 
 $(window).keydown(function(e) {
@@ -271,7 +297,16 @@ $(window).keyup(function(e) {
 
 $(document).ready(function() {
   loadGradient('g1', 'img/gradient-1.png');
-  Renderers = [GammaRenderer, NormalRenderer, GradientRenderer];
+  loadMatcaps([
+    {
+      name: 'clay2',
+      url: 'img/matcaps/clay_2.jpg'
+    }, {
+      name: 'clay1',
+      url: 'img/matcaps/clay_1.0.png'
+    }
+  ]);
+  Renderers = [GammaRenderer, NormalRenderer, GradientRenderer, MatcapRenderer];
   Tools = [RoundBrush, Picker];
   toolsProperties = new PropertyPanel('#tools > .properties');
   editor = new Editor();

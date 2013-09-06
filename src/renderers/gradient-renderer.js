@@ -23,19 +23,11 @@ GradientRenderer = (function() {
         var offset = iy * width;
         for(var ix=minX; ix<=maxX; ++ix) {
           var fval = fb[offset + ix];
-          var lookup = lut[
-            Math.round(
-              Math.min(511,
-                Math.max(0,
-                  256.0 * (1.0 + fval)
-                )
-              )
-            )
-          ];
+          var lookupIndex = Math.round(Math.min(511,Math.max(0,256.0 * (1.0 + fval)))) * 4;
           var off = (offset + ix) << 2;
-          imgData[off] = lookup & 0xff;
-          imgData[off+1] = (lookup >> 8) & 0xff;
-          imgData[off+2] = (lookup >> 16) & 0xff;
+          imgData[off] =  lut[lookupIndex];
+          imgData[off+1] = lut[lookupIndex+1];
+          imgData[off+2] = lut[lookupIndex+2];
           imgData[off+3] = 0xff;
         }
       }
