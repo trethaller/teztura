@@ -69,7 +69,7 @@ class DocumentView
 
       if e.which is 2
         @panning = true
-        local.panningStart = getCoords(e)
+        local.panningStart = getMouseCoords(e)
         local.offsetStart = @offset.clone()
 
     $container.mouseup (e)=>
@@ -91,7 +91,7 @@ class DocumentView
         @onDraw(getCanvasCoords(), getPressure())
 
       if @panning
-        curPos = getCoords(e)
+        curPos = getMouseCoords(e)
         o = local.offsetStart.add(curPos.sub(local.panningStart))
         @offset = o
         @rePaint()

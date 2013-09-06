@@ -1,4 +1,4 @@
-var BlendModes, Commands, Document, DocumentView, Editor, Flatten, Matcaps, Picker, PropertyPanel, PropertyView, Renderers, RoundBrush, StepBrush, Tools, createCommandsButtons, createPalette, createRenderersButtons, createToolsButtons, editor, loadGradient, loadMatcaps, refresh, status, toolsProperties, _ref,
+var BlendModes, Commands, Document, DocumentView, Editor, FlattenBrush, Matcaps, Picker, PropertyPanel, PropertyView, Renderers, RoundBrush, StepBrush, Tools, createCommandsButtons, createPalette, createRenderersButtons, createToolsButtons, editor, loadGradient, loadMatcaps, refresh, status, toolsProperties, _ref,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
@@ -406,7 +406,7 @@ DocumentView = (function() {
       }
       if (e.which === 2) {
         _this.panning = true;
-        local.panningStart = getCoords(e);
+        local.panningStart = getMouseCoords(e);
         return local.offsetStart = _this.offset.clone();
       }
     });
@@ -431,7 +431,7 @@ DocumentView = (function() {
         _this.onDraw(getCanvasCoords(), getPressure());
       }
       if (_this.panning) {
-        curPos = getCoords(e);
+        curPos = getMouseCoords(e);
         o = local.offsetStart.add(curPos.sub(local.panningStart));
         _this.offset = o;
         return _this.rePaint();
@@ -837,18 +837,18 @@ FlattenBrush = (function() {
     }, {
       id: 'hardness',
       name: "Hardness",
-      defaultValue: 0.8,
+      defaultValue: 0.2,
       range: [0.0, 1.0]
     }, {
       id: 'size',
       name: "Size",
-      defaultValue: 40.0,
+      defaultValue: 30.0,
       range: [1.0, 256.0],
       type: 'int'
     }, {
       id: 'intensity',
       name: "Intensity",
-      defaultValue: 0.2,
+      defaultValue: 0.1,
       range: [0.0, 1.0],
       power: 2.0
     }
@@ -869,9 +869,10 @@ FlattenBrush = (function() {
       blendExp: "var tar = (-normal.x * (rect.x + sx) - normal.y * (rect.y + sy) - det) / normal.z;                {dst} = {dst} * (1 - intensity * {src}) + intensity * tar * {src};"
     });
     sb.drawStep = function(layer, pos, intensity, rect) {
-      var det, r;
+      var det, r, rad;
       r = new Rect(pos.x - size * 0.5, pos.y - size * 0.5, size, size);
-      self.normal = layer.getNormalAt(pos, 4);
+      rad = Math.round(self.get('size') * 0.5 * 0.75);
+      self.normal = layer.getNormalAt(pos, rad);
       self.origin = new Vec3(pos.x, pos.y, layer.getAt(pos));
       det = -self.normal.x * self.origin.x - self.normal.y * self.origin.y - self.normal.z * self.origin.z;
       func(r, layer, intensity * self.get('intensity'), hardness, self.normal, det);

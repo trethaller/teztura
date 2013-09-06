@@ -159,20 +159,20 @@ FlattenBrush = (()->
     {
       id: 'hardness'
       name: "Hardness"
-      defaultValue: 0.8
+      defaultValue: 0.2
       range: [0.0, 1.0]
     },
     {
       id: 'size'
       name: "Size"
-      defaultValue: 40.0
+      defaultValue: 30.0
       range: [1.0, 256.0]
       type: 'int'
     },
     {
       id:'intensity'
       name: "Intensity"
-      defaultValue: 0.2
+      defaultValue: 0.1
       range: [0.0, 1.0]
       power: 2.0
     }
@@ -203,7 +203,8 @@ FlattenBrush = (()->
         pos.y - size * 0.5,
         size, size)
 
-      self.normal = layer.getNormalAt(pos, 4)
+      rad = Math.round(self.get('size') * 0.5 * 0.75)
+      self.normal = layer.getNormalAt(pos, rad)
       self.origin = new Vec3(pos.x, pos.y, layer.getAt(pos))
       det = -self.normal.x * self.origin.x - self.normal.y * self.origin.y - self.normal.z * self.origin.z;
       func(r, layer, intensity * self.get('intensity'), hardness, self.normal, det)
