@@ -1,7 +1,4 @@
 *.sublime-*
-*.hi
-*.o
-*.exe
 node_modules
 *.map
-*.src.coffee
+
