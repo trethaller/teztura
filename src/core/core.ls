@@ -1,67 +1,14 @@
 
-class FloatBuffer
-  (@width, @height) ->
-    @buffer = new ArrayBuffer @width * @height * 4
-    @fbuffer = new Float32Array @buffer
 
-
-class Layer
-  (@width, @height) ->
-    @data = new FloatBuffer(@width, @height)
-
-  getRect: ->
-    new Rect(0,0,@width,@height)
-
-  getBuffer: ->
-    @data.fbuffer
-
-  getAt: (pos)->
-    ipos = pos.wrap(@width, @height).round()
-    @data.fbuffer[ ipos.y * @width + ipos.x ]
-
-  getNormalAt: (pos, rad)->
-    p = pos.round()
-    fb = @data.fbuffer
-    px = Math.round(pos.x)
-    py = Math.round(pos.y)
-    sx1 = fb[ py * @width + ((px-rad)%@width) ]
-    sx2 = fb[ py * @width + ((px+rad)%@width) ]
-    sy1 = fb[ ((py-rad) % @height) * @width + px ]
-    sy2 = fb[ ((py+rad) % @height) * @width + px ]
-    xvec = new Vec3(rad*2, 0, sx2 - sx1)
-    yvec = new Vec3(0, rad*2, sy2 - sy1)
-    norm = xvec.cross(yvec).normalized()
-
-  getCopy: (rect)->
-    srcData = @data.buffer
-    dstData = new ArrayBuffer(rect.width * rect.height * 4)
-    ```
-    for(var iy=0; iy<rect.height; ++iy) {
-      var src = new Uint32Array(srcData, 4 * ((iy + rect.y) * this.width + rect.x), rect.width);
-      var dst = new Uint32Array(dstData, 4 * iy * rect.width, rect.width);
-      dst.set(src);
-    }```
-    return dstData
-
-  setData: (buffer, rect)->
-    dstData = @data.buffer
-    ```
-    for(var iy=0; iy<rect.height; ++iy) {
-      var src = new Uint32Array(buffer, 4 * iy * rect.width, rect.width);
-      var dstOff = 4 * ((iy + rect.y) * this.width + rect.x);
-      var dst = new Uint32Array(dstData, dstOff, rect.width);
-      dst.set(src);
-    }```
-    return
-
+/*
 Bezier =
   quadratic: (pts, t)->
     lerp = (a, b, t) ->
-      return (a * t + b * (1-t))
+      a * t + b * (1-t)
     f3 = (v1, v2, v3, t) ->
-      return lerp(lerp(v1, v2, t), lerp(v2, v3, t), t)
+      lerp(lerp(v1, v2, t), lerp(v2, v3, t), t)
     f2 = (v1, v2, t) ->
-      return lerp(v1, v2, t)
+      lerp(v1, v2, t)
 
     if pts.length is 1
       return pts[0]
@@ -69,9 +16,10 @@ Bezier =
       return new Vec2 f2(pts[0].x, pts[1].x, t), f2(pts[0].y, pts[1].y, t)
     else
       return new Vec2 f3(pts[0].x, pts[1].x, pts[2].x, t), f3(pts[0].y, pts[1].y, pts[2].y, t)
+*/
 
 
-```
+``
 function fillLayer(layer, func) {
   var width = layer.width;
   var height = layer.height;
@@ -86,7 +34,7 @@ function fillLayer(layer, func) {
     }
   }
 }
-```
+``
 
 genBlendFunc = (args, expression)->
   expr = expression
@@ -171,3 +119,8 @@ getRoundBrushFunc = (hardness) ->
   return (x,y) -> 
     d = Math.min(1.0, Math.max(0.0, (Math.sqrt(x*x + y*y) * hardnessPlus1 - hardness)))
     return Math.cos(d * Math.PI) * 0.5 + 0.5
+
+
+export {
+  fillLayer, genBlendFunc, genBrushFunc, getRoundBrushFunc
+}

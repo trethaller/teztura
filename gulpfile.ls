@@ -6,22 +6,33 @@ connect       = require 'gulp-connect'
 rename        = require 'gulp-rename'
 uglify        = require 'gulp-uglify'
 mocha         = require 'gulp-mocha'
+mochaPhantom  = require 'gulp-mocha-phantomjs'
 
 
-dest = './dist'
+dist = './dist'
+
+gulp.task 'js', ->
+  gulp.src 'src/**/*.js'
+    .pipe gulp.dest "#{dist}/js"
 
 gulp.task 'ls', ->
   gulp.src 'src/**/*.ls'
     .pipe ls!
     .on 'error' -> throw it
-    .pipe gulp.dest dest + '/js'
+    .pipe gulp.dest "#{dist}/js"
 
-gulp.task 'test', ['ls'], ->
-  gulp.src dest + '/js/test/*.js'
+gulp.task 'test', ['js', 'ls'], ->
+  # Run unit tests first
+  gulp.src "#{dist}/js/test/unit-*.js"
     .pipe mocha!
+  # Compile browser tests
+  gulp.src "#{dist}/js/test/test.js"
+    .pipe browserify!
+    .pipe rename {suffix: '.bundle'}
+    .pipe gulp.dest "#{dist}/test"
 
 gulp.task 'main', ['ls'], ->
-  gulp.src dest + '/js/main.js'
+  gulp.src "#{dist}/js/main.js"
     .pipe browserify!
     .pipe rename {suffix: '.bundle'}
     .pipe gulp.dest dest
@@ -36,6 +47,6 @@ gulp.task 'connect', ->
     root: dest
     livereload: true
 
-gulp.task 'watch', ['connect'], ->
-  gulp.watch 'src/**.ls', ['main']
 */
+gulp.task 'watch', ->
+  gulp.watch 'src/**/*.ls', ['test']
