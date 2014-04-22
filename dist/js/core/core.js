@@ -1,38 +1,5 @@
-/*
-Bezier =
-  quadratic: (pts, t)->
-    lerp = (a, b, t) ->
-      a * t + b * (1-t)
-    f3 = (v1, v2, v3, t) ->
-      lerp(lerp(v1, v2, t), lerp(v2, v3, t), t)
-    f2 = (v1, v2, t) ->
-      lerp(v1, v2, t)
-
-    if pts.length is 1
-      return pts[0]
-    else if pts.length is 2
-      return new Vec2 f2(pts[0].x, pts[1].x, t), f2(pts[0].y, pts[1].y, t)
-    else
-      return new Vec2 f3(pts[0].x, pts[1].x, pts[2].x, t), f3(pts[0].y, pts[1].y, pts[2].y, t)
-*/
 (function(){
   var genBlendFunc, genBrushFunc, getRoundBrushFunc, ref$, out$ = typeof exports != 'undefined' && exports || this;
-  
-  function fillLayer(layer, func) {
-    var width = layer.width;
-    var height = layer.height;
-    var invw = 2.0 / (width - 1);
-    var invh = 2.0 / (height - 1);
-    var fb = layer.getBuffer();
-    for(var iy=0; iy<height; ++iy) {
-      var off = iy * width;
-      for(var ix=0; ix<width; ++ix) {
-        fb[off] = func(ix * invw - 1.0, iy * invh - 1.0);
-        ++off;
-      }
-    }
-  }
-  
   genBlendFunc = function(args, expression){
     var expr, str;
     expr = expression.replace(/{dst}/g, "dstData[dsti]").replace(/{src}/g, "srcData[srci]");
@@ -51,16 +18,20 @@ Bezier =
     return eval(str);
   };
   getRoundBrushFunc = function(hardness){
-    var hardnessPlus1;
+    var hardnessPlus1, min, max, cos, sqrt, pi;
     hardnessPlus1 = hardness + 1.0;
+    min = Math.min;
+    max = Math.max;
+    cos = Math.cos;
+    sqrt = Math.sqrt;
+    pi = Math.PI;
     return function(x, y){
       var d;
-      d = Math.min(1.0, Math.max(0.0, Math.sqrt(x * x + y * y) * hardnessPlus1 - hardness));
-      return Math.cos(d * Math.PI) * 0.5 + 0.5;
+      d = min(1.0, max(0.0, sqrt(x * x + y * y) * hardnessPlus1 - hardness));
+      return cos(d * pi) * 0.5 + 0.5;
     };
   };
   ref$ = out$;
-  ref$.fillLayer = fillLayer;
   ref$.genBlendFunc = genBlendFunc;
   ref$.genBrushFunc = genBrushFunc;
   ref$.getRoundBrushFunc = getRoundBrushFunc;

@@ -13,6 +13,14 @@
     $('<hr>').appendTo($root);
     return fn($el);
   };
+  /*
+  testSection 'Round brush', ($el)->
+    size = 200
+    $can = $ "<canvas width='#{size * 4}' height='#{size}'/>"
+      .appendTo $el
+    layer = new Layer size, size
+    layer.fill Core.getRoundBrushFunc 0  
+  */
   testSection('Blend modes', function($el){
     var width, height, $can, ctx, layer, brush, blendTest, view;
     width = 800;

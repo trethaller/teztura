@@ -15,6 +15,14 @@ testSection = (desc, fn)->
     .appendTo $root
   fn $el
 
+/*
+testSection 'Round brush', ($el)->
+  size = 200
+  $can = $ "<canvas width='#{size * 4}' height='#{size}'/>"
+    .appendTo $el
+  layer = new Layer size, size
+  layer.fill Core.getRoundBrushFunc 0  
+*/
 
 testSection 'Blend modes', ($el)->
   width = 800
