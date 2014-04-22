@@ -69,7 +69,7 @@ Bezier =
 
 },{}],2:[function(require,module,exports){
 (function(){
-  var Layer, out$ = typeof exports != 'undefined' && exports || this;
+  var Layer;
   Layer = (function(){
     Layer.displayName = 'Layer';
     var prototype = Layer.prototype, constructor = Layer;
@@ -149,11 +149,175 @@ Bezier =
     };
     return Layer;
   }());
-  out$.Layer = Layer;
+  module.exports = Layer;
 }).call(this);
 
 },{}],3:[function(require,module,exports){
-GammaRenderer = (function() {
+(function(){
+  var Vec2, Rect;
+  Vec2 = require('./vec').Vec2;
+  Rect = (function(){
+    Rect.displayName = 'Rect';
+    var prototype = Rect.prototype, constructor = Rect;
+    function Rect(x, y, width, height){
+      this.x = x;
+      this.y = y;
+      this.width = width;
+      this.height = height;
+    }
+    prototype.intersect = function(rect){
+      var nmaxx, nmaxy, nx, ny;
+      nmaxx = Math.min(this.x + this.width, rect.x + rect.width);
+      nmaxy = Math.min(this.y + this.height, rect.y + rect.height);
+      nx = Math.max(this.x, rect.x);
+      ny = Math.max(this.y, rect.y);
+      return new Rect(nx, ny, Math.max(0, nmaxx - nx), Math.max(0, nmaxy - ny));
+    };
+    prototype.union = function(rect){
+      var x$;
+      x$ = new Rect(this.x, this.y, this.width, this.height);
+      x$.extend(rect.topLeft());
+      x$.extend(rect.bottomRight());
+      return x$;
+    };
+    prototype.clone = function(){
+      return new Rect(this.x, this.y, this.width, this.height);
+    };
+    prototype.offset = function(vec){
+      return new Rect(this.x + vec.x, this.y + vec.y, this.width, this.height);
+    };
+    prototype.isEmpty = function(){
+      return this.width <= 0 || this.height <= 0;
+    };
+    prototype.round = function(){
+      return new Rect(Math.floor(this.x), Math.floor(this.y), Math.ceil(this.width), Math.ceil(this.height));
+    };
+    prototype.extend = function(obj){
+      if (obj.width != null) {
+        this.extend(obj.topLeft());
+        return this.extend(obj.bottomRight());
+      } else {
+        if (obj.x < this.x) {
+          this.width += this.x - obj.x;
+          this.x = obj.x;
+        } else {
+          this.width = Math.max(this.width, obj.x - this.x);
+        }
+        if (obj.y < this.y) {
+          this.height += this.y - obj.y;
+          return this.y = obj.y;
+        } else {
+          return this.height = Math.max(this.height, obj.y - this.y);
+        }
+      }
+    };
+    prototype.topLeft = function(){
+      return new Vec2(this.x, this.y);
+    };
+    prototype.bottomRight = function(){
+      return new Vec2(this.x + this.width, this.y + this.height);
+    };
+    return Rect;
+  }());
+  Rect.Empty = new Rect(0, 0, 0, 0);
+  module.exports = Rect;
+}).call(this);
+
+},{"./vec":4}],4:[function(require,module,exports){
+(function(){
+  var Vec2, Vec3, ref$, out$ = typeof exports != 'undefined' && exports || this;
+  Vec2 = (function(){
+    Vec2.displayName = 'Vec2';
+    var prototype = Vec2.prototype, constructor = Vec2;
+    function Vec2(x, y){
+      this.x = x;
+      this.y = y;
+    }
+    prototype.clone = function(){
+      return new Vec2(this.x, this.y);
+    };
+    prototype.distanceTo = function(v){
+      return Math.sqrt(squareDistanceTo(v));
+    };
+    prototype.squareDistanceTo = function(v){
+      var dx, dy;
+      dx = this.x - v.x;
+      dy = this.y - v.y;
+      return dx * dx + dy * dy;
+    };
+    prototype.round = function(){
+      return new Vec2(Math.round(this.x), Math.round(this.y));
+    };
+    prototype.add = function(v){
+      return new Vec2(this.x + v.x, this.y + v.y);
+    };
+    prototype.sub = function(v){
+      return new Vec2(this.x - v.x, this.y - v.y);
+    };
+    prototype.scale = function(s){
+      return new Vec2(this.x * s, this.y * s);
+    };
+    prototype.length = function(){
+      return Math.sqrt(this.squareLength());
+    };
+    prototype.squareLength = function(){
+      return this.x * this.x + this.y * this.y;
+    };
+    prototype.normalized = function(){
+      return this.scale(1.0 / this.length());
+    };
+    prototype.wrap = function(w, h){
+      return new Vec2((this.x % w + w) % w, (this.y % h + h) % h);
+    };
+    prototype.toString = function(){
+      return this.x + ", " + this.y;
+    };
+    return Vec2;
+  }());
+  Vec3 = (function(){
+    Vec3.displayName = 'Vec3';
+    var prototype = Vec3.prototype, constructor = Vec3;
+    function Vec3(x, y, z){
+      this.x = x;
+      this.y = y;
+      this.z = z;
+    }
+    prototype.add = function(v){
+      return new Vec3(this.x + v.x, this.y + v.y, this.z + v.z);
+    };
+    prototype.sub = function(v){
+      return new Vec3(this.x - v.x, this.y - v.y, this.z - v.z);
+    };
+    prototype.scale = function(s){
+      return new Vec3(this.x * s, this.y * s, this.z * s);
+    };
+    prototype.length = function(){
+      return Math.sqrt(this.squareLength());
+    };
+    prototype.squareLength = function(){
+      return this.x * this.x + this.y * this.y + this.z * this.z;
+    };
+    prototype.normalized = function(){
+      return this.scale(1.0 / this.length());
+    };
+    prototype.cross = function(v){
+      return new Vec3(this.y * v.z - this.z * v.y, this.z * v.x - this.x * v.z, this.x * v.y - this.y * v.x);
+    };
+    prototype.dot = function(v){
+      return this.x + v.x + this.y + v.y + this.z + v.z;
+    };
+    prototype.toString = function(){
+      return this.x + ", " + this.y + ", " + this.z;
+    };
+    return Vec3;
+  }());
+  ref$ = out$;
+  ref$.Vec2 = Vec2;
+  ref$.Vec3 = Vec3;
+}).call(this);
+
+},{}],5:[function(require,module,exports){
+module.exports = (function() {
 
   var properties = {
     gamma: 1.0
@@ -197,12 +361,13 @@ GammaRenderer = (function() {
   };
 })();
 
-export { GammaRenderer }
-},{}],4:[function(require,module,exports){
+},{}],6:[function(require,module,exports){
 (function(){
-  var Core, Layer, GammaRenderer, $root, testSection;
+  var Core, Rect, Layer, Vec2, GammaRenderer, $root, testSection;
   Core = require('../core/core');
+  Rect = require('../core/rect');
   Layer = require('../core/layer');
+  Vec2 = require('../core/vec').Vec2;
   GammaRenderer = require('../renderers/gamma-renderer');
   $root = $('#tests-root');
   testSection = function(desc, fn){
@@ -213,27 +378,42 @@ export { GammaRenderer }
     return fn($el);
   };
   testSection('Blend modes', function($el){
-    var width, height, $can, ctx, layer, brush, view;
-    width = 400;
-    height = 100;
-    $can = $('#canvas').width(width).height(height).appendTo($el);
+    var width, height, $can, ctx, layer, brush, blendTest, view;
+    width = 800;
+    height = 400;
+    $can = $("<canvas width='" + width + "' height='" + height + "'/>").appendTo($el);
     ctx = $can[0].getContext('2d');
     layer = new Layer(width, height);
-    brush = new Layer(height, height);
+    brush = new Layer(100, 100);
     brush.fill(Core.getRoundBrushFunc(0));
     layer.fill(function(x, y){
       x += 1;
       y += 1;
-      return (Math.round(x * 40) % 2) * 0.1 - (Math.round(y * 40) % 2) * 0.1;
+      return (Math.round(x * 80) % 2) * 0.1 - (Math.round(y * 40) % 2) * 0.1;
     });
+    blendTest = function(y, args, expr){
+      var fn, nsteps, i$, i, pressure, results$ = [];
+      fn = Core.genBlendFunc(args, expr);
+      nsteps = 30;
+      for (i$ = 0; i$ < nsteps; ++i$) {
+        i = i$;
+        pressure = (1.0 - Math.cos(2 * Math.PI * i / nsteps)) * 0.5;
+        results$.push(fn(new Vec2(i * width / nsteps - 50.0, y).round(), brush, layer, pressure));
+      }
+      return results$;
+    };
+    blendTest(0, "intensity", "{dst} += {src} * intensity");
+    blendTest(100, "intensity", "{dst} *= 1 + {src} * intensity");
+    blendTest(200, "intensity", "{dst} = {dst} * (1 - intensity*{src}) + 0.5 * intensity*{src}");
+    blendTest(300, "intensity", "{dst} = {src} * intensity");
     view = {
       canvas: $can[0],
       context: ctx,
       imageData: ctx.getImageData(0, 0, width, height)
     };
     GammaRenderer.renderLayer(layer, view, [new Rect(0, 0, width, height)]);
-    return ctx.drawImage(canvas, 0, 0);
+    return ctx.drawImage($can[0], 0, 0);
   });
 }).call(this);
 
-},{"../core/core":1,"../core/layer":2,"../renderers/gamma-renderer":3}]},{},[4])
+},{"../core/core":1,"../core/layer":2,"../core/rect":3,"../core/vec":4,"../renderers/gamma-renderer":5}]},{},[6])

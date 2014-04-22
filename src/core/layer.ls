@@ -61,4 +61,4 @@ class Layer
         ++i
 
 
-export {Layer}
+module.exports = Layer

@@ -1,5 +1,5 @@
 (function(){
-  var Layer, out$ = typeof exports != 'undefined' && exports || this;
+  var Layer;
   Layer = (function(){
     Layer.displayName = 'Layer';
     var prototype = Layer.prototype, constructor = Layer;
@@ -79,5 +79,5 @@
     };
     return Layer;
   }());
-  out$.Layer = Layer;
+  module.exports = Layer;
 }).call(this);

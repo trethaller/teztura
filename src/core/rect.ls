@@ -55,4 +55,4 @@ class Rect
 
 Rect.Empty = new Rect(0,0,0,0)
 
-export { Rect }
+module.exports = Rect

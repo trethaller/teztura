@@ -2,7 +2,7 @@
   var assert, ref$, Vec2, Vec3, Rect, assertClose;
   assert = require('assert');
   ref$ = require('../core/vec'), Vec2 = ref$.Vec2, Vec3 = ref$.Vec3;
-  Rect = require('../core/rect').Rect;
+  Rect = require('../core/rect');
   assertClose = function(a, b){
     return assert(Math.abs(a - b) < 1.0e-8, a + " != " + b);
   };

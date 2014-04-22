@@ -1,4 +1,4 @@
-GammaRenderer = (function() {
+module.exports = (function() {
 
   var properties = {
     gamma: 1.0
@@ -41,5 +41,3 @@ GammaRenderer = (function() {
     renderLayer: renderLayer
   };
 })();
-
-export { GammaRenderer }

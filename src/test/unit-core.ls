@@ -1,6 +1,6 @@
 assert          = require 'assert'
 {Vec2, Vec3}    = require '../core/vec'
-{Rect}          = require '../core/rect'
+Rect            = require '../core/rect'
 
 assertClose = (a,b)->
   assert(Math.abs(a - b) < 1.0e-8, "#{a} != #{b}")

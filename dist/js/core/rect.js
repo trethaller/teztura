@@ -1,5 +1,5 @@
 (function(){
-  var Vec2, Rect, out$ = typeof exports != 'undefined' && exports || this;
+  var Vec2, Rect;
   Vec2 = require('./vec').Vec2;
   Rect = (function(){
     Rect.displayName = 'Rect';
@@ -65,5 +65,5 @@
     return Rect;
   }());
   Rect.Empty = new Rect(0, 0, 0, 0);
-  out$.Rect = Rect;
+  module.exports = Rect;
 }).call(this);
