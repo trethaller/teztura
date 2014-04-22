@@ -3,6 +3,7 @@ Rect = require '../core/rect'
 Layer = require '../core/layer'
 {Vec2} = require '../core/vec'
 GammaRenderer = require '../renderers/gamma-renderer'
+RoundBrush = require '../tools/roundbrush'
 
 $root = $ \#tests-root
 
@@ -15,14 +16,52 @@ testSection = (desc, fn)->
     .appendTo $root
   fn $el
 
-/*
+
 testSection 'Round brush', ($el)->
-  size = 200
-  $can = $ "<canvas width='#{size * 4}' height='#{size}'/>"
+  width = 800
+  height = 400
+  $can = $ "<canvas width='#{width}' height='#{height}'/>"
     .appendTo $el
-  layer = new Layer size, size
-  layer.fill Core.getRoundBrushFunc 0  
-*/
+  layer = new Layer width, height
+  layer.fill (x,y)-> -1
+
+  env =
+    tiling: false
+    targetValue: 1.0
+
+  defaults = -> {[p.id, p.defaultValue] for p in RoundBrush.properties}
+  brush-test = (ypos, props)->
+    brush = RoundBrush.createTool props, env  
+    brush.beginDraw layer, new Vec2(0, ypos)
+    for i from 1 to 9
+      brush.draw layer, new Vec2(i*80, ypos), 1
+    brush.endDraw!
+
+  p = defaults!
+    ..hardness = 0
+  y = 0
+  brush-test (y+=50), p
+  p.size = 50
+  brush-test (y+=50), p
+  p.step = 30
+  brush-test (y+=50), p
+  p.step = 50
+  brush-test (y+=50), p
+  p.step = 30
+  p.hardness = 0.3
+  brush-test (y+=50), p
+  p.hardness = 0.5
+  brush-test (y+=50), p
+  p.hardness = 1.0
+  brush-test (y+=50), p
+
+  ctx = $can.0.getContext '2d'
+  view =
+    canvas: $can.0
+    context: ctx
+    imageData: ctx.getImageData 0, 0, width, height
+  GammaRenderer.renderLayer layer, view, [new Rect(0,0,width,height)]
+  ctx.drawImage $can.0, 0, 0
 
 testSection 'Blend modes', ($el)->
   width = 800
