@@ -1,6 +1,6 @@
 
 class Document
-  constructor: (@width,@height)->
+  (@width,@height)->
     @layer = new Layer(@width,@height)
     @backup = new Layer(@width,@height)
     @history = []
@@ -56,3 +56,5 @@ class Document
     }
 
     @layer.setData(toRestore.data, toRestore.rect)
+
+module.exports = Document
