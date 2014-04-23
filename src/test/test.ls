@@ -2,7 +2,7 @@ Core = require '../core/core'
 Rect = require '../core/rect'
 Layer = require '../core/layer'
 {Vec2} = require '../core/vec'
-GammaRenderer = require '../renderers/gamma-renderer'
+GammaRenderer = require '../renderers/gamma'
 RoundBrush = require '../tools/roundbrush'
 
 $root = $ \#tests-root
@@ -28,11 +28,11 @@ testSection 'Round brush', ($el)->
   defaults = -> {[p.id, p.defaultValue] for p in RoundBrush.properties}
   brush-test = (ypos, props) !->
     f = (xoffset, tiling) !->
-      env = 
+      env =
         tiling: tiling
         targetValue: 1.0
 
-      brush = RoundBrush.createTool props, env  
+      brush = RoundBrush.createTool props, env
       brush.beginDraw layer, new Vec2(0, ypos)
       steps = 20
       for i from 0 to steps
@@ -67,8 +67,12 @@ testSection 'Round brush', ($el)->
     canvas: $can.0
     context: ctx
     imageData: ctx.getImageData 0, 0, width, height
-  GammaRenderer.renderLayer layer, view, [new Rect(0,0,width,height)]
+
+  renderer = GammaRenderer.create {gamma: 1}, layer, view
+  renderer.render [new Rect(0,0,width,height)]
   ctx.drawImage $can.0, 0, 0
+
+
 
 testSection 'Blend modes', ($el)->
   width = 800
@@ -104,6 +108,7 @@ testSection 'Blend modes', ($el)->
     imageData: ctx.getImageData 0, 0, width, height
   }
 
-  GammaRenderer.renderLayer layer, view, [new Rect(0,0,width,height)]
+  renderer = GammaRenderer.create {gamma: 1}, layer, view
+  renderer.render [new Rect(0,0,width,height)]
   ctx.drawImage $can.0, 0, 0
 

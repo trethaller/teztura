@@ -1,15 +1,21 @@
-module.exports = (function() {
 
-  var properties = {
-    gamma: 1.0
-  };
+name = "Gray"
+properties =
+  * id: 'gamma'
+    name: "Gamma"
+    defaultValue: 1.0
+    range: [0, 100]
 
-  function renderLayer (layer, view, rects) {
-    var width = layer.width;
-    var height = layer.height;
-    var imgData = view.imageData.data;
-    var fb = layer.getBuffer();
-    var gamma = properties.gamma;
+create = (props, layer, view) ->
+  width = layer.width
+  height = layer.height
+  imgData = view.imageData.data
+  fb = layer.getBuffer()
+  gamma = props.gamma
+
+  code = "
+  (function (rects) {
+    'use strict';
     for(var ri in rects) {
       var r = rects[ri];
       var minX = r.x;
@@ -21,7 +27,7 @@ module.exports = (function() {
         for(var ix=minX; ix<=maxX; ++ix) {
           var fval = fb[offset + ix];
           fval = fval > 1.0 ? 1.0 : (fval < -1.0 ? -1.0 : fval);
-          var val = Math.round(Math.pow((fval + 1.0) * 0.5, gamma) * 255.0);
+          var val = Math.round(Math.pow((fval + 1.0) * 0.5, gamma) * 255.0) | 0;
           var off = (offset + ix) << 2;
           imgData[off] = val;
           imgData[off+1] = val;
@@ -31,13 +37,9 @@ module.exports = (function() {
       }
       view.context.putImageData(view.imageData, 0, 0, r.x, r.y, r.width+1, r.height+1);
     }
-  }
+  });
+  "
+  return
+    render: eval(code)
 
-  return {
-    description: {
-      name: "Height map"
-    },
-    properties: properties,
-    renderLayer: renderLayer
-  };
-})();
+export {name, properties, create}

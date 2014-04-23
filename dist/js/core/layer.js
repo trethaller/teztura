@@ -1,5 +1,6 @@
 (function(){
-  var Layer;
+  var Rect, Layer;
+  Rect = require('../core/rect');
   Layer = (function(){
     Layer.displayName = 'Layer';
     var prototype = Layer.prototype, constructor = Layer;

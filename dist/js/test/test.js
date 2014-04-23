@@ -1,10 +1,11 @@
 (function(){
-  var Core, Rect, Layer, Vec2, GammaRenderer, $root, testSection;
+  var Core, Rect, Layer, Vec2, GammaRenderer, RoundBrush, $root, testSection;
   Core = require('../core/core');
   Rect = require('../core/rect');
   Layer = require('../core/layer');
   Vec2 = require('../core/vec').Vec2;
-  GammaRenderer = require('../renderers/gamma-renderer');
+  GammaRenderer = require('../renderers/gamma');
+  RoundBrush = require('../tools/roundbrush');
   $root = $('#tests-root');
   testSection = function(desc, fn){
     var $el;
@@ -13,16 +14,76 @@
     $('<hr>').appendTo($root);
     return fn($el);
   };
-  /*
-  testSection 'Round brush', ($el)->
-    size = 200
-    $can = $ "<canvas width='#{size * 4}' height='#{size}'/>"
-      .appendTo $el
-    layer = new Layer size, size
-    layer.fill Core.getRoundBrushFunc 0  
-  */
+  testSection('Round brush', function($el){
+    var width, height, $can, layer, defaults, brushTest, x$, p, y, ctx, view, renderer;
+    width = 800;
+    height = 400;
+    $can = $("<canvas width='" + width + "' height='" + height + "'/>").appendTo($el);
+    layer = new Layer(width, height);
+    layer.fill(function(x, y){
+      return -1;
+    });
+    defaults = function(){
+      var i$, ref$, len$, p, results$ = {};
+      for (i$ = 0, len$ = (ref$ = RoundBrush.properties).length; i$ < len$; ++i$) {
+        p = ref$[i$];
+        results$[p.id] = p.defaultValue;
+      }
+      return results$;
+    };
+    brushTest = function(ypos, props){
+      var f;
+      f = function(xoffset, tiling){
+        var env, brush, steps, i$, i, t, pos;
+        env = {
+          tiling: tiling,
+          targetValue: 1.0
+        };
+        brush = RoundBrush.createTool(props, env);
+        brush.beginDraw(layer, new Vec2(0, ypos));
+        steps = 20;
+        for (i$ = 0; i$ <= steps; ++i$) {
+          i = i$;
+          t = i / steps;
+          pos = new Vec2(xoffset + t * 300, ypos - 30 * Math.sin(Math.PI * t));
+          brush.draw(layer, pos, 1);
+        }
+        brush.endDraw();
+      };
+      f(50, false);
+      f(450, true);
+    };
+    x$ = p = defaults();
+    x$.hardness = 0;
+    y = 0;
+    brushTest(y += 50, p);
+    p.size = 50;
+    brushTest(y += 50, p);
+    p.step = 30;
+    brushTest(y += 50, p);
+    p.step = 50;
+    brushTest(y += 50, p);
+    p.step = 30;
+    p.hardness = 0.3;
+    brushTest(y += 50, p);
+    p.hardness = 0.5;
+    brushTest(y += 50, p);
+    p.hardness = 1.0;
+    brushTest(y += 50, p);
+    ctx = $can[0].getContext('2d');
+    view = {
+      canvas: $can[0],
+      context: ctx,
+      imageData: ctx.getImageData(0, 0, width, height)
+    };
+    renderer = GammaRenderer.create({
+      gamma: 1
+    }, layer, view);
+    renderer.render([new Rect(0, 0, width, height)]);
+    return ctx.drawImage($can[0], 0, 0);
+  });
   testSection('Blend modes', function($el){
-    var width, height, $can, ctx, layer, brush, blendTest, view;
+    var width, height, $can, ctx, layer, brush, blendTest, view, renderer;
     width = 800;
     height = 400;
     $can = $("<canvas width='" + width + "' height='" + height + "'/>").appendTo($el);
@@ -55,7 +116,10 @@
       context: ctx,
       imageData: ctx.getImageData(0, 0, width, height)
     };
-    GammaRenderer.renderLayer(layer, view, [new Rect(0, 0, width, height)]);
+    renderer = GammaRenderer.create({
+      gamma: 1
+    }, layer, view);
+    renderer.render([new Rect(0, 0, width, height)]);
     return ctx.drawImage($can[0], 0, 0);
   });
 }).call(this);

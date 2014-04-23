@@ -1,13 +1,13 @@
 
 Document = require './document'
 DocumentView = require './document-view'
-GammaRenderer = require './renderers/gamma-renderer'
+# GammaRenderer = require './renderers/gamma'
 RoundBrush = require './tools/roundbrush'
 
 
 Editor = !->
 
-  @tiling = -> false
+  @tiling = -> true
   @toolObject = ->
     if not @tool?
       props = {[p.id, p.defaultValue] for p in RoundBrush.properties}
@@ -18,9 +18,8 @@ start = ->
   editor = new Editor
   doc = new Document 512, 512
   doc.layer.fill -> -1
-  renderer = GammaRenderer
-  view = new DocumentView $('.document-view'), doc, renderer, editor
-  view.reRender!
+  view = new DocumentView $('.document-view'), doc, editor
+  view.render!
 
 
 $(document).ready start

@@ -290,6 +290,304 @@
 
 },{}],5:[function(require,module,exports){
 (function(){
+  var Vec2, Rect, GammaRenderer, DocumentView;
+  Vec2 = require('./core/vec').Vec2;
+  Rect = require('./core/rect');
+  GammaRenderer = require('./renderers/gamma');
+  DocumentView = (function(){
+    DocumentView.displayName = 'DocumentView';
+    var prototype = DocumentView.prototype, constructor = DocumentView;
+    prototype.drawing = false;
+    prototype.panning = false;
+    prototype.imageData = null;
+    prototype.context = null;
+    prototype.canvas = null;
+    prototype.backContext = null;
+    prototype.doc = null;
+    prototype.offset = new Vec2(0.0, 0.0);
+    prototype.scale = 2.0;
+    prototype.penPos = new Vec2(0, 0);
+    function DocumentView($container, doc, editor){
+      var $canvas, $backCanvas, plugin, penAPI, getMouseCoords, getPressure, updatePen, getCanvasCoords, this$ = this;
+      this.doc = doc;
+      this.editor = editor;
+      $container.empty();
+      $canvas = $('<canvas/>', {
+        'class': ''
+      }).attr({
+        width: this.doc.width,
+        height: this.doc.height
+      });
+      $backCanvas = $('<canvas/>', {
+        'class': ''
+      }).attr({
+        width: this.doc.width,
+        height: this.doc.height
+      });
+      $container.append($backCanvas);
+      this.backContext = $backCanvas[0].getContext('2d');
+      this.canvas = $canvas[0];
+      this.context = $canvas[0].getContext('2d');
+      this.imageData = this.context.getImageData(0, 0, this.doc.width, this.doc.height);
+      this.context.mozImageSmoothingEnabled = false;
+      plugin = document.getElementById('wtPlugin');
+      penAPI = plugin != null ? plugin.penAPI : void 8;
+      getMouseCoords = function(e){
+        var v;
+        v = new Vec2(e.pageX, e.pageY);
+        /*
+        penAPI = plugin.penAPI
+        if penAPI? and penAPI.pointerType > 0
+          v.x += penAPI.sysX - penAPI.posX
+          v.y += penAPI.sysY - penAPI.posY
+        */
+        v.x -= $backCanvas.position().left;
+        v.y -= $backCanvas.position().top;
+        return v;
+      };
+      getPressure = function(){
+        if ((penAPI != null ? penAPI.pointerType : void 8) > 0) {
+          return penAPI.pressure;
+        }
+        return 1.0;
+      };
+      updatePen = function(e){
+        var pos;
+        pos = getMouseCoords(e);
+        this$.penPos = this$.penPos.add(pos.sub(this$.penPos).scale(0.6));
+      };
+      getCanvasCoords = function(){
+        return this$.screenToCanvas(this$.penPos);
+      };
+      $backCanvas.mousedown(function(e){
+        var coords;
+        e.preventDefault();
+        if (e.which === 1) {
+          this$.drawing = true;
+          this$.actionDirtyRect = null;
+          coords = getCanvasCoords();
+          this$.editor.toolObject().beginDraw(this$.doc.layer, coords);
+          this$.doc.beginEdit();
+          this$.onDraw(coords, getPressure());
+        }
+        if (e.which === 2) {
+          this$.panning = true;
+          this$.panningStart = getMouseCoords(e);
+          return this$.offsetStart = this$.offset.clone();
+        }
+      });
+      $container.mouseup(function(e){
+        e.preventDefault();
+        if (e.which === 1) {
+          this$.editor.toolObject().endDraw(getCanvasCoords());
+          this$.drawing = false;
+          if (this$.actionDirtyRect != null) {
+            this$.doc.afterEdit(this$.actionDirtyRect);
+          }
+        }
+        if (e.which === 2) {
+          return this$.panning = false;
+        }
+      });
+      $container.mousemove(function(e){
+        var curPos, o;
+        e.preventDefault();
+        updatePen(e);
+        if (this$.drawing) {
+          this$.onDraw(getCanvasCoords(), getPressure());
+        }
+        if (this$.panning) {
+          curPos = getMouseCoords(e);
+          o = this$.offsetStart.add(curPos.sub(this$.panningStart));
+          this$.offset = o;
+          return this$.repaint();
+        }
+      });
+      $container.mousewheel(function(e, delta, deltaX, deltaY){
+        var mult;
+        mult = 1.0 + deltaY * 0.25;
+        this$.scale *= mult;
+        return this$.repaint();
+      });
+    }
+    prototype.getRenderer = function(){
+      if (this.renderer == null) {
+        this.renderer = GammaRenderer.create({
+          gamma: 1
+        }, this.doc.layer, this);
+      }
+      return this.renderer;
+    };
+    prototype.screenToCanvas = function(pt){
+      return pt.sub(this.offset).scale(1.0 / this.scale);
+    };
+    prototype.render = function(){
+      this.getRenderer().render([new Rect(0, 0, this.doc.width, this.doc.height)]);
+      return this.repaint();
+    };
+    prototype.repaint = function(){
+      var x$, ctx;
+      x$ = ctx = this.backContext;
+      x$.setTransform(1, 0, 0, 1, 0, 0);
+      x$.translate(this.offset.x, this.offset.y);
+      x$.scale(this.scale, this.scale);
+      if (this.editor.tiling()) {
+        ctx.fillStyle = ctx.createPattern(this.canvas, "repeat");
+        return ctx.fillRect(-this.offset.x / this.scale, -this.offset.y / this.scale, this.canvas.width / this.scale, this.canvas.height / this.scale);
+      } else {
+        return ctx.drawImage(this.canvas, 0, 0);
+      }
+    };
+    prototype.onDraw = function(pos, pressure){
+      var dirtyRects, layer, tool, layerRect, r, i$, ref$, len$, xoff, j$, ref1$, len1$, yoff, totalArea, this$ = this;
+      dirtyRects = [];
+      layer = this.doc.layer;
+      tool = this.editor.toolObject();
+      layerRect = layer.getRect();
+      r = tool.draw(layer, pos, pressure).round();
+      if (this.editor.tiling()) {
+        for (i$ = 0, len$ = (ref$ = [-1, 0, 1]).length; i$ < len$; ++i$) {
+          xoff = ref$[i$];
+          for (j$ = 0, len1$ = (ref1$ = [-1, 0, 1]).length; j$ < len1$; ++j$) {
+            yoff = ref1$[j$];
+            dirtyRects.push(r.offset(new Vec2(xoff * layerRect.width, yoff * layerRect.height)));
+          }
+        }
+      } else {
+        dirtyRects.push(r.intersect(layerRect));
+      }
+      dirtyRects = dirtyRects.map(function(r){
+        return r.intersect(layerRect);
+      }).filter(function(r){
+        return !r.isEmpty();
+      });
+      dirtyRects.forEach(function(r){
+        if (this$.actionDirtyRect == null) {
+          return this$.actionDirtyRect = r.clone();
+        } else {
+          return this$.actionDirtyRect.extend(r);
+        }
+      });
+      if (false) {
+        totalArea = dirtyRects.map(function(r){
+          return r.width * r.height;
+        }).reduce(function(a, b){
+          return a + b;
+        });
+        console.log(dirtyRects.length + " rects, " + Math.round(Math.sqrt(totalArea)) + " px²");
+      }
+      if (true) {
+        this.getRenderer().render(dirtyRects);
+        return this.repaint();
+      }
+    };
+    return DocumentView;
+  }());
+  module.exports = DocumentView;
+}).call(this);
+
+},{"./core/rect":3,"./core/vec":4,"./renderers/gamma":8}],6:[function(require,module,exports){
+(function(){
+  var Layer, Document;
+  Layer = require('./core/layer');
+  Document = (function(){
+    Document.displayName = 'Document';
+    var prototype = Document.prototype, constructor = Document;
+    function Document(width, height){
+      this.width = width;
+      this.height = height;
+      this.layer = new Layer(this.width, this.height);
+      this.backup = new Layer(this.width, this.height);
+      this.history = [];
+      this.histIndex = 1;
+    }
+    prototype.beginEdit = function(){
+      if (this.histIndex > 0) {
+        this.history.splice(0, this.histIndex);
+        this.histIndex = 0;
+        return this.backup.getBuffer().set(this.layer.getBuffer());
+      }
+    };
+    prototype.afterEdit = function(rect){
+      var histSize;
+      this.history.splice(0, 0, {
+        data: this.backup.getCopy(rect),
+        rect: rect
+      });
+      this.backup.getBuffer().set(this.layer.getBuffer());
+      histSize = 10;
+      if (this.history.length >= histSize) {
+        return this.history.splice(histSize);
+      }
+    };
+    prototype.undo = function(){
+      if (this.histIndex >= this.history.length) {
+        return;
+      }
+      this.restore();
+      return this.histIndex++;
+    };
+    prototype.redo = function(){
+      if (this.histIndex === 0) {
+        return;
+      }
+      this.histIndex--;
+      return this.restore();
+    };
+    prototype.restore = function(){
+      var toRestore, rect;
+      toRestore = this.history[this.histIndex];
+      rect = toRestore.rect;
+      this.history[this.histIndex] = {
+        data: this.layer.getCopy(rect),
+        rect: rect
+      };
+      return this.layer.setData(toRestore.data, toRestore.rect);
+    };
+    return Document;
+  }());
+  module.exports = Document;
+}).call(this);
+
+},{"./core/layer":2}],7:[function(require,module,exports){
+(function(){
+  var Document, DocumentView, RoundBrush, Editor, start;
+  Document = require('./document');
+  DocumentView = require('./document-view');
+  RoundBrush = require('./tools/roundbrush');
+  Editor = function(){
+    this.tiling = function(){
+      return true;
+    };
+    this.toolObject = function(){
+      var props, res$, i$, ref$, len$, p;
+      if (this.tool == null) {
+        res$ = {};
+        for (i$ = 0, len$ = (ref$ = RoundBrush.properties).length; i$ < len$; ++i$) {
+          p = ref$[i$];
+          res$[p.id] = p.defaultValue;
+        }
+        props = res$;
+        this.tool = RoundBrush.createTool(props, this);
+      }
+      return this.tool;
+    };
+  };
+  start = function(){
+    var editor, doc, view;
+    editor = new Editor;
+    doc = new Document(512, 512);
+    doc.layer.fill(function(){
+      return -1;
+    });
+    view = new DocumentView($('.document-view'), doc, editor);
+    return view.render();
+  };
+  $(document).ready(start);
+}).call(this);
+
+},{"./document":6,"./document-view":5,"./tools/roundbrush":9}],8:[function(require,module,exports){
+(function(){
   var name, properties, create, ref$, out$ = typeof exports != 'undefined' && exports || this;
   name = "Gray";
   properties = {
@@ -316,134 +614,7 @@
   ref$.create = create;
 }).call(this);
 
-},{}],6:[function(require,module,exports){
-(function(){
-  var Core, Rect, Layer, Vec2, GammaRenderer, RoundBrush, $root, testSection;
-  Core = require('../core/core');
-  Rect = require('../core/rect');
-  Layer = require('../core/layer');
-  Vec2 = require('../core/vec').Vec2;
-  GammaRenderer = require('../renderers/gamma');
-  RoundBrush = require('../tools/roundbrush');
-  $root = $('#tests-root');
-  testSection = function(desc, fn){
-    var $el;
-    $('<h2>').text(desc).appendTo($root);
-    $el = $('<div>').appendTo($root);
-    $('<hr>').appendTo($root);
-    return fn($el);
-  };
-  testSection('Round brush', function($el){
-    var width, height, $can, layer, defaults, brushTest, x$, p, y, ctx, view, renderer;
-    width = 800;
-    height = 400;
-    $can = $("<canvas width='" + width + "' height='" + height + "'/>").appendTo($el);
-    layer = new Layer(width, height);
-    layer.fill(function(x, y){
-      return -1;
-    });
-    defaults = function(){
-      var i$, ref$, len$, p, results$ = {};
-      for (i$ = 0, len$ = (ref$ = RoundBrush.properties).length; i$ < len$; ++i$) {
-        p = ref$[i$];
-        results$[p.id] = p.defaultValue;
-      }
-      return results$;
-    };
-    brushTest = function(ypos, props){
-      var f;
-      f = function(xoffset, tiling){
-        var env, brush, steps, i$, i, t, pos;
-        env = {
-          tiling: tiling,
-          targetValue: 1.0
-        };
-        brush = RoundBrush.createTool(props, env);
-        brush.beginDraw(layer, new Vec2(0, ypos));
-        steps = 20;
-        for (i$ = 0; i$ <= steps; ++i$) {
-          i = i$;
-          t = i / steps;
-          pos = new Vec2(xoffset + t * 300, ypos - 30 * Math.sin(Math.PI * t));
-          brush.draw(layer, pos, 1);
-        }
-        brush.endDraw();
-      };
-      f(50, false);
-      f(450, true);
-    };
-    x$ = p = defaults();
-    x$.hardness = 0;
-    y = 0;
-    brushTest(y += 50, p);
-    p.size = 50;
-    brushTest(y += 50, p);
-    p.step = 30;
-    brushTest(y += 50, p);
-    p.step = 50;
-    brushTest(y += 50, p);
-    p.step = 30;
-    p.hardness = 0.3;
-    brushTest(y += 50, p);
-    p.hardness = 0.5;
-    brushTest(y += 50, p);
-    p.hardness = 1.0;
-    brushTest(y += 50, p);
-    ctx = $can[0].getContext('2d');
-    view = {
-      canvas: $can[0],
-      context: ctx,
-      imageData: ctx.getImageData(0, 0, width, height)
-    };
-    renderer = GammaRenderer.create({
-      gamma: 1
-    }, layer, view);
-    renderer.render([new Rect(0, 0, width, height)]);
-    return ctx.drawImage($can[0], 0, 0);
-  });
-  testSection('Blend modes', function($el){
-    var width, height, $can, ctx, layer, brush, blendTest, view, renderer;
-    width = 800;
-    height = 400;
-    $can = $("<canvas width='" + width + "' height='" + height + "'/>").appendTo($el);
-    ctx = $can[0].getContext('2d');
-    layer = new Layer(width, height);
-    brush = new Layer(100, 100);
-    brush.fill(Core.getRoundBrushFunc(0));
-    layer.fill(function(x, y){
-      x += 1;
-      y += 1;
-      return (Math.round(x * 80) % 2) * 0.1 - (Math.round(y * 40) % 2) * 0.1;
-    });
-    blendTest = function(y, args, expr){
-      var fn, nsteps, i$, i, pressure, results$ = [];
-      fn = Core.genBlendFunc(args, expr);
-      nsteps = 30;
-      for (i$ = 0; i$ < nsteps; ++i$) {
-        i = i$;
-        pressure = (1.0 - Math.cos(2 * Math.PI * i / nsteps)) * 0.5;
-        results$.push(fn(new Vec2(i * width / nsteps - 50.0, y).round(), brush, layer, pressure));
-      }
-      return results$;
-    };
-    blendTest(0, "intensity", "{dst} += {src} * intensity");
-    blendTest(100, "intensity", "{dst} *= 1 + {src} * intensity");
-    blendTest(200, "intensity", "{dst} = {dst} * (1 - intensity*{src}) + 0.5 * intensity*{src}");
-    blendTest(300, "intensity", "{dst} = {src} * intensity");
-    view = {
-      canvas: $can[0],
-      context: ctx,
-      imageData: ctx.getImageData(0, 0, width, height)
-    };
-    renderer = GammaRenderer.create({
-      gamma: 1
-    }, layer, view);
-    renderer.render([new Rect(0, 0, width, height)]);
-    return ctx.drawImage($can[0], 0, 0);
-  });
-}).call(this);
-
-},{"../core/core":1,"../core/layer":2,"../core/rect":3,"../core/vec":4,"../renderers/gamma":5,"../tools/roundbrush":7}],7:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 (function(){
   var Rect, genBrushFunc, createStepTool, name, properties, createTool, ref$, out$ = typeof exports != 'undefined' && exports || this;
   Rect = require('../core/rect');
@@ -510,7 +681,7 @@
   ref$.createTool = createTool;
 }).call(this);
 
-},{"../core/core":1,"../core/rect":3,"./utils":8}],8:[function(require,module,exports){
+},{"../core/core":1,"../core/rect":3,"./utils":10}],10:[function(require,module,exports){
 (function(){
   var Rect, createStepTool, out$ = typeof exports != 'undefined' && exports || this;
   Rect = require('../core/rect');
@@ -560,4 +731,4 @@
   out$.createStepTool = createStepTool;
 }).call(this);
 
-},{"../core/rect":3}]},{},[6])
+},{"../core/rect":3}]},{},[7])

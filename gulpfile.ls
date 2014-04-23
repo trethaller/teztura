@@ -48,4 +48,4 @@ gulp.task 'connect', ->
     livereload: true
 
 gulp.task 'serve', ['test', 'main', 'connect'], ->
-  gulp.watch 'src/**/*.ls', ['test', 'main']
+  gulp.watch ['src/**/*'], ['test', 'main']

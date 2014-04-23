@@ -1,5 +1,6 @@
 (function(){
-  var Document;
+  var Layer, Document;
+  Layer = require('./core/layer');
   Document = (function(){
     Document.displayName = 'Document';
     var prototype = Document.prototype, constructor = Document;

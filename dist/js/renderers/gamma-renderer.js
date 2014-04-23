@@ -1,10 +1,11 @@
-module.exports = (function() {
+module.exports = (function () {
+  'use strict';
 
   var properties = {
     gamma: 1.0
   };
 
-  function renderLayer (layer, view, rects) {
+  function renderLayer(layer, view, rects) {
     var width = layer.width;
     var height = layer.height;
     var imgData = view.imageData.data;
@@ -40,4 +41,5 @@ module.exports = (function() {
     properties: properties,
     renderLayer: renderLayer
   };
+
 })();

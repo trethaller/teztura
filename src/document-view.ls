@@ -1,5 +1,6 @@
 {Vec2} = require './core/vec'
 Rect = require './core/rect'
+GammaRenderer = require './renderers/gamma'
 
 class DocumentView
   drawing: false
@@ -13,7 +14,7 @@ class DocumentView
   scale: 2.0
   penPos: new Vec2(0,0)
 
-  ($container, @doc, @renderer, @editor) ->
+  ($container, @doc, @editor) ->
     $container.empty()
     $canvas = $('<canvas/>',{'class':''}).attr {width: @doc.width, height:@doc.height}
     $backCanvas = $('<canvas/>',{'class':''}).attr {width: @doc.width, height:@doc.height}
@@ -93,23 +94,26 @@ class DocumentView
         curPos = getMouseCoords(e)
         o = @offsetStart.add(curPos.sub(@panningStart))
         @offset = o
-        @rePaint()
+        @repaint()
 
     $container.mousewheel (e, delta, deltaX, deltaY) ~>
       mult = 1.0 + (deltaY * 0.25)
       @scale *= mult
-      @rePaint()
+      @repaint()
 
  
-  screenToCanvas: (pt) ->
-    return pt.sub(@offset).scale(1.0/@scale)
+  getRenderer: ->
+    if not @renderer?
+      @renderer = GammaRenderer.create {gamma: 1}, @doc.layer, this
+    return @renderer
 
-  reRender: ->
-    layer = @doc.layer
-    @renderer.renderLayer(layer, this, [new Rect(0,0,@doc.width,@doc.height)])
-    @rePaint()
+  screenToCanvas: (pt) -> pt.sub(@offset).scale(1.0/@scale)
 
-  rePaint: ->
+  render: ->
+    @getRenderer().render [new Rect(0,0,@doc.width,@doc.height)]
+    @repaint()
+
+  repaint: ->
     ctx = @backContext
       ..setTransform(1, 0, 0, 1, 0, 0)
       ..translate(@offset.x, @offset.y)
@@ -156,8 +160,8 @@ class DocumentView
 
     if true
     #setTimeout (->
-      @renderer.renderLayer(layer, @, dirtyRects)
-      @rePaint()
+      @getRenderer().render dirtyRects
+      @repaint()
     #), 0
 
 module.exports = DocumentView
