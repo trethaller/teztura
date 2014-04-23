@@ -10,7 +10,7 @@ create = (props, layer, view) ->
   height = layer.height
   imgData = view.imageData.data
   fb = layer.getBuffer()
-  lut = props.gradient.imageData.data
+  lut = props.gradient.data
 
   code = "
   (function (rects) {

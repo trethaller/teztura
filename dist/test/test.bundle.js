@@ -318,43 +318,71 @@
 
 },{}],6:[function(require,module,exports){
 (function(){
-  var Core, Rect, Layer, Vec2, GammaRenderer, RoundBrush, testRenderers, testRoundBrush, testBlendModes, tests;
+  var name, properties, create, ref$, out$ = typeof exports != 'undefined' && exports || this;
+  name = "Gradient";
+  properties = {
+    id: 'gradient',
+    name: "Gradient image",
+    type: 'image'
+  };
+  create = function(props, layer, view){
+    var width, height, imgData, fb, lut, code;
+    width = layer.width;
+    height = layer.height;
+    imgData = view.imageData.data;
+    fb = layer.getBuffer();
+    lut = props.gradient.data;
+    code = "(function (rects) {'use strict';for(var ri in rects) {var r = rects[ri];var minX = r.x;var minY = r.y;var maxX = minX + r.width;var maxY = minY + r.height;for(var iy=minY; iy<=maxY; ++iy) {var offset = iy * width;for(var ix=minX; ix<=maxX; ++ix) {var fval = fb[offset + ix];var lookupIndex = Math.round(Math.min(511,Math.max(0,256.0 * (1.0 + fval)))) * 4;var off = (offset + ix) << 2;imgData[off] =  lut[lookupIndex];imgData[off+1] = lut[lookupIndex+1];imgData[off+2] = lut[lookupIndex+2];imgData[off+3] = 0xff;}}view.context.putImageData(view.imageData, 0, 0, r.x, r.y, r.width+1, r.height+1);}});";
+    return {
+      render: eval(code)
+    };
+  };
+  ref$ = out$;
+  ref$.name = name;
+  ref$.properties = properties;
+  ref$.create = create;
+}).call(this);
+
+},{}],7:[function(require,module,exports){
+(function(){
+  var Core, Rect, Layer, Vec2, GammaRenderer, GradientRenderer, RoundBrush, loadGradient, testRenderers, testRoundBrush, testBlendModes, tests;
   Core = require('../core/core');
   Rect = require('../core/rect');
   Layer = require('../core/layer');
   Vec2 = require('../core/vec').Vec2;
   GammaRenderer = require('../renderers/gamma');
+  GradientRenderer = require('../renderers/gradient');
   RoundBrush = require('../tools/roundbrush');
+  loadGradient = function(url, done){
+    var imageObj;
+    imageObj = new Image();
+    imageObj.onload = function(){
+      var canvas, ctx, imageData;
+      canvas = document.createElement("canvas");
+      canvas.width = this.width;
+      canvas.height = this.height;
+      ctx = canvas.getContext('2d');
+      ctx.drawImage(this, 0, 0);
+      imageData = ctx.getImageData(0, 0, this.width, 1);
+      return done(imageData);
+    };
+    return imageObj.src = url;
+  };
   testRenderers = function($el){
-    var width, height, x$, props, p, brush, renderTest;
+    var width, height, renderTest;
     width = 800;
-    height = 150;
-    x$ = props = (function(){
-      var i$, ref$, len$, results$ = {};
-      for (i$ = 0, len$ = (ref$ = RoundBrush.properties).length; i$ < len$; ++i$) {
-        p = ref$[i$];
-        results$[p.id] = p.defaultValue;
-      }
-      return results$;
-    }());
-    x$.hardness = 0.8;
-    x$.step = 60;
-    x$.size = 100;
-    brush = RoundBrush.createTool(props, {
-      tiling: false,
-      targetValue: 1.0
-    });
+    height = 100;
     renderTest = function(type, props){
       var $can, layer, ctx, view, renderer;
       $can = $("<canvas width='" + width + "' height='" + height + "'/>").appendTo($el);
       layer = new Layer(width, height);
       layer.fill(function(x, y){
-        return -1;
+        if (y > 0) {
+          return (Math.floor((x + 1) * 40) % 2 - Math.floor(y * 5) % 2) * (x + 1) / 2.0;
+        } else {
+          return x;
+        }
       });
-      brush.beginDraw(layer, new Vec2(0, 150));
-      brush.draw(layer, new Vec2(75, 75), 1);
-      brush.draw(layer, new Vec2(750, 75), 1);
-      brush.endDraw();
       ctx = $can[0].getContext('2d');
       view = {
         canvas: $can[0],
@@ -374,8 +402,13 @@
     renderTest(GammaRenderer, {
       gamma: 1.0
     });
-    return renderTest(GammaRenderer, {
+    renderTest(GammaRenderer, {
       gamma: 2.0
+    });
+    return loadGradient('/img/gradient-1.png', function(g1){
+      return renderTest(GradientRenderer, {
+        gradient: g1
+      });
     });
   };
   testRoundBrush = function($el){
@@ -500,7 +533,7 @@
   })();
 }).call(this);
 
-},{"../core/core":1,"../core/layer":2,"../core/rect":3,"../core/vec":4,"../renderers/gamma":5,"../tools/roundbrush":7}],7:[function(require,module,exports){
+},{"../core/core":1,"../core/layer":2,"../core/rect":3,"../core/vec":4,"../renderers/gamma":5,"../renderers/gradient":6,"../tools/roundbrush":8}],8:[function(require,module,exports){
 (function(){
   var Rect, genBrushFunc, createStepTool, name, properties, createTool, ref$, out$ = typeof exports != 'undefined' && exports || this;
   Rect = require('../core/rect');
@@ -567,7 +600,7 @@
   ref$.createTool = createTool;
 }).call(this);
 
-},{"../core/core":1,"../core/rect":3,"./utils":8}],8:[function(require,module,exports){
+},{"../core/core":1,"../core/rect":3,"./utils":9}],9:[function(require,module,exports){
 (function(){
   var Rect, createStepTool, out$ = typeof exports != 'undefined' && exports || this;
   Rect = require('../core/rect');
@@ -617,4 +650,4 @@
   out$.createStepTool = createStepTool;
 }).call(this);
 
-},{"../core/rect":3}]},{},[6])
+},{"../core/rect":3}]},{},[7])

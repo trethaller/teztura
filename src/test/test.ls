@@ -3,31 +3,34 @@ Rect = require '../core/rect'
 Layer = require '../core/layer'
 {Vec2} = require '../core/vec'
 GammaRenderer = require '../renderers/gamma'
+GradientRenderer = require '../renderers/gradient'
 RoundBrush = require '../tools/roundbrush'
 
 
+loadGradient = (url, done)->
+  imageObj = new Image()
+  imageObj.onload = ->
+    canvas = document.createElement "canvas"
+    canvas.width = this.width
+    canvas.height = this.height
+    ctx = canvas.getContext '2d'
+    ctx.drawImage(this, 0, 0)
+    imageData = ctx.getImageData(0,0,this.width,1)
+    done imageData
+  imageObj.src = url
+
 testRenderers = ($el)->
   width = 800
-  height = 150
+  height = 100
 
-  props = {[p.id, p.defaultValue] for p in RoundBrush.properties}
-    ..hardness = 0.8
-    ..step = 60
-    ..size = 100
-
-  brush = RoundBrush.createTool props, {
-    tiling: false
-    targetValue: 1.0
-  }
   render-test = (type, props)->
     $can = $ "<canvas width='#{width}' height='#{height}'/>"
       .appendTo $el
     layer = new Layer width, height
-    layer.fill (x,y)-> -1    
-    brush.beginDraw layer, new Vec2(0, 150)
-    brush.draw layer, new Vec2(75, 75), 1
-    brush.draw layer, new Vec2(750, 75), 1
-    brush.endDraw!
+    layer.fill (x,y) ->
+      if y > 0
+      then ((Math.floor((x+1)*40) % 2) - (Math.floor(y*5) % 2)) * (x+1) / 2.0
+      else x
     
     ctx = $can.0.getContext '2d'
     view =
@@ -42,6 +45,10 @@ testRenderers = ($el)->
   render-test GammaRenderer, {gamma: 0.5}
   render-test GammaRenderer, {gamma: 1.0}
   render-test GammaRenderer, {gamma: 2.0}
+
+  g1 <- loadGradient '/img/gradient-1.png'
+  render-test GradientRenderer, {gradient: g1}
+
 
 testRoundBrush = ($el)->
   width = 800

@@ -1,41 +1,42 @@
 (function(){
-  var Core, Rect, Layer, Vec2, GammaRenderer, RoundBrush, testRenderers, testRoundBrush, testBlendModes, tests;
+  var Core, Rect, Layer, Vec2, GammaRenderer, GradientRenderer, RoundBrush, loadGradient, testRenderers, testRoundBrush, testBlendModes, tests;
   Core = require('../core/core');
   Rect = require('../core/rect');
   Layer = require('../core/layer');
   Vec2 = require('../core/vec').Vec2;
   GammaRenderer = require('../renderers/gamma');
+  GradientRenderer = require('../renderers/gradient');
   RoundBrush = require('../tools/roundbrush');
+  loadGradient = function(url, done){
+    var imageObj;
+    imageObj = new Image();
+    imageObj.onload = function(){
+      var canvas, ctx, imageData;
+      canvas = document.createElement("canvas");
+      canvas.width = this.width;
+      canvas.height = this.height;
+      ctx = canvas.getContext('2d');
+      ctx.drawImage(this, 0, 0);
+      imageData = ctx.getImageData(0, 0, this.width, 1);
+      return done(imageData);
+    };
+    return imageObj.src = url;
+  };
   testRenderers = function($el){
-    var width, height, x$, props, p, brush, renderTest;
+    var width, height, renderTest;
     width = 800;
-    height = 150;
-    x$ = props = (function(){
-      var i$, ref$, len$, results$ = {};
-      for (i$ = 0, len$ = (ref$ = RoundBrush.properties).length; i$ < len$; ++i$) {
-        p = ref$[i$];
-        results$[p.id] = p.defaultValue;
-      }
-      return results$;
-    }());
-    x$.hardness = 0.8;
-    x$.step = 60;
-    x$.size = 100;
-    brush = RoundBrush.createTool(props, {
-      tiling: false,
-      targetValue: 1.0
-    });
+    height = 100;
     renderTest = function(type, props){
       var $can, layer, ctx, view, renderer;
       $can = $("<canvas width='" + width + "' height='" + height + "'/>").appendTo($el);
       layer = new Layer(width, height);
       layer.fill(function(x, y){
-        return -1;
+        if (y > 0) {
+          return (Math.floor((x + 1) * 40) % 2 - Math.floor(y * 5) % 2) * (x + 1) / 2.0;
+        } else {
+          return x;
+        }
       });
-      brush.beginDraw(layer, new Vec2(0, 150));
-      brush.draw(layer, new Vec2(75, 75), 1);
-      brush.draw(layer, new Vec2(750, 75), 1);
-      brush.endDraw();
       ctx = $can[0].getContext('2d');
       view = {
         canvas: $can[0],
@@ -55,8 +56,13 @@
     renderTest(GammaRenderer, {
       gamma: 1.0
     });
-    return renderTest(GammaRenderer, {
+    renderTest(GammaRenderer, {
       gamma: 2.0
+    });
+    return loadGradient('/img/gradient-1.png', function(g1){
+      return renderTest(GradientRenderer, {
+        gradient: g1
+      });
     });
   };
   testRoundBrush = function($el){
