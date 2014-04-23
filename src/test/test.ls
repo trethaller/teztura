@@ -5,19 +5,45 @@ Layer = require '../core/layer'
 GammaRenderer = require '../renderers/gamma'
 RoundBrush = require '../tools/roundbrush'
 
-$root = $ \#tests-root
 
-testSection = (desc, fn)->
-  $ \<h2>
-    .text desc
-    .appendTo $root
-  $el = $ \<div> .appendTo $root
-  $ \<hr>
-    .appendTo $root
-  fn $el
+testRenderers = ($el)->
+  width = 800
+  height = 150
 
+  props = {[p.id, p.defaultValue] for p in RoundBrush.properties}
+    ..hardness = 0.8
+    ..step = 60
+    ..size = 100
 
-testSection 'Round brush', ($el)->
+  brush = RoundBrush.createTool props, {
+    tiling: false
+    targetValue: 1.0
+  }
+  render-test = (type, props)->
+    $can = $ "<canvas width='#{width}' height='#{height}'/>"
+      .appendTo $el
+    layer = new Layer width, height
+    layer.fill (x,y)-> -1    
+    brush.beginDraw layer, new Vec2(0, 150)
+    brush.draw layer, new Vec2(75, 75), 1
+    brush.draw layer, new Vec2(750, 75), 1
+    brush.endDraw!
+    
+    ctx = $can.0.getContext '2d'
+    view =
+      canvas: $can.0
+      context: ctx
+      imageData: ctx.getImageData 0, 0, width, height
+    renderer = type.create props, layer, view
+    renderer.render [new Rect(0,0,width,height)]
+    ctx.drawImage $can.0, 0, 0
+
+  render-test GammaRenderer, {gamma: 0.1}
+  render-test GammaRenderer, {gamma: 0.5}
+  render-test GammaRenderer, {gamma: 1.0}
+  render-test GammaRenderer, {gamma: 2.0}
+
+testRoundBrush = ($el)->
   width = 800
   height = 400
   $can = $ "<canvas width='#{width}' height='#{height}'/>"
@@ -74,7 +100,7 @@ testSection 'Round brush', ($el)->
 
 
 
-testSection 'Blend modes', ($el)->
+testBlendModes = ($el)->
   width = 800
   height = 400
   $can = $ "<canvas width='#{width}' height='#{height}'/>"
@@ -112,3 +138,22 @@ testSection 'Blend modes', ($el)->
   renderer.render [new Rect(0,0,width,height)]
   ctx.drawImage $can.0, 0, 0
 
+
+# ----
+
+tests = [
+  ["Renderers",   testRenderers]
+  #["Blend modes", testBlendModes]
+  #["Round brush", testRoundBrush]
+]
+
+do ->
+  $root = $ \#tests-root
+  tests.forEach (t)->
+    $ \<h2>
+      .text t.0
+      .appendTo $root
+    $el = $ \<div> .appendTo $root
+    $ \<hr>
+      .appendTo $root
+    t[1]($el)
