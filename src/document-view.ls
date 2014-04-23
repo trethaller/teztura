@@ -1,3 +1,5 @@
+{Vec2} = require './core/vec'
+Rect = require './core/rect'
 
 class DocumentView
   drawing: false
@@ -11,79 +13,76 @@ class DocumentView
   scale: 2.0
   penPos: new Vec2(0,0)
 
-  constructor: ($container, doc)->
-    @doc = doc
+  ($container, @doc, @renderer, @editor) ->
     $container.empty()
-    $canvas = $('<canvas/>',{'class':''}).attr {width: doc.width, height:doc.height}
-    $backCanvas = $('<canvas/>',{'class':''}).attr {width: doc.width, height:doc.height}
+    $canvas = $('<canvas/>',{'class':''}).attr {width: @doc.width, height:@doc.height}
+    $backCanvas = $('<canvas/>',{'class':''}).attr {width: @doc.width, height:@doc.height}
     $container.append($backCanvas)
 
     @backContext = $backCanvas[0].getContext('2d')
     @canvas = $canvas[0] 
     @context = $canvas[0].getContext('2d')
-    @imageData = @context.getImageData(0,0,doc.width,doc.height)
+    @imageData = @context.getImageData(0,0,@doc.width,@doc.height)
 
     @context.mozImageSmoothingEnabled = false
 
     plugin = document.getElementById('wtPlugin')
-    penAPI = if plugin? then plugin.penAPI else null
+    penAPI = plugin?.penAPI
 
  
-    getMouseCoords = (e)=>
+    getMouseCoords = (e)~>
       v = new Vec2(e.pageX, e.pageY)
 
-      ###
+      /*
       penAPI = plugin.penAPI
       if penAPI? and penAPI.pointerType > 0
         v.x += penAPI.sysX - penAPI.posX
         v.y += penAPI.sysY - penAPI.posY
-      ###
+      */
       v.x -= $backCanvas.position().left
       v.y -= $backCanvas.position().top
       return v
 
-    getPressure = ()=>
-      if penAPI? and penAPI.pointerType > 0
+    getPressure = ~>
+      if penAPI?.pointerType > 0
         return penAPI.pressure
       return 1.0
 
-    updatePen = (e)=>
+    updatePen = (e) !~>
       pos = getMouseCoords(e)
       @penPos = @penPos.add( pos.sub(@penPos).scale(0.6) )
 
-    getCanvasCoords = =>
-      return @screenToCanvas(@penPos)
+    getCanvasCoords = ~>
+      @screenToCanvas(@penPos)
 
-    local = {}
-
-    $backCanvas.mousedown (e)=>
+    $backCanvas.mousedown (e) ~>
       e.preventDefault()
 
       if e.which is 1
         @drawing = true
         @actionDirtyRect = null
         coords = getCanvasCoords()
-        editor.getToolObject().beginDraw(doc.layer, coords)
-        doc.beginEdit()
+        @editor.toolObject().beginDraw(@doc.layer, coords)
+        @doc.beginEdit()
         @onDraw(coords, getPressure())
 
       if e.which is 2
         @panning = true
-        local.panningStart = getMouseCoords(e)
-        local.offsetStart = @offset.clone()
+        @panningStart = getMouseCoords(e)
+        @offsetStart = @offset.clone()
 
-    $container.mouseup (e)=>
+    $container.mouseup (e) ~>
       e.preventDefault()
       if e.which is 1
-        editor.getToolObject().endDraw(getCanvasCoords())
+        @editor.toolObject().endDraw(getCanvasCoords())
         @drawing = false
         if @actionDirtyRect?
-          doc.afterEdit(@actionDirtyRect)
+          @doc.afterEdit(@actionDirtyRect)
 
       if e.which is 2
         @panning = false
 
-    $container.mousemove (e)=>
+    $container.mousemove (e) ~>
       e.preventDefault()
       updatePen(e)
 
@@ -92,47 +91,47 @@ class DocumentView
 
       if @panning
         curPos = getMouseCoords(e)
-        o = local.offsetStart.add(curPos.sub(local.panningStart))
+        o = @offsetStart.add(curPos.sub(@panningStart))
         @offset = o
         @rePaint()
 
-    $container.mousewheel (e, delta, deltaX, deltaY)=>
+    $container.mousewheel (e, delta, deltaX, deltaY) ~>
       mult = 1.0 + (deltaY * 0.25)
       @scale *= mult
       @rePaint()
 
  
-  screenToCanvas: (pt)->
+  screenToCanvas: (pt) ->
     return pt.sub(@offset).scale(1.0/@scale)
 
-  reRender: ()->
+  reRender: ->
     layer = @doc.layer
-    editor.get('renderer').renderLayer(layer, this, [new Rect(0,0,@doc.width,@doc.height)])
+    @renderer.renderLayer(layer, this, [new Rect(0,0,@doc.width,@doc.height)])
     @rePaint()
 
-  rePaint: ()->
+  rePaint: ->
     ctx = @backContext
-    ctx.setTransform(1, 0, 0, 1, 0, 0)
-    ctx.translate(@offset.x, @offset.y)
-    ctx.scale(@scale, @scale)
+      ..setTransform(1, 0, 0, 1, 0, 0)
+      ..translate(@offset.x, @offset.y)
+      ..scale(@scale, @scale)
     
-    if editor.get('tiling')
+    if @editor.tiling()
       ctx.fillStyle = ctx.createPattern(@canvas,"repeat")
       ctx.fillRect(-@offset.x / @scale,-@offset.y / @scale,@canvas.width / @scale, @canvas.height / @scale)
     else
       ctx.drawImage(@canvas, 0, 0)
 
-  onDraw: (pos, pressure)->
+  onDraw: (pos, pressure) ->
     dirtyRects = []
 
     layer = @doc.layer
-    tool = editor.getToolObject()
+    tool = @editor.toolObject()
 
     layerRect = layer.getRect()
     
     r = tool.draw(layer, pos, pressure).round()
 
-    if editor.get('tiling')
+    if @editor.tiling()
       for xoff in [-1,0,1]
         for yoff in [-1,0,1]
           dirtyRects.push(r.offset(new Vec2(xoff * layerRect.width, yoff * layerRect.height)))
@@ -140,10 +139,10 @@ class DocumentView
       dirtyRects.push(r.intersect(layerRect))
 
     dirtyRects = dirtyRects
-      .map((r)->r.intersect(layerRect))
-      .filter((r)->not r.isEmpty())
+      .map((r) ->r.intersect(layerRect))
+      .filter((r) ->not r.isEmpty())
 
-    dirtyRects.forEach (r)=>
+    dirtyRects.forEach (r) ~>
       if not @actionDirtyRect?
         @actionDirtyRect = r.clone()
       else
@@ -151,13 +150,14 @@ class DocumentView
 
     if false # Log dirty rects
       totalArea = dirtyRects
-        .map((r)-> r.width * r.height)
-        .reduce((a,b)-> a+b)
+        .map((r) -> r.width * r.height)
+        .reduce((a,b) -> a+b)
       console.log "#{dirtyRects.length} rects, #{Math.round(Math.sqrt(totalArea))} px²"
 
     if true
-    #setTimeout (()->
-      editor.get('renderer').renderLayer(layer, @, dirtyRects)
+    #setTimeout (->
+      @renderer.renderLayer(layer, @, dirtyRects)
       @rePaint()
     #), 0
 
+module.exports = DocumentView

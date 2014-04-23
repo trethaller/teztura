@@ -1,3 +1,4 @@
+Layer = require './core/layer'
 
 class Document
   (@width,@height)->

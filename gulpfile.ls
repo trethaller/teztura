@@ -35,18 +35,17 @@ gulp.task 'main', ['ls'], ->
   gulp.src "#{dist}/js/main.js"
     .pipe browserify!
     .pipe rename {suffix: '.bundle'}
-    .pipe gulp.dest dest
+    .pipe gulp.dest dist
     #.pipe uglify!
     #.pipe rename {suffix: '.min'}
     #.pipe gulp.dest dest
     .pipe connect.reload!
 
-/*
 gulp.task 'connect', ->
   connect.server do
-    root: dest
+    root: dist
+    port: 8000
     livereload: true
 
-*/
-gulp.task 'watch', ->
-  gulp.watch 'src/**/*.ls', ['test']
+gulp.task 'serve', ['test', 'main', 'connect'], ->
+  gulp.watch 'src/**/*.ls', ['test', 'main']

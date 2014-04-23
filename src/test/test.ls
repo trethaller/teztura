@@ -25,17 +25,24 @@ testSection 'Round brush', ($el)->
   layer = new Layer width, height
   layer.fill (x,y)-> -1
 
-  env =
-    tiling: false
-    targetValue: 1.0
-
   defaults = -> {[p.id, p.defaultValue] for p in RoundBrush.properties}
-  brush-test = (ypos, props)->
-    brush = RoundBrush.createTool props, env  
-    brush.beginDraw layer, new Vec2(0, ypos)
-    for i from 1 to 9
-      brush.draw layer, new Vec2(i*80, ypos), 1
-    brush.endDraw!
+  brush-test = (ypos, props) !->
+    f = (xoffset, tiling) !->
+      env = 
+        tiling: tiling
+        targetValue: 1.0
+
+      brush = RoundBrush.createTool props, env  
+      brush.beginDraw layer, new Vec2(0, ypos)
+      steps = 20
+      for i from 0 to steps
+        t = i / steps
+        pos = new Vec2(xoffset + t * 300, ypos - 30 * Math.sin(Math.PI * t))
+        brush.draw layer, pos, 1
+      brush.endDraw!
+
+    f 50, false
+    f 450, true
 
   p = defaults!
     ..hardness = 0
@@ -99,6 +106,4 @@ testSection 'Blend modes', ($el)->
 
   GammaRenderer.renderLayer layer, view, [new Rect(0,0,width,height)]
   ctx.drawImage $can.0, 0, 0
-
-
 

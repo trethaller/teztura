@@ -1,3 +1,4 @@
+Rect = require '../core/rect'
 
 class Layer
   (@width, @height) ->
