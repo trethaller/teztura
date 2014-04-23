@@ -37,7 +37,9 @@ testRenderers = ($el)->
       canvas: $can.0
       context: ctx
       imageData: ctx.getImageData 0, 0, width, height
-    renderer = type.create props, layer, view
+    renderer = new type layer, view
+    for k, v of props
+      renderer.properties[k] = v
     renderer.render [new Rect(0,0,width,height)]
     ctx.drawImage $can.0, 0, 0
 
@@ -48,7 +50,6 @@ testRenderers = ($el)->
 
   g1 <- loadGradient '/img/gradient-1.png'
   render-test GradientRenderer, {gradient: g1}
-
 
 testRoundBrush = ($el)->
   width = 800
@@ -101,7 +102,7 @@ testRoundBrush = ($el)->
     context: ctx
     imageData: ctx.getImageData 0, 0, width, height
 
-  renderer = GammaRenderer.create {gamma: 1}, layer, view
+  renderer = new GammaRenderer layer, view
   renderer.render [new Rect(0,0,width,height)]
   ctx.drawImage $can.0, 0, 0
 
@@ -141,7 +142,7 @@ testBlendModes = ($el)->
     imageData: ctx.getImageData 0, 0, width, height
   }
 
-  renderer = GammaRenderer.create {gamma: 1}, layer, view
+  renderer = new GammaRenderer layer, view
   renderer.render [new Rect(0,0,width,height)]
   ctx.drawImage $can.0, 0, 0
 
@@ -150,8 +151,8 @@ testBlendModes = ($el)->
 
 tests = [
   ["Renderers",   testRenderers]
-  #["Blend modes", testBlendModes]
-  #["Round brush", testRoundBrush]
+  ["Blend modes", testBlendModes]
+  ["Round brush", testRoundBrush]
 ]
 
 do ->

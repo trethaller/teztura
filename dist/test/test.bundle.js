@@ -290,60 +290,86 @@
 
 },{}],5:[function(require,module,exports){
 (function(){
-  var name, properties, create, ref$, out$ = typeof exports != 'undefined' && exports || this;
+  var createProperties, name, properties, GammaRenderer;
+  createProperties = require('./utils').createProperties;
   name = "Gray";
-  properties = {
+  properties = [{
     id: 'gamma',
     name: "Gamma",
     defaultValue: 1.0,
-    range: [0, 100]
-  };
-  create = function(props, layer, view){
-    var width, height, imgData, fb, gamma, code;
-    width = layer.width;
-    height = layer.height;
-    imgData = view.imageData.data;
-    fb = layer.getBuffer();
-    gamma = props.gamma;
-    code = "(function (rects) {'use strict';for(var ri in rects) {var r = rects[ri];var minX = r.x;var minY = r.y;var maxX = minX + r.width;var maxY = minY + r.height;for(var iy=minY; iy<=maxY; ++iy) {var offset = iy * width;for(var ix=minX; ix<=maxX; ++ix) {var fval = fb[offset + ix];fval = fval > 1.0 ? 1.0 : (fval < -1.0 ? -1.0 : fval);var val = Math.round(Math.pow((fval + 1.0) * 0.5, gamma) * 255.0) | 0;var off = (offset + ix) << 2;imgData[off] = val;imgData[off+1] = val;imgData[off+2] = val;imgData[off+3] = 0xff;}}view.context.putImageData(view.imageData, 0, 0, r.x, r.y, r.width+1, r.height+1);}});";
-    return {
-      render: eval(code)
+    range: [0, 10]
+  }];
+  GammaRenderer = function(layer, view){
+    var generateFunc, this$ = this;
+    this.properties = createProperties(properties);
+    generateFunc = function(){
+      var width, height, imgData, fb, gamma, code;
+      width = layer.width;
+      height = layer.height;
+      imgData = view.imageData.data;
+      fb = layer.getBuffer();
+      gamma = this$.properties.gamma;
+      code = "(function (rects) {'use strict';for(var ri in rects) {var r = rects[ri];var minX = r.x;var minY = r.y;var maxX = minX + r.width;var maxY = minY + r.height;for(var iy=minY; iy<=maxY; ++iy) {var offset = iy * width;for(var ix=minX; ix<=maxX; ++ix) {var fval = fb[offset + ix];fval = fval > 1.0 ? 1.0 : (fval < -1.0 ? -1.0 : fval);var val = Math.round(Math.pow((fval + 1.0) * 0.5, gamma) * 255.0) | 0;var off = (offset + ix) << 2;imgData[off] = val;imgData[off+1] = val;imgData[off+2] = val;imgData[off+3] = 0xff;}}view.context.putImageData(view.imageData, 0, 0, r.x, r.y, r.width+1, r.height+1);}});";
+      return eval(code);
+    };
+    this.render = function(rects){
+      if (this$.renderFunc == null) {
+        this$.renderFunc = generateFunc();
+      }
+      this$.renderFunc(rects);
     };
   };
-  ref$ = out$;
-  ref$.name = name;
-  ref$.properties = properties;
-  ref$.create = create;
+  module.exports = GammaRenderer;
 }).call(this);
 
-},{}],6:[function(require,module,exports){
+},{"./utils":7}],6:[function(require,module,exports){
 (function(){
-  var name, properties, create, ref$, out$ = typeof exports != 'undefined' && exports || this;
+  var createProperties, name, properties, GradientRenderer;
+  createProperties = require('./utils').createProperties;
   name = "Gradient";
-  properties = {
+  properties = [{
     id: 'gradient',
     name: "Gradient image",
     type: 'image'
-  };
-  create = function(props, layer, view){
-    var width, height, imgData, fb, lut, code;
-    width = layer.width;
-    height = layer.height;
-    imgData = view.imageData.data;
-    fb = layer.getBuffer();
-    lut = props.gradient.data;
-    code = "(function (rects) {'use strict';for(var ri in rects) {var r = rects[ri];var minX = r.x;var minY = r.y;var maxX = minX + r.width;var maxY = minY + r.height;for(var iy=minY; iy<=maxY; ++iy) {var offset = iy * width;for(var ix=minX; ix<=maxX; ++ix) {var fval = fb[offset + ix];var lookupIndex = Math.round(Math.min(511,Math.max(0,256.0 * (1.0 + fval)))) * 4;var off = (offset + ix) << 2;imgData[off] =  lut[lookupIndex];imgData[off+1] = lut[lookupIndex+1];imgData[off+2] = lut[lookupIndex+2];imgData[off+3] = 0xff;}}view.context.putImageData(view.imageData, 0, 0, r.x, r.y, r.width+1, r.height+1);}});";
-    return {
-      render: eval(code)
+  }];
+  GradientRenderer = function(layer, view){
+    var generateFunc, this$ = this;
+    this.properties = createProperties(properties);
+    generateFunc = function(){
+      var width, height, imgData, fb, lut, code;
+      width = layer.width;
+      height = layer.height;
+      imgData = view.imageData.data;
+      fb = layer.getBuffer();
+      lut = this$.properties.gradient.data;
+      code = "(function (rects) {'use strict';for(var ri in rects) {var r = rects[ri];var minX = r.x;var minY = r.y;var maxX = minX + r.width;var maxY = minY + r.height;for(var iy=minY; iy<=maxY; ++iy) {var offset = iy * width;for(var ix=minX; ix<=maxX; ++ix) {var fval = fb[offset + ix];var lookupIndex = Math.round(Math.min(511,Math.max(0,256.0 * (1.0 + fval)))) * 4;var off = (offset + ix) << 2;imgData[off] =  lut[lookupIndex];imgData[off+1] = lut[lookupIndex+1];imgData[off+2] = lut[lookupIndex+2];imgData[off+3] = 0xff;}}view.context.putImageData(view.imageData, 0, 0, r.x, r.y, r.width+1, r.height+1);}});";
+      return eval(code);
+    };
+    this.render = function(rects){
+      if (this$.renderFunc == null) {
+        this$.renderFunc = generateFunc();
+      }
+      this$.renderFunc(rects);
     };
   };
-  ref$ = out$;
-  ref$.name = name;
-  ref$.properties = properties;
-  ref$.create = create;
+  module.exports = GradientRenderer;
 }).call(this);
 
-},{}],7:[function(require,module,exports){
+},{"./utils":7}],7:[function(require,module,exports){
+(function(){
+  var createProperties, out$ = typeof exports != 'undefined' && exports || this;
+  createProperties = function(definitions){
+    var i$, len$, p, results$ = {};
+    for (i$ = 0, len$ = definitions.length; i$ < len$; ++i$) {
+      p = definitions[i$];
+      results$[p.id] = p.defaultValue;
+    }
+    return results$;
+  };
+  out$.createProperties = createProperties;
+}).call(this);
+
+},{}],8:[function(require,module,exports){
 (function(){
   var Core, Rect, Layer, Vec2, GammaRenderer, GradientRenderer, RoundBrush, loadGradient, testRenderers, testRoundBrush, testBlendModes, tests;
   Core = require('../core/core');
@@ -373,7 +399,7 @@
     width = 800;
     height = 100;
     renderTest = function(type, props){
-      var $can, layer, ctx, view, renderer;
+      var $can, layer, ctx, view, renderer, k, v;
       $can = $("<canvas width='" + width + "' height='" + height + "'/>").appendTo($el);
       layer = new Layer(width, height);
       layer.fill(function(x, y){
@@ -389,7 +415,11 @@
         context: ctx,
         imageData: ctx.getImageData(0, 0, width, height)
       };
-      renderer = type.create(props, layer, view);
+      renderer = new type(layer, view);
+      for (k in props) {
+        v = props[k];
+        renderer.properties[k] = v;
+      }
       renderer.render([new Rect(0, 0, width, height)]);
       return ctx.drawImage($can[0], 0, 0);
     };
@@ -473,9 +503,7 @@
       context: ctx,
       imageData: ctx.getImageData(0, 0, width, height)
     };
-    renderer = GammaRenderer.create({
-      gamma: 1
-    }, layer, view);
+    renderer = new GammaRenderer(layer, view);
     renderer.render([new Rect(0, 0, width, height)]);
     return ctx.drawImage($can[0], 0, 0);
   };
@@ -513,13 +541,11 @@
       context: ctx,
       imageData: ctx.getImageData(0, 0, width, height)
     };
-    renderer = GammaRenderer.create({
-      gamma: 1
-    }, layer, view);
+    renderer = new GammaRenderer(layer, view);
     renderer.render([new Rect(0, 0, width, height)]);
     return ctx.drawImage($can[0], 0, 0);
   };
-  tests = [["Renderers", testRenderers]];
+  tests = [["Renderers", testRenderers], ["Blend modes", testBlendModes], ["Round brush", testRoundBrush]];
   (function(){
     var $root;
     $root = $('#tests-root');
@@ -533,7 +559,7 @@
   })();
 }).call(this);
 
-},{"../core/core":1,"../core/layer":2,"../core/rect":3,"../core/vec":4,"../renderers/gamma":5,"../renderers/gradient":6,"../tools/roundbrush":8}],8:[function(require,module,exports){
+},{"../core/core":1,"../core/layer":2,"../core/rect":3,"../core/vec":4,"../renderers/gamma":5,"../renderers/gradient":6,"../tools/roundbrush":9}],9:[function(require,module,exports){
 (function(){
   var Rect, genBrushFunc, createStepTool, name, properties, createTool, ref$, out$ = typeof exports != 'undefined' && exports || this;
   Rect = require('../core/rect');
@@ -600,7 +626,7 @@
   ref$.createTool = createTool;
 }).call(this);
 
-},{"../core/core":1,"../core/rect":3,"./utils":9}],9:[function(require,module,exports){
+},{"../core/core":1,"../core/rect":3,"./utils":10}],10:[function(require,module,exports){
 (function(){
   var Rect, createStepTool, out$ = typeof exports != 'undefined' && exports || this;
   Rect = require('../core/rect');
@@ -650,4 +676,4 @@
   out$.createStepTool = createStepTool;
 }).call(this);
 
-},{"../core/rect":3}]},{},[7])
+},{"../core/rect":3}]},{},[8])

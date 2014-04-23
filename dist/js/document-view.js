@@ -121,9 +121,7 @@
     }
     prototype.getRenderer = function(){
       if (this.renderer == null) {
-        this.renderer = GammaRenderer.create({
-          gamma: 1
-        }, this.doc.layer, this);
+        this.renderer = new GammaRenderer(this.doc.layer, this);
       }
       return this.renderer;
     };

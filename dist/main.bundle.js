@@ -412,9 +412,7 @@
     }
     prototype.getRenderer = function(){
       if (this.renderer == null) {
-        this.renderer = GammaRenderer.create({
-          gamma: 1
-        }, this.doc.layer, this);
+        this.renderer = new GammaRenderer(this.doc.layer, this);
       }
       return this.renderer;
     };
@@ -586,35 +584,55 @@
   $(document).ready(start);
 }).call(this);
 
-},{"./document":6,"./document-view":5,"./tools/roundbrush":9}],8:[function(require,module,exports){
+},{"./document":6,"./document-view":5,"./tools/roundbrush":10}],8:[function(require,module,exports){
 (function(){
-  var name, properties, create, ref$, out$ = typeof exports != 'undefined' && exports || this;
+  var createProperties, name, properties, GammaRenderer;
+  createProperties = require('./utils').createProperties;
   name = "Gray";
-  properties = {
+  properties = [{
     id: 'gamma',
     name: "Gamma",
     defaultValue: 1.0,
-    range: [0, 100]
-  };
-  create = function(props, layer, view){
-    var width, height, imgData, fb, gamma, code;
-    width = layer.width;
-    height = layer.height;
-    imgData = view.imageData.data;
-    fb = layer.getBuffer();
-    gamma = props.gamma;
-    code = "(function (rects) {'use strict';for(var ri in rects) {var r = rects[ri];var minX = r.x;var minY = r.y;var maxX = minX + r.width;var maxY = minY + r.height;for(var iy=minY; iy<=maxY; ++iy) {var offset = iy * width;for(var ix=minX; ix<=maxX; ++ix) {var fval = fb[offset + ix];fval = fval > 1.0 ? 1.0 : (fval < -1.0 ? -1.0 : fval);var val = Math.round(Math.pow((fval + 1.0) * 0.5, gamma) * 255.0) | 0;var off = (offset + ix) << 2;imgData[off] = val;imgData[off+1] = val;imgData[off+2] = val;imgData[off+3] = 0xff;}}view.context.putImageData(view.imageData, 0, 0, r.x, r.y, r.width+1, r.height+1);}});";
-    return {
-      render: eval(code)
+    range: [0, 10]
+  }];
+  GammaRenderer = function(layer, view){
+    var generateFunc, this$ = this;
+    this.properties = createProperties(properties);
+    generateFunc = function(){
+      var width, height, imgData, fb, gamma, code;
+      width = layer.width;
+      height = layer.height;
+      imgData = view.imageData.data;
+      fb = layer.getBuffer();
+      gamma = this$.properties.gamma;
+      code = "(function (rects) {'use strict';for(var ri in rects) {var r = rects[ri];var minX = r.x;var minY = r.y;var maxX = minX + r.width;var maxY = minY + r.height;for(var iy=minY; iy<=maxY; ++iy) {var offset = iy * width;for(var ix=minX; ix<=maxX; ++ix) {var fval = fb[offset + ix];fval = fval > 1.0 ? 1.0 : (fval < -1.0 ? -1.0 : fval);var val = Math.round(Math.pow((fval + 1.0) * 0.5, gamma) * 255.0) | 0;var off = (offset + ix) << 2;imgData[off] = val;imgData[off+1] = val;imgData[off+2] = val;imgData[off+3] = 0xff;}}view.context.putImageData(view.imageData, 0, 0, r.x, r.y, r.width+1, r.height+1);}});";
+      return eval(code);
+    };
+    this.render = function(rects){
+      if (this$.renderFunc == null) {
+        this$.renderFunc = generateFunc();
+      }
+      this$.renderFunc(rects);
     };
   };
-  ref$ = out$;
-  ref$.name = name;
-  ref$.properties = properties;
-  ref$.create = create;
+  module.exports = GammaRenderer;
 }).call(this);
 
-},{}],9:[function(require,module,exports){
+},{"./utils":9}],9:[function(require,module,exports){
+(function(){
+  var createProperties, out$ = typeof exports != 'undefined' && exports || this;
+  createProperties = function(definitions){
+    var i$, len$, p, results$ = {};
+    for (i$ = 0, len$ = definitions.length; i$ < len$; ++i$) {
+      p = definitions[i$];
+      results$[p.id] = p.defaultValue;
+    }
+    return results$;
+  };
+  out$.createProperties = createProperties;
+}).call(this);
+
+},{}],10:[function(require,module,exports){
 (function(){
   var Rect, genBrushFunc, createStepTool, name, properties, createTool, ref$, out$ = typeof exports != 'undefined' && exports || this;
   Rect = require('../core/rect');
@@ -681,7 +699,7 @@
   ref$.createTool = createTool;
 }).call(this);
 
-},{"../core/core":1,"../core/rect":3,"./utils":10}],10:[function(require,module,exports){
+},{"../core/core":1,"../core/rect":3,"./utils":11}],11:[function(require,module,exports){
 (function(){
   var Rect, createStepTool, out$ = typeof exports != 'undefined' && exports || this;
   Rect = require('../core/rect');

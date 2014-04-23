@@ -27,7 +27,7 @@
     width = 800;
     height = 100;
     renderTest = function(type, props){
-      var $can, layer, ctx, view, renderer;
+      var $can, layer, ctx, view, renderer, k, v;
       $can = $("<canvas width='" + width + "' height='" + height + "'/>").appendTo($el);
       layer = new Layer(width, height);
       layer.fill(function(x, y){
@@ -43,7 +43,11 @@
         context: ctx,
         imageData: ctx.getImageData(0, 0, width, height)
       };
-      renderer = type.create(props, layer, view);
+      renderer = new type(layer, view);
+      for (k in props) {
+        v = props[k];
+        renderer.properties[k] = v;
+      }
       renderer.render([new Rect(0, 0, width, height)]);
       return ctx.drawImage($can[0], 0, 0);
     };
@@ -127,9 +131,7 @@
       context: ctx,
       imageData: ctx.getImageData(0, 0, width, height)
     };
-    renderer = GammaRenderer.create({
-      gamma: 1
-    }, layer, view);
+    renderer = new GammaRenderer(layer, view);
     renderer.render([new Rect(0, 0, width, height)]);
     return ctx.drawImage($can[0], 0, 0);
   };
@@ -167,13 +169,11 @@
       context: ctx,
       imageData: ctx.getImageData(0, 0, width, height)
     };
-    renderer = GammaRenderer.create({
-      gamma: 1
-    }, layer, view);
+    renderer = new GammaRenderer(layer, view);
     renderer.render([new Rect(0, 0, width, height)]);
     return ctx.drawImage($can[0], 0, 0);
   };
-  tests = [["Renderers", testRenderers]];
+  tests = [["Renderers", testRenderers], ["Blend modes", testBlendModes], ["Round brush", testRoundBrush]];
   (function(){
     var $root;
     $root = $('#tests-root');

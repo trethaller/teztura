@@ -104,7 +104,7 @@ class DocumentView
  
   getRenderer: ->
     if not @renderer?
-      @renderer = GammaRenderer.create {gamma: 1}, @doc.layer, this
+      @renderer = new GammaRenderer @doc.layer, this
     return @renderer
 
   screenToCanvas: (pt) -> pt.sub(@offset).scale(1.0/@scale)
