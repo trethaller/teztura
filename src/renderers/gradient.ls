@@ -1,4 +1,4 @@
-{ createProperties } = require './utils'
+{ createProperties } = require '../core/properties'
 
 name = "Gradient"
 properties = [

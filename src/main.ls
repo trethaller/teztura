@@ -5,6 +5,8 @@ DocumentView = require './document-view'
 RoundBrush = require './tools/roundbrush'
 
 
+
+
 Editor = !->
 
   @tiling = -> true
