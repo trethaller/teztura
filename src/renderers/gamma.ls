@@ -1,22 +1,20 @@
 
-{ createProperties } = require './utils'
-
-name = "Gray"
-properties = [
-  * id: 'gamma'
-    name: "Gamma"
-    defaultValue: 1.0
-    range: [0, 10]
-]
+{ createProperties } = require '../core/properties'
 
 GammaRenderer = (layer, view)!->
-  @properties = createProperties properties
+  createProperties @, [
+    * id: 'gamma'
+      name: "Gamma"
+      defaultValue: 1.0
+      range: [0, 10]
+  ]
+
   generateFunc = ~>
     width = layer.width
     height = layer.height
     imgData = view.imageData.data
     fb = layer.getBuffer()
-    gamma = @properties.gamma
+    gamma = @gamma!
 
     code = "
     (function (rects) {

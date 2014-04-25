@@ -39,7 +39,7 @@ testRenderers = ($el)->
       imageData: ctx.getImageData 0, 0, width, height
     renderer = new type layer, view
     for k, v of props
-      renderer.properties[k] = v
+      renderer[k](v)
     renderer.render [new Rect(0,0,width,height)]
     ctx.drawImage $can.0, 0, 0
 
@@ -59,14 +59,16 @@ testRoundBrush = ($el)->
   layer = new Layer width, height
   layer.fill (x,y)-> -1
 
-  defaults = -> {[p.id, p.defaultValue] for p in RoundBrush.properties}
   brush-test = (ypos, props) !->
     f = (xoffset, tiling) !->
       env =
         tiling: tiling
         targetValue: 1.0
 
-      brush = RoundBrush.createTool props, env
+      brush = new RoundBrush env
+      for k, v of props
+        brush[k](v)
+
       brush.beginDraw layer, new Vec2(0, ypos)
       steps = 20
       for i from 0 to steps
@@ -78,23 +80,14 @@ testRoundBrush = ($el)->
     f 50, false
     f 450, true
 
-  p = defaults!
-    ..hardness = 0
   y = 0
-  brush-test (y+=50), p
-  p.size = 50
-  brush-test (y+=50), p
-  p.step = 30
-  brush-test (y+=50), p
-  p.step = 50
-  brush-test (y+=50), p
-  p.step = 30
-  p.hardness = 0.3
-  brush-test (y+=50), p
-  p.hardness = 0.5
-  brush-test (y+=50), p
-  p.hardness = 1.0
-  brush-test (y+=50), p
+  brush-test (y+=50), {}
+  brush-test (y+=50), {size: 50}
+  brush-test (y+=50), {size: 50, step: 30}
+  brush-test (y+=50), {size: 50, step: 50}
+  brush-test (y+=50), {size: 50, step: 30, hardness: 0.3}
+  brush-test (y+=50), {size: 50, step: 30, hardness: 0.5}
+  brush-test (y+=50), {size: 50, step: 30, hardness: 1.0}
 
   ctx = $can.0.getContext '2d'
   view =

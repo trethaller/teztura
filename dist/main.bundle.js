@@ -124,7 +124,44 @@
   module.exports = Layer;
 }).call(this);
 
-},{"../core/rect":3}],3:[function(require,module,exports){
+},{"../core/rect":4}],3:[function(require,module,exports){
+(function(){
+  var createProperties, out$ = typeof exports != 'undefined' && exports || this;
+  createProperties = function(target, definitions, changed){
+    target.properties = {};
+    return definitions.forEach(function(def){
+      var prop;
+      prop = clone$(def);
+      prop.val = def.defaultValue;
+      prop.set = function(val){
+        var prev;
+        prev = prop.val;
+        prop.val = val;
+        if (changed != null) {
+          return changed(prop.id, val, prev);
+        }
+      };
+      prop.get = function(){
+        return prop.val;
+      };
+      target[prop.id] = function(val){
+        if (val != null) {
+          return prop.set(val);
+        } else {
+          return prop.get();
+        }
+      };
+      return target.properties[prop.id] = prop;
+    });
+  };
+  out$.createProperties = createProperties;
+  function clone$(it){
+    function fun(){} fun.prototype = it;
+    return new fun;
+  }
+}).call(this);
+
+},{}],4:[function(require,module,exports){
 (function(){
   var Vec2, Rect;
   Vec2 = require('./vec').Vec2;
@@ -195,7 +232,7 @@
   module.exports = Rect;
 }).call(this);
 
-},{"./vec":4}],4:[function(require,module,exports){
+},{"./vec":5}],5:[function(require,module,exports){
 (function(){
   var Vec2, Vec3, ref$, out$ = typeof exports != 'undefined' && exports || this;
   Vec2 = (function(){
@@ -288,7 +325,7 @@
   ref$.Vec3 = Vec3;
 }).call(this);
 
-},{}],5:[function(require,module,exports){
+},{}],6:[function(require,module,exports){
 (function(){
   var Vec2, Rect, GammaRenderer, DocumentView;
   Vec2 = require('./core/vec').Vec2;
@@ -484,7 +521,7 @@
   module.exports = DocumentView;
 }).call(this);
 
-},{"./core/rect":3,"./core/vec":4,"./renderers/gamma":8}],6:[function(require,module,exports){
+},{"./core/rect":4,"./core/vec":5,"./renderers/gamma":9}],7:[function(require,module,exports){
 (function(){
   var Layer, Document;
   Layer = require('./core/layer');
@@ -547,7 +584,7 @@
   module.exports = Document;
 }).call(this);
 
-},{"./core/layer":2}],7:[function(require,module,exports){
+},{"./core/layer":2}],8:[function(require,module,exports){
 (function(){
   var Document, DocumentView, RoundBrush, Editor, start;
   Document = require('./document');
@@ -558,15 +595,8 @@
       return true;
     };
     this.toolObject = function(){
-      var props, res$, i$, ref$, len$, p;
       if (this.tool == null) {
-        res$ = {};
-        for (i$ = 0, len$ = (ref$ = RoundBrush.properties).length; i$ < len$; ++i$) {
-          p = ref$[i$];
-          res$[p.id] = p.defaultValue;
-        }
-        props = res$;
-        this.tool = RoundBrush.createTool(props, this);
+        this.tool = new RoundBrush(this);
       }
       return this.tool;
     };
@@ -584,27 +614,25 @@
   $(document).ready(start);
 }).call(this);
 
-},{"./document":6,"./document-view":5,"./tools/roundbrush":10}],8:[function(require,module,exports){
+},{"./document":7,"./document-view":6,"./tools/roundbrush":10}],9:[function(require,module,exports){
 (function(){
-  var createProperties, name, properties, GammaRenderer;
-  createProperties = require('./utils').createProperties;
-  name = "Gray";
-  properties = [{
-    id: 'gamma',
-    name: "Gamma",
-    defaultValue: 1.0,
-    range: [0, 10]
-  }];
+  var createProperties, GammaRenderer;
+  createProperties = require('../core/properties').createProperties;
   GammaRenderer = function(layer, view){
     var generateFunc, this$ = this;
-    this.properties = createProperties(properties);
+    createProperties(this, [{
+      id: 'gamma',
+      name: "Gamma",
+      defaultValue: 1.0,
+      range: [0, 10]
+    }]);
     generateFunc = function(){
       var width, height, imgData, fb, gamma, code;
       width = layer.width;
       height = layer.height;
       imgData = view.imageData.data;
       fb = layer.getBuffer();
-      gamma = this$.properties.gamma;
+      gamma = this$.gamma();
       code = "(function (rects) {'use strict';for(var ri in rects) {var r = rects[ri];var minX = r.x;var minY = r.y;var maxX = minX + r.width;var maxY = minY + r.height;for(var iy=minY; iy<=maxY; ++iy) {var offset = iy * width;for(var ix=minX; ix<=maxX; ++ix) {var fval = fb[offset + ix];fval = fval > 1.0 ? 1.0 : (fval < -1.0 ? -1.0 : fval);var val = Math.round(Math.pow((fval + 1.0) * 0.5, gamma) * 255.0) | 0;var off = (offset + ix) << 2;imgData[off] = val;imgData[off+1] = val;imgData[off+2] = val;imgData[off+3] = 0xff;}}view.context.putImageData(view.imageData, 0, 0, r.x, r.y, r.width+1, r.height+1);}});";
       return eval(code);
     };
@@ -618,88 +646,92 @@
   module.exports = GammaRenderer;
 }).call(this);
 
-},{"./utils":9}],9:[function(require,module,exports){
+},{"../core/properties":3}],10:[function(require,module,exports){
 (function(){
-  var createProperties, out$ = typeof exports != 'undefined' && exports || this;
-  createProperties = function(definitions){
-    var i$, len$, p, results$ = {};
-    for (i$ = 0, len$ = definitions.length; i$ < len$; ++i$) {
-      p = definitions[i$];
-      results$[p.id] = p.defaultValue;
-    }
-    return results$;
-  };
-  out$.createProperties = createProperties;
-}).call(this);
-
-},{}],10:[function(require,module,exports){
-(function(){
-  var Rect, genBrushFunc, createStepTool, name, properties, createTool, ref$, out$ = typeof exports != 'undefined' && exports || this;
+  var createStepTool, Rect, genBrushFunc, createProperties, RoundBrush;
+  createStepTool = require('./utils').createStepTool;
   Rect = require('../core/rect');
   genBrushFunc = require('../core/core').genBrushFunc;
-  createStepTool = require('./utils').createStepTool;
-  name = "Round";
-  properties = [
-    {
-      id: 'step',
-      name: "Step %",
-      defaultValue: 10,
-      range: [0, 100]
-    }, {
-      id: 'hardness',
-      name: "Hardness",
-      defaultValue: 0.2,
-      range: [0.0, 1.0]
-    }, {
-      id: 'size',
-      name: "Size",
-      defaultValue: 30.0,
-      range: [1.0, 256.0],
-      type: 'int'
-    }, {
-      id: 'blendMode',
-      name: "Blend mode",
-      defaultValue: "blend",
-      choices: ["blend", "add", "sub", "multiply"]
-    }, {
-      id: 'intensity',
-      name: "Intensity",
-      defaultValue: 0.4,
-      range: [0.0, 1.0],
-      power: 2.0
+  createProperties = require('../core/properties').createProperties;
+  RoundBrush = function(env){
+    var properties, this$ = this;
+    properties = [
+      {
+        id: 'step',
+        name: "Step %",
+        defaultValue: 10,
+        range: [0, 100]
+      }, {
+        id: 'hardness',
+        name: "Hardness",
+        defaultValue: 0.2,
+        range: [0.0, 1.0]
+      }, {
+        id: 'size',
+        name: "Size",
+        defaultValue: 30.0,
+        range: [1.0, 256.0],
+        type: 'int'
+      }, {
+        id: 'blendMode',
+        name: "Blend mode",
+        defaultValue: "blend",
+        choices: ["blend", "add", "sub", "multiply"]
+      }, {
+        id: 'intensity',
+        name: "Intensity",
+        defaultValue: 0.4,
+        range: [0.0, 1.0],
+        power: 2.0
+      }
+    ];
+    this.tool = null;
+    createProperties(this, properties, propChanged);
+    function propChanged(pid, val, prev){
+      return console.log("Property " + pid + " changed: " + prev + " -> " + val);
     }
-  ];
-  createTool = function(props, env){
-    var hardness, hardnessPlus1, intensity, size, func, drawFunc, stepOpts;
-    hardness = Math.pow(props.hardness, 2.0) * 8.0;
-    hardnessPlus1 = hardness + 1.0;
-    intensity = props.intensity;
-    size = props.size;
-    func = genBrushFunc({
-      args: "intensity, target, h, hp1",
-      tiling: env.tiling,
-      blendExp: "{dst} += {src} * intensity",
-      brushExp: "var d = Math.min(1.0, Math.max(0.0, (Math.sqrt(x*x + y*y) * hp1 - h)));{out} = Math.cos(d * Math.PI) * 0.5 + 0.5;"
-    });
-    drawFunc = function(layer, pos, pressure, rect){
-      var r;
-      r = new Rect(pos.x - size * 0.5, pos.y - size * 0.5, size, size);
-      func(r, layer, pressure * intensity, env.targetValue, hardness, hardnessPlus1);
-      return rect.extend(r.round());
+    function createTool(){
+      var hardness, hardnessPlus1, intensity, size, func, drawFunc, stepOpts;
+      hardness = Math.pow(this$.hardness(), 2.0) * 8.0;
+      hardnessPlus1 = hardness + 1.0;
+      intensity = this$.intensity();
+      size = this$.size();
+      func = genBrushFunc({
+        args: "intensity, target, h, hp1",
+        tiling: env.tiling,
+        blendExp: "{dst} += {src} * intensity",
+        brushExp: "var d = Math.min(1.0, Math.max(0.0, (Math.sqrt(x*x + y*y) * hp1 - h)));{out} = Math.cos(d * Math.PI) * 0.5 + 0.5;"
+      });
+      drawFunc = function(layer, pos, pressure, rect){
+        var r;
+        r = new Rect(pos.x - size * 0.5, pos.y - size * 0.5, size, size);
+        func(r, layer, pressure * intensity, env.targetValue, hardness, hardnessPlus1);
+        return rect.extend(r.round());
+      };
+      stepOpts = {
+        step: Math.max(1, Math.round(this$.step() * this$.size() / 100.0)),
+        tiling: env.tiling
+      };
+      return createStepTool(stepOpts, drawFunc);
+    }
+    function getTool(){
+      if (this$.tool == null) {
+        this$.tool = createTool();
+      }
+      return this$.tool;
+    }
+    this.beginDraw = function(){};
+    this.draw = function(){
+      return getTool().draw.apply(this$, arguments);
     };
-    stepOpts = {
-      step: Math.max(1, Math.round(props.step * props.size / 100.0)),
-      tiling: env.tiling
+    this.endDraw = function(){
+      return getTool().endDraw.apply(this$, arguments);
     };
-    return createStepTool(stepOpts, drawFunc);
   };
-  ref$ = out$;
-  ref$.name = name;
-  ref$.properties = properties;
-  ref$.createTool = createTool;
+  module.exports = RoundBrush;
 }).call(this);
 
-},{"../core/core":1,"../core/rect":3,"./utils":11}],11:[function(require,module,exports){
+},{"../core/core":1,"../core/properties":3,"../core/rect":4,"./utils":11}],11:[function(require,module,exports){
 (function(){
   var Rect, createStepTool, out$ = typeof exports != 'undefined' && exports || this;
   Rect = require('../core/rect');
@@ -749,4 +781,4 @@
   out$.createStepTool = createStepTool;
 }).call(this);
 
-},{"../core/rect":3}]},{},[7])
+},{"../core/rect":4}]},{},[8])

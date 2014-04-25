@@ -46,7 +46,7 @@
       renderer = new type(layer, view);
       for (k in props) {
         v = props[k];
-        renderer.properties[k] = v;
+        renderer[k](v);
       }
       renderer.render([new Rect(0, 0, width, height)]);
       return ctx.drawImage($can[0], 0, 0);
@@ -70,7 +70,7 @@
     });
   };
   testRoundBrush = function($el){
-    var width, height, $can, layer, defaults, brushTest, x$, p, y, ctx, view, renderer;
+    var width, height, $can, layer, brushTest, y, ctx, view, renderer;
     width = 800;
     height = 400;
     $can = $("<canvas width='" + width + "' height='" + height + "'/>").appendTo($el);
@@ -78,23 +78,19 @@
     layer.fill(function(x, y){
       return -1;
     });
-    defaults = function(){
-      var i$, ref$, len$, p, results$ = {};
-      for (i$ = 0, len$ = (ref$ = RoundBrush.properties).length; i$ < len$; ++i$) {
-        p = ref$[i$];
-        results$[p.id] = p.defaultValue;
-      }
-      return results$;
-    };
     brushTest = function(ypos, props){
       var f;
       f = function(xoffset, tiling){
-        var env, brush, steps, i$, i, t, pos;
+        var env, brush, k, ref$, v, steps, i$, i, t, pos;
         env = {
           tiling: tiling,
           targetValue: 1.0
         };
-        brush = RoundBrush.createTool(props, env);
+        brush = new RoundBrush(env);
+        for (k in ref$ = props) {
+          v = ref$[k];
+          brush[k](v);
+        }
         brush.beginDraw(layer, new Vec2(0, ypos));
         steps = 20;
         for (i$ = 0; i$ <= steps; ++i$) {
@@ -108,23 +104,34 @@
       f(50, false);
       f(450, true);
     };
-    x$ = p = defaults();
-    x$.hardness = 0;
     y = 0;
-    brushTest(y += 50, p);
-    p.size = 50;
-    brushTest(y += 50, p);
-    p.step = 30;
-    brushTest(y += 50, p);
-    p.step = 50;
-    brushTest(y += 50, p);
-    p.step = 30;
-    p.hardness = 0.3;
-    brushTest(y += 50, p);
-    p.hardness = 0.5;
-    brushTest(y += 50, p);
-    p.hardness = 1.0;
-    brushTest(y += 50, p);
+    brushTest(y += 50, {});
+    brushTest(y += 50, {
+      size: 50
+    });
+    brushTest(y += 50, {
+      size: 50,
+      step: 30
+    });
+    brushTest(y += 50, {
+      size: 50,
+      step: 50
+    });
+    brushTest(y += 50, {
+      size: 50,
+      step: 30,
+      hardness: 0.3
+    });
+    brushTest(y += 50, {
+      size: 50,
+      step: 30,
+      hardness: 0.5
+    });
+    brushTest(y += 50, {
+      size: 50,
+      step: 30,
+      hardness: 1.0
+    });
     ctx = $can[0].getContext('2d');
     view = {
       canvas: $can[0],

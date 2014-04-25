@@ -30,7 +30,7 @@ gulp.task 'test', ['js', 'ls'], ->
     .pipe browserify!
     .pipe rename {suffix: '.bundle'}
     .pipe gulp.dest "#{dist}/test"
-
+    
 gulp.task 'main', ['ls'], ->
   gulp.src "#{dist}/js/main.js"
     .pipe browserify!

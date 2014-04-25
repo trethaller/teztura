@@ -1,15 +1,22 @@
 
 createProperties = (target, definitions, changed) ->
-  for p in definitions
-    pid = '_' + p.id
-    target[pid] = p.defaultValue
-    target[p.id] = (val)!->
+  target.properties = {}
+  definitions.forEach (def) ->
+    prop = ^^def
+    prop.val = def.defaultValue
+    prop.set = (val)->
+      prev = prop.val
+      prop.val = val
+      if changed?
+        changed prop.id, val, prev
+    prop.get = -> prop.val
+
+    target[prop.id] = (val)->
       if val?
-        prev = target[pid]
-        target[pid] = val
-        if changed?
-          changed p.id, prev, val
+        prop.set val
       else
-        return target[pid]
+        prop.get!
+        
+    target.properties[prop.id] = prop
 
 export { createProperties }

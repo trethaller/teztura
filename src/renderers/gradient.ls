@@ -1,20 +1,21 @@
 { createProperties } = require '../core/properties'
 
 name = "Gradient"
-properties = [
-  * id: 'gradient'
-    name: "Gradient image"
-    type: 'image'
-]
+
 
 GradientRenderer = (layer, view) !->
-  @properties = createProperties properties
+  createProperties @, [
+    * id: 'gradient'
+      name: "Gradient image"
+      type: 'image'
+  ]
+
   generateFunc = ~>
     width = layer.width
     height = layer.height
     imgData = view.imageData.data
     fb = layer.getBuffer()
-    lut = @properties.gradient.data
+    lut = @gradient!.data
 
     code = "
     (function (rects) {

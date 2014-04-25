@@ -8,15 +8,8 @@
       return true;
     };
     this.toolObject = function(){
-      var props, res$, i$, ref$, len$, p;
       if (this.tool == null) {
-        res$ = {};
-        for (i$ = 0, len$ = (ref$ = RoundBrush.properties).length; i$ < len$; ++i$) {
-          p = ref$[i$];
-          res$[p.id] = p.defaultValue;
-        }
-        props = res$;
-        this.tool = RoundBrush.createTool(props, this);
+        this.tool = new RoundBrush(this);
       }
       return this.tool;
     };
