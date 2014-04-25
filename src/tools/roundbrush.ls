@@ -37,19 +37,18 @@ RoundBrush = (env) !->
   createProperties @, properties, propChanged
 
   ~function propChanged pid, val, prev
-    console.log "Property #{pid} changed: #{prev} -> #{val}"
+    @tool = null
 
   ~function createTool
     hardness = Math.pow(@hardness!, 2.0) * 8.0;
-    hardnessPlus1 = hardness + 1.0
     intensity = @intensity!
     size = @size!
 
     func = genBrushFunc {
-      args: "intensity, target, h, hp1"
+      args: "intensity, target, h"
       tiling: env.tiling
       blendExp: "{dst} += {src} * intensity"
-      brushExp: "var d = Math.min(1.0, Math.max(0.0, (Math.sqrt(x*x + y*y) * hp1 - h)));
+      brushExp: "var d = Math.min(1.0, Math.max(0.0, (Math.sqrt(x*x + y*y) * (h+1) - h)));
                 {out} = Math.cos(d * Math.PI) * 0.5 + 0.5;"
     }
 
@@ -58,7 +57,7 @@ RoundBrush = (env) !->
         pos.x - size * 0.5,
         pos.y - size * 0.5,
         size, size)
-      func(r, layer, pressure * intensity, env.targetValue, hardness, hardnessPlus1)
+      func(r, layer, pressure * intensity, env.targetValue, hardness)
       rect.extend r.round()
 
     stepOpts = 

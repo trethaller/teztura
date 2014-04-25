@@ -128,30 +128,18 @@
 (function(){
   var createProperties, out$ = typeof exports != 'undefined' && exports || this;
   createProperties = function(target, definitions, changed){
-    target.properties = {};
+    target.properties = [];
     return definitions.forEach(function(def){
       var prop;
       prop = clone$(def);
-      prop.val = def.defaultValue;
-      prop.set = function(val){
-        var prev;
-        prev = prop.val;
-        prop.val = val;
-        if (changed != null) {
-          return changed(prop.id, val, prev);
-        }
-      };
-      prop.get = function(){
-        return prop.val;
-      };
-      target[prop.id] = function(val){
-        if (val != null) {
-          return prop.set(val);
-        } else {
-          return prop.get();
-        }
-      };
-      return target.properties[prop.id] = prop;
+      prop.value = ko.observable(def.defaultValue);
+      if (changed != null) {
+        prop.value.subscribe(function(val){
+          return changed(prop.id, val);
+        });
+      }
+      target[prop.id] = prop.value;
+      return target.properties.push(prop);
     });
   };
   out$.createProperties = createProperties;
@@ -628,24 +616,23 @@
     this.tool = null;
     createProperties(this, properties, propChanged);
     function propChanged(pid, val, prev){
-      return console.log("Property " + pid + " changed: " + prev + " -> " + val);
+      return this$.tool = null;
     }
     function createTool(){
-      var hardness, hardnessPlus1, intensity, size, func, drawFunc, stepOpts;
+      var hardness, intensity, size, func, drawFunc, stepOpts;
       hardness = Math.pow(this$.hardness(), 2.0) * 8.0;
-      hardnessPlus1 = hardness + 1.0;
       intensity = this$.intensity();
       size = this$.size();
       func = genBrushFunc({
-        args: "intensity, target, h, hp1",
+        args: "intensity, target, h",
         tiling: env.tiling,
         blendExp: "{dst} += {src} * intensity",
-        brushExp: "var d = Math.min(1.0, Math.max(0.0, (Math.sqrt(x*x + y*y) * hp1 - h)));{out} = Math.cos(d * Math.PI) * 0.5 + 0.5;"
+        brushExp: "var d = Math.min(1.0, Math.max(0.0, (Math.sqrt(x*x + y*y) * (h+1) - h)));{out} = Math.cos(d * Math.PI) * 0.5 + 0.5;"
       });
       drawFunc = function(layer, pos, pressure, rect){
         var r;
         r = new Rect(pos.x - size * 0.5, pos.y - size * 0.5, size, size);
-        func(r, layer, pressure * intensity, env.targetValue, hardness, hardnessPlus1);
+        func(r, layer, pressure * intensity, env.targetValue, hardness);
         return rect.extend(r.round());
       };
       stepOpts = {

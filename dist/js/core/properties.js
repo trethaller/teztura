@@ -1,30 +1,18 @@
 (function(){
   var createProperties, out$ = typeof exports != 'undefined' && exports || this;
   createProperties = function(target, definitions, changed){
-    target.properties = {};
+    target.properties = [];
     return definitions.forEach(function(def){
       var prop;
       prop = clone$(def);
-      prop.val = def.defaultValue;
-      prop.set = function(val){
-        var prev;
-        prev = prop.val;
-        prop.val = val;
-        if (changed != null) {
-          return changed(prop.id, val, prev);
-        }
-      };
-      prop.get = function(){
-        return prop.val;
-      };
-      target[prop.id] = function(val){
-        if (val != null) {
-          return prop.set(val);
-        } else {
-          return prop.get();
-        }
-      };
-      return target.properties[prop.id] = prop;
+      prop.value = ko.observable(def.defaultValue);
+      if (changed != null) {
+        prop.value.subscribe(function(val){
+          return changed(prop.id, val);
+        });
+      }
+      target[prop.id] = prop.value;
+      return target.properties.push(prop);
     });
   };
   out$.createProperties = createProperties;
