@@ -32,7 +32,7 @@
       });
       this.subscription = prop.value.subscribe(function(newVal){
         $input.val(newVal);
-        return $slider.val(newVal);
+        return $slider.val(invconv(newVal));
       });
     }
     this.cleanup = function(){

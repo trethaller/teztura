@@ -40,7 +40,7 @@ PropertyView = (prop) !->
 
     @subscription = prop.value.subscribe (newVal) ->
       $input.val newVal
-      $slider.val newVal
+      $slider.val invconv newVal
 
   @cleanup = ~>
     @subscription?.dispose!
