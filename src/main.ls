@@ -1,47 +1,46 @@
 
-{Vec2} = require './core/vec'
+{ Vec2 } = require './core/vec'
 Document = require './document'
 DocumentView = require './document-view'
 RoundBrush = require './tools/roundbrush'
 
+makeDraggable = (el)->
+  function DragHelper @el
+    @startPos = null
+    @lastPos = null
+    @delta = null
 
-DragHelper = (@el) !->
-  @startPos = null
-  @delta = null
+    @cleanup = ->
+      stopDrag!
+      @el.off 'mousedown', startDrag
 
-  @onStart = (pos)->;
-  @onDrag = (pos)->;
-  @onStop = (pos)->;
+    evtPos = (e) ~>
+      new Vec2 e.clientX, e.clientY
 
-  @cleanup = ->
-    stopDrag!
-    @el.off 'mousedown', startDrag
+    onMouseUp = ~>
+      stopDrag!
+    onMouseMove = (e)~>
+      pos = evtPos e
+      delta = pos.sub @lastPos
+      @el.trigger 'drag', [delta.x, delta.y]
+      @lastPos = pos
 
-  evtPos = (e) ~>
-    new Vec2 e.clientX, e.clientY
+    startDrag = (e)~>
+      @startPos = evtPos e
+      $(document).on 'mouseup', onMouseUp
+      $(document).on 'mousemove', onMouseMove
+      p = @lastPos = @startPos
+      @el.trigger 'drag', [0, 0]
 
-  onMouseUp = ~>
-    stopDrag!
-  onMouseMove = (e)~>
-    @onDrag (evtPos e).sub @startPos
+    stopDrag = ~>
+      if @startPos?
+        @startPos = null
+        @lastPos = null
+        $(document).off 'mouseup', onMouseUp
+        $(document).off 'mousemove', onMouseMove
 
-  startDrag = (e)~>
-    @startPos = evtPos e
-    $(document).on 'mouseup', onMouseUp
-    $(document).on 'mousemove', onMouseMove
-    p = @startPos
-    @onStart p 
-    @onDrag p
-
-  stopDrag = ~>
-    if @startPos?
-      @startPos = null
-      @onStop @delta
-      $(document).off 'mouseup', onMouseUp
-      $(document).off 'mousemove', onMouseMove
-
-  @el.on 'mousedown', startDrag
-
+    @el.on 'mousedown', startDrag
+  new DragHelper el
 
 SliderView = !->
   @el = $ '<span/>'
@@ -51,14 +50,12 @@ SliderView = !->
     .addClass 'tz-slider-bar'
     .appendTo @el
 
-  drag = new DragHelper @el
-    ..onStart = ~>  console.log 'Start'
-    ..onDrag = (d)~> console.log d.x
-    ..onStop = (d)~> ;
+  @setValue = (v)~>
+    @bar.width (v * 100) + '%'
 
+  drag = makeDraggable @el
   @cleanup = ~>
     drag.cleanup!
-
 
   @bar.width '50%'
 
@@ -71,8 +68,6 @@ PropertyView = (prop) !->
 
   @subs = []
 
-  sv = new SliderView!
-  @$el.append sv.el
 
   if prop.range?
     power = prop.power or 1.0
@@ -81,6 +76,7 @@ PropertyView = (prop) !->
 
     rmin = invconv prop.range[0]
     rmax = invconv prop.range[1]
+    range = prop.range.1 - prop.range.0
 
     $input = $ '<input/>'
       .val prop.value!
@@ -92,6 +88,13 @@ PropertyView = (prop) !->
         else
           prop.value parseFloat $input.val!
 
+    sv = new SliderView!
+    sv.setValue invconv (prop.value! / range)
+    @$el.append sv.el
+    sv.el.on 'drag', (e, x, y)->
+      prop.value conv(invconv(prop.value!) + (x * range / 500))
+
+    /*
     $slider = $ '<input type="range"/>'
       .attr 'min', rmin
       .attr 'max', rmax
@@ -101,10 +104,11 @@ PropertyView = (prop) !->
       .appendTo @$el
       .change (evt)->
         prop.value conv $slider.val!
+    */
 
     @subscription = prop.value.subscribe (newVal) ->
       $input.val newVal
-      $slider.val invconv newVal
+      sv.setValue invconv (newVal / range)
 
   @cleanup = ~>
     @subscription?.dispose!

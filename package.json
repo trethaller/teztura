@@ -13,6 +13,7 @@
     "gulp-uglify": "^0.2.1",
     "mocha": "^1.18.2",
     "gulp-mocha": "^0.4.1",
-    "gulp-mocha-phantomjs": "^0.1.5"
+    "gulp-mocha-phantomjs": "^0.1.5",
+    "gulp-less": "^1.2.3"
   }
 }
