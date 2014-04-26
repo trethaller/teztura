@@ -63,7 +63,7 @@ SliderView = !->
 PropertyView = (prop) !->
   @$el = $ '<div/>'
     .addClass 'property'
-    
+
   $ '<label/>'
     .text prop.name
     .appendTo @$el
@@ -107,7 +107,7 @@ PropertyView = (prop) !->
     @subscription?.dispose!
     #ko.applyBindings prop, $range[0]
   
-PropertyGroup = !->
+PropertyGroup = (title)!->
   @$el = $ '<div/>'
     .addClass 'property-group'
 
@@ -115,7 +115,7 @@ PropertyGroup = !->
     @$el.empty()
 
     $ \<h1/>
-      .text 'Properties'
+      .text title
       .appendTo @$el
 
     props.forEach (p) !~>
@@ -128,10 +128,7 @@ Editor = !->
   @tool = new RoundBrush this
   @toolObject = -> @tool
 
-  g = new PropertyGroup()
-  g.setProperties @tool.properties
-  $ \#properties
-    .append g.$el
+
 
 start = ->
   editor = new Editor
@@ -139,6 +136,11 @@ start = ->
   doc.layer.fill -> -1
   view = new DocumentView $('.document-view'), doc, editor
   view.render!
+
+  g = new PropertyGroup 'Tool'
+  g.setProperties editor.@tool.properties
+  $ \#properties
+    .append g.$el
 
 
 $(document).ready start

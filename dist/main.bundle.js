@@ -678,12 +678,12 @@
       }
     };
   };
-  PropertyGroup = function(){
+  PropertyGroup = function(title){
     var this$ = this;
     this.$el = $('<div/>').addClass('property-group');
     this.setProperties = function(props){
       this$.$el.empty();
-      $('<h1/>').text('Properties').appendTo(this$.$el);
+      $('<h1/>').text(title).appendTo(this$.$el);
       props.forEach(function(p){
         var pv;
         pv = new PropertyView(p);
@@ -700,7 +700,7 @@
     this.toolObject = function(){
       return this.tool;
     };
-    g = new PropertyGroup();
+    g = new PropertyGroup('Tool');
     g.setProperties(this.tool.properties);
     $('#properties').append(g.$el);
   };
