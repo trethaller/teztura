@@ -7,9 +7,13 @@ rename        = require 'gulp-rename'
 uglify        = require 'gulp-uglify'
 mocha         = require 'gulp-mocha'
 mochaPhantom  = require 'gulp-mocha-phantomjs'
-
+less          = require 'gulp-less'
 
 dist = './dist'
+
+err = (e)->
+  console.error e
+  this.emit 'end'
 
 gulp.task 'js', ->
   gulp.src 'src/**/*.js'
@@ -17,8 +21,7 @@ gulp.task 'js', ->
 
 gulp.task 'ls', ->
   gulp.src 'src/**/*.ls'
-    .pipe ls!
-    .on 'error' -> throw it
+    .pipe ls!.on('error', err)
     .pipe gulp.dest "#{dist}/js"
 
 gulp.task 'test', ['js', 'ls'], ->
@@ -41,6 +44,12 @@ gulp.task 'main', ['ls'], ->
     #.pipe gulp.dest dest
     .pipe connect.reload!
 
+gulp.task 'less', ->
+  gulp.src "styles/**/*.less"
+    .pipe less!.on('error', err)
+    .pipe gulp.dest "#{dist}/css"
+    .pipe connect.reload!
+
 gulp.task 'connect', ->
   connect.server do
     root: dist
@@ -49,3 +58,4 @@ gulp.task 'connect', ->
 
 gulp.task 'serve', ['test', 'main', 'connect'], ->
   gulp.watch ['src/**/*', "#{dist}/**/*.html"], ['test', 'main']
+  gulp.watch ['styles/**/*.less'], ['less']
