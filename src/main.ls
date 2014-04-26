@@ -42,6 +42,7 @@ makeDraggable = (el)->
     @el.on 'mousedown', startDrag
   new DragHelper el
 
+
 SliderView = !->
   @el = $ '<span/>'
     .addClass 'tz-slider'
@@ -61,13 +62,16 @@ SliderView = !->
 
 PropertyView = (prop) !->
   @$el = $ '<div/>'
-  $ '<span/>'
+    .addClass 'property'
+    
+  $ '<label/>'
     .text prop.name
+    .appendTo @$el
 
+  $prop = $ \<div/>
     .appendTo @$el
 
   @subs = []
-
 
   if prop.range?
     power = prop.power or 1.0
@@ -77,53 +81,57 @@ PropertyView = (prop) !->
     rmin = invconv prop.range[0]
     rmax = invconv prop.range[1]
     range = prop.range.1 - prop.range.0
+    sv = new SliderView!
+    sv.setValue invconv (prop.value! / range)
+    sv.el
+      .appendTo $prop
+    sv.el.on 'drag', (e, x, y) !->
+      prop.value conv(invconv(prop.value!) + (x * range / 500))
+
+    @subscription = prop.value.subscribe (newVal) !->
+      $input.val newVal
+      sv.setValue invconv (newVal / range)
 
     $input = $ '<input/>'
       .val prop.value!
-      .appendTo @$el
-      .addClass 'form-input'
+      .appendTo $prop
+      .addClass 'tz-input'
       .change (evt)->
         if prop.type is 'int'
           prop.value parseInt $input.val!
         else
           prop.value parseFloat $input.val!
 
-    sv = new SliderView!
-    sv.setValue invconv (prop.value! / range)
-    @$el.append sv.el
-    sv.el.on 'drag', (e, x, y)->
-      prop.value conv(invconv(prop.value!) + (x * range / 500))
 
-    /*
-    $slider = $ '<input type="range"/>'
-      .attr 'min', rmin
-      .attr 'max', rmax
-      .attr 'step', if prop.type is 'int' then 1 else (rmax - rmin) / 100
-      #.addClass 'topcoat-range'
-      .val invconv prop.value!
-      .appendTo @$el
-      .change (evt)->
-        prop.value conv $slider.val!
-    */
-
-    @subscription = prop.value.subscribe (newVal) ->
-      $input.val newVal
-      sv.setValue invconv (newVal / range)
-
-  @cleanup = ~>
+  @cleanup = !~>
     @subscription?.dispose!
     #ko.applyBindings prop, $range[0]
   
+PropertyGroup = !->
+  @$el = $ '<div/>'
+    .addClass 'property-group'
+
+  @setProperties = (props) !~>
+    @$el.empty()
+
+    $ \<h1/>
+      .text 'Properties'
+      .appendTo @$el
+
+    props.forEach (p) !~>
+      pv = new PropertyView p
+      @$el.append pv.$el
+
 
 Editor = !->
   @tiling = -> true
   @tool = new RoundBrush this
   @toolObject = -> @tool
 
-  @tool.properties.forEach (p)->
-    pv = new PropertyView p
-    $ \#properties
-      .append pv.$el
+  g = new PropertyGroup()
+  g.setProperties @tool.properties
+  $ \#properties
+    .append g.$el
 
 start = ->
   editor = new Editor

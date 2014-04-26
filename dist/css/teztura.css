@@ -1,9 +1,38 @@
 body {
   background-color: #202020;
+  color: #868686;
+  font-size: 13px;
 }
 #properties {
   width: 200px;
+  position: absolute;
+  right: 0;
+}
+.clear {
+  clear: both;
+}
+.property-group {
+  background-color: #3a3a3a;
+  padding: 5px;
+  overflow: hidden;
+}
+.property-group .property {
+  clear: both;
+}
+.property-group h1 {
+  font-size: 130%;
+  color: #868686;
+  margin: 0;
+}
+.property-group input {
   float: right;
+  width: 40px;
+  border: 0;
+  background-color: transparent;
+}
+.property-group .tz-slider {
+  float: left;
+  width: 140px;
 }
 .tz-slider {
   -webkit-touch-callout: none;
@@ -12,12 +41,8 @@ body {
   -moz-user-select: none;
   -ms-user-select: none;
   user-select: none;
-  -webkit-box-shadow: inset 0 1px 1px #ffffff, inset 0 -1px 1px #000000;
-  -moz-box-shadow: inset 0 1px 1px #ffffff, inset 0 -1px 1px #000000;
-  box-shadow: inset 0 1px 1px #ffffff, inset 0 -1px 1px #000000;
-  width: 100%;
   padding: 1px;
-  background-color: #606060;
+  background-color: #868686;
   display: block;
 }
 .tz-slider-bar {

@@ -574,7 +574,7 @@
 
 },{"./core/layer":2}],8:[function(require,module,exports){
 (function(){
-  var Vec2, Document, DocumentView, RoundBrush, makeDraggable, SliderView, PropertyView, Editor, start;
+  var Vec2, Document, DocumentView, RoundBrush, makeDraggable, SliderView, PropertyView, PropertyGroup, Editor, start;
   Vec2 = require('./core/vec').Vec2;
   Document = require('./document');
   DocumentView = require('./document-view');
@@ -637,9 +637,10 @@
     this.bar.width('50%');
   };
   PropertyView = function(prop){
-    var power, conv, invconv, rmin, rmax, range, $input, sv, this$ = this;
-    this.$el = $('<div/>');
-    $('<span/>').text(prop.name).appendTo(this.$el);
+    var $prop, power, conv, invconv, rmin, rmax, range, sv, $input, this$ = this;
+    this.$el = $('<div/>').addClass('property');
+    $('<label/>').text(prop.name).appendTo(this.$el);
+    $prop = $('<div/>').appendTo(this.$el);
     this.subs = [];
     if (prop.range != null) {
       power = prop.power || 1.0;
@@ -652,41 +653,46 @@
       rmin = invconv(prop.range[0]);
       rmax = invconv(prop.range[1]);
       range = prop.range[1] - prop.range[0];
-      $input = $('<input/>').val(prop.value()).appendTo(this.$el).addClass('form-input').change(function(evt){
+      sv = new SliderView();
+      sv.setValue(invconv(prop.value() / range));
+      sv.el.appendTo($prop);
+      sv.el.on('drag', function(e, x, y){
+        prop.value(conv(invconv(prop.value()) + x * range / 500));
+      });
+      this.subscription = prop.value.subscribe(function(newVal){
+        $input.val(newVal);
+        sv.setValue(invconv(newVal / range));
+      });
+      $input = $('<input/>').val(prop.value()).appendTo($prop).addClass('tz-input').change(function(evt){
         if (prop.type === 'int') {
           return prop.value(parseInt($input.val()));
         } else {
           return prop.value(parseFloat($input.val()));
         }
       });
-      sv = new SliderView();
-      sv.setValue(invconv(prop.value() / range));
-      this.$el.append(sv.el);
-      sv.el.on('drag', function(e, x, y){
-        return prop.value(conv(invconv(prop.value()) + x * range / 500));
-      });
-      /*
-      $slider = $ '<input type="range"/>'
-        .attr 'min', rmin
-        .attr 'max', rmax
-        .attr 'step', if prop.type is 'int' then 1 else (rmax - rmin) / 100
-        #.addClass 'topcoat-range'
-        .val invconv prop.value!
-        .appendTo @$el
-        .change (evt)->
-          prop.value conv $slider.val!
-      */
-      this.subscription = prop.value.subscribe(function(newVal){
-        $input.val(newVal);
-        return sv.setValue(invconv(newVal / range));
-      });
     }
     this.cleanup = function(){
       var ref$;
-      return (ref$ = this$.subscription) != null ? ref$.dispose() : void 8;
+      if ((ref$ = this$.subscription) != null) {
+        ref$.dispose();
+      }
+    };
+  };
+  PropertyGroup = function(){
+    var this$ = this;
+    this.$el = $('<div/>').addClass('property-group');
+    this.setProperties = function(props){
+      this$.$el.empty();
+      $('<h1/>').text('Properties').appendTo(this$.$el);
+      props.forEach(function(p){
+        var pv;
+        pv = new PropertyView(p);
+        this$.$el.append(pv.$el);
+      });
     };
   };
   Editor = function(){
+    var g;
     this.tiling = function(){
       return true;
     };
@@ -694,11 +700,9 @@
     this.toolObject = function(){
       return this.tool;
     };
-    this.tool.properties.forEach(function(p){
-      var pv;
-      pv = new PropertyView(p);
-      return $('#properties').append(pv.$el);
-    });
+    g = new PropertyGroup();
+    g.setProperties(this.tool.properties);
+    $('#properties').append(g.$el);
   };
   start = function(){
     var editor, doc, view;
