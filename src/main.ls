@@ -1,16 +1,78 @@
 
+{Vec2} = require './core/vec'
 Document = require './document'
 DocumentView = require './document-view'
 RoundBrush = require './tools/roundbrush'
 
 
+DragHelper = (@el) !->
+  @startPos = null
+  @delta = null
+
+  @onStart = (pos)->;
+  @onDrag = (pos)->;
+  @onStop = (pos)->;
+
+  @cleanup = ->
+    stopDrag!
+    @el.off 'mousedown', startDrag
+
+  evtPos = (e) ~>
+    new Vec2 e.clientX, e.clientY
+
+  onMouseUp = ~>
+    stopDrag!
+  onMouseMove = (e)~>
+    @onDrag (evtPos e).sub @startPos
+
+  startDrag = (e)~>
+    @startPos = evtPos e
+    $(document).on 'mouseup', onMouseUp
+    $(document).on 'mousemove', onMouseMove
+    p = @startPos
+    @onStart p 
+    @onDrag p
+
+  stopDrag = ~>
+    if @startPos?
+      @startPos = null
+      @onStop @delta
+      $(document).off 'mouseup', onMouseUp
+      $(document).off 'mousemove', onMouseMove
+
+  @el.on 'mousedown', startDrag
+
+
+SliderView = !->
+  @el = $ '<span/>'
+    .addClass 'tz-slider'
+
+  @bar = $ '<span/>'
+    .addClass 'tz-slider-bar'
+    .appendTo @el
+
+  drag = new DragHelper @el
+    ..onStart = ~>  console.log 'Start'
+    ..onDrag = (d)~> console.log d.x
+    ..onStop = (d)~> ;
+
+  @cleanup = ~>
+    drag.cleanup!
+
+
+  @bar.width '50%'
+
 PropertyView = (prop) !->
   @$el = $ '<div/>'
   $ '<span/>'
     .text prop.name
+
     .appendTo @$el
 
   @subs = []
+
+  sv = new SliderView!
+  @$el.append sv.el
 
   if prop.range?
     power = prop.power or 1.0
@@ -23,6 +85,7 @@ PropertyView = (prop) !->
     $input = $ '<input/>'
       .val prop.value!
       .appendTo @$el
+      .addClass 'form-input'
       .change (evt)->
         if prop.type is 'int'
           prop.value parseInt $input.val!
@@ -33,6 +96,7 @@ PropertyView = (prop) !->
       .attr 'min', rmin
       .attr 'max', rmax
       .attr 'step', if prop.type is 'int' then 1 else (rmax - rmin) / 100
+      #.addClass 'topcoat-range'
       .val invconv prop.value!
       .appendTo @$el
       .change (evt)->
@@ -63,5 +127,6 @@ start = ->
   doc.layer.fill -> -1
   view = new DocumentView $('.document-view'), doc, editor
   view.render!
+
 
 $(document).ready start
