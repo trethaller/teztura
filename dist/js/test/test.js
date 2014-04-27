@@ -1,27 +1,13 @@
 (function(){
-  var Core, Rect, Layer, Vec2, GammaRenderer, GradientRenderer, RoundBrush, loadGradient, testRenderers, testRoundBrush, testBlendModes, tests;
-  Core = require('../core/core');
+  var core, Rect, Layer, Vec2, loadImageData, GammaRenderer, GradientRenderer, RoundBrush, testRenderers, testRoundBrush, testBlendModes, tests;
+  core = require('../core/core');
   Rect = require('../core/rect');
   Layer = require('../core/layer');
   Vec2 = require('../core/vec').Vec2;
+  loadImageData = require('../core/utils').loadImageData;
   GammaRenderer = require('../renderers/gamma');
   GradientRenderer = require('../renderers/gradient');
   RoundBrush = require('../tools/roundbrush');
-  loadGradient = function(url, done){
-    var imageObj;
-    imageObj = new Image();
-    imageObj.onload = function(){
-      var canvas, ctx, imageData;
-      canvas = document.createElement("canvas");
-      canvas.width = this.width;
-      canvas.height = this.height;
-      ctx = canvas.getContext('2d');
-      ctx.drawImage(this, 0, 0);
-      imageData = ctx.getImageData(0, 0, this.width, 1);
-      return done(imageData);
-    };
-    return imageObj.src = url;
-  };
   testRenderers = function($el){
     var width, height, renderTest;
     width = 800;
@@ -55,15 +41,12 @@
       gamma: 0.1
     });
     renderTest(GammaRenderer, {
-      gamma: 0.5
-    });
-    renderTest(GammaRenderer, {
       gamma: 1.0
     });
     renderTest(GammaRenderer, {
       gamma: 2.0
     });
-    return loadGradient('/img/gradient-1.png', function(g1){
+    return loadImageData('/img/gradient-1.png', function(g1){
       return renderTest(GradientRenderer, {
         gradient: g1
       });
@@ -180,7 +163,7 @@
     renderer.render([new Rect(0, 0, width, height)]);
     return ctx.drawImage($can[0], 0, 0);
   };
-  tests = [["Renderers", testRenderers], ["Blend modes", testBlendModes], ["Round brush", testRoundBrush]];
+  tests = [["Renderers", testRenderers]];
   (function(){
     var $root;
     $root = $('#tests-root');

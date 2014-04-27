@@ -128,8 +128,6 @@ Editor = !->
   @tool = new RoundBrush this
   @toolObject = -> @tool
 
-
-
 start = ->
   editor = new Editor
   doc = new Document 512, 512
@@ -138,7 +136,7 @@ start = ->
   view.render!
 
   g = new PropertyGroup 'Tool'
-  g.setProperties editor.@tool.properties
+  g.setProperties editor.tool.properties
   $ \#properties
     .append g.$el
 

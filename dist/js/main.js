@@ -117,7 +117,6 @@
     };
   };
   Editor = function(){
-    var g;
     this.tiling = function(){
       return true;
     };
@@ -125,19 +124,19 @@
     this.toolObject = function(){
       return this.tool;
     };
-    g = new PropertyGroup('Tool');
-    g.setProperties(this.tool.properties);
-    $('#properties').append(g.$el);
   };
   start = function(){
-    var editor, doc, view;
+    var editor, doc, view, g;
     editor = new Editor;
     doc = new Document(512, 512);
     doc.layer.fill(function(){
       return -1;
     });
     view = new DocumentView($('.document-view'), doc, editor);
-    return view.render();
+    view.render();
+    g = new PropertyGroup('Tool');
+    g.setProperties(editor.tool.properties);
+    return $('#properties').append(g.$el);
   };
   $(document).ready(start);
 }).call(this);

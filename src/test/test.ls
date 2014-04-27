@@ -1,23 +1,11 @@
-Core = require '../core/core'
-Rect = require '../core/rect'
-Layer = require '../core/layer'
-{Vec2} = require '../core/vec'
-GammaRenderer = require '../renderers/gamma'
-GradientRenderer = require '../renderers/gradient'
-RoundBrush = require '../tools/roundbrush'
-
-
-loadGradient = (url, done)->
-  imageObj = new Image()
-  imageObj.onload = ->
-    canvas = document.createElement "canvas"
-    canvas.width = this.width
-    canvas.height = this.height
-    ctx = canvas.getContext '2d'
-    ctx.drawImage(this, 0, 0)
-    imageData = ctx.getImageData(0,0,this.width,1)
-    done imageData
-  imageObj.src = url
+core              = require '../core/core'
+Rect              = require '../core/rect'
+Layer             = require '../core/layer'
+{Vec2}            = require '../core/vec'
+{loadImageData}   = require '../core/utils'
+GammaRenderer     = require '../renderers/gamma'
+GradientRenderer  = require '../renderers/gradient'
+RoundBrush        = require '../tools/roundbrush'
 
 testRenderers = ($el)->
   width = 800
@@ -44,11 +32,10 @@ testRenderers = ($el)->
     ctx.drawImage $can.0, 0, 0
 
   render-test GammaRenderer, {gamma: 0.1}
-  render-test GammaRenderer, {gamma: 0.5}
   render-test GammaRenderer, {gamma: 1.0}
   render-test GammaRenderer, {gamma: 2.0}
 
-  g1 <- loadGradient '/img/gradient-1.png'
+  g1 <- loadImageData '/img/gradient-1.png'
   render-test GradientRenderer, {gradient: g1}
 
 testRoundBrush = ($el)->
@@ -144,8 +131,8 @@ testBlendModes = ($el)->
 
 tests = [
   ["Renderers",   testRenderers]
-  ["Blend modes", testBlendModes]
-  ["Round brush", testRoundBrush]
+  #["Blend modes", testBlendModes]
+  #["Round brush", testRoundBrush]
 ]
 
 do ->

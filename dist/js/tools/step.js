@@ -1,13 +1,13 @@
 (function(){
   var createStepTool, out$ = typeof exports != 'undefined' && exports || this;
-  createStepTool = function(options, stepFunc){
-    var step, tiling, lastpos, accumulator, draw, beginDraw, endDraw;
-    step = options.step || 4.0;
-    tiling = options.tiling || false;
+  createStepTool = function(properties, stepFunc){
+    var lastpos, accumulator, draw, endDraw;
     lastpos = null;
     accumulator = 0.0;
     draw = function(layer, pos, pressure){
-      var wpos, rect, delt, length, dir, pt;
+      var tiling, step, wpos, rect, delt, length, dir, pt;
+      tiling = properties.tiling;
+      step = properties.step;
       wpos = tiling
         ? pos.wrap(layer.width, layer.height)
         : pos.clone();
@@ -31,10 +31,8 @@
       lastpos = pos.clone();
       return rect;
     };
-    beginDraw = function(layer, pos){
-      accumulator = 0;
-    };
     endDraw = function(pos){
+      accumulator = 0;
       lastpos = null;
     };
     return {

@@ -7,7 +7,10 @@ GammaRenderer = (layer, view)!->
       name: "Gamma"
       defaultValue: 1.0
       range: [0, 10]
-  ]
+  ], propChanged
+
+  ~function propChanged pid, val, prev
+    @renderFunc = null
 
   generateFunc = ~>
     width = layer.width
@@ -26,11 +29,11 @@ GammaRenderer = (layer, view)!->
         var maxX = minX + r.width;
         var maxY = minY + r.height;
         for(var iy=minY; iy<=maxY; ++iy) {
-          var offset = iy * width;
+          var offset = iy * #{width};
           for(var ix=minX; ix<=maxX; ++ix) {
             var fval = fb[offset + ix];
             fval = fval > 1.0 ? 1.0 : (fval < -1.0 ? -1.0 : fval);
-            var val = Math.round(Math.pow((fval + 1.0) * 0.5, gamma) * 255.0) | 0;
+            var val = Math.round(Math.pow((fval + 1.0) * 0.5, #{gamma}) * 255.0) | 0;
             var off = (offset + ix) << 2;
             imgData[off] = val;
             imgData[off+1] = val;
