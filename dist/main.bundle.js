@@ -530,7 +530,7 @@
   module.exports = DocumentView;
 }).call(this);
 
-},{"./core/rect":4,"./core/vec":6,"./renderers/gamma":10}],8:[function(require,module,exports){
+},{"./core/rect":4,"./core/vec":6,"./renderers/gamma":11}],8:[function(require,module,exports){
 (function(){
   var Layer, Document;
   Layer = require('./core/layer');
@@ -595,13 +595,47 @@
 
 },{"./core/layer":2}],9:[function(require,module,exports){
 (function(){
-  var Vec2, loadImageData, Document, DocumentView, RoundBrush, GradientRenderer, makeDraggable, SliderView, SliderPropertyView, PropertyView, PropertyGroup, Editor, start;
+  var Vec2, loadImageData, Document, DocumentView, RoundBrush, GradientRenderer, PropertyGroup, Editor, start;
   Vec2 = require('./core/vec').Vec2;
   loadImageData = require('./core/utils').loadImageData;
   Document = require('./document');
   DocumentView = require('./document-view');
   RoundBrush = require('./tools/roundbrush');
   GradientRenderer = require('./renderers/gradient');
+  PropertyGroup = require('./property-view').PropertyGroup;
+  Editor = function(){
+    this.tiling = function(){
+      return true;
+    };
+    this.tool = new RoundBrush(this);
+    this.toolObject = function(){
+      return this.tool;
+    };
+  };
+  start = function(){
+    var editor, doc, view, renderer;
+    editor = new Editor;
+    doc = new Document(512, 512);
+    doc.layer.fill(function(){
+      return -1;
+    });
+    view = new DocumentView($('.document-view'), doc, editor);
+    renderer = new GradientRenderer(doc.layer, view);
+    return loadImageData('/img/gradient-1.png', function(g){
+      renderer.gradient(g);
+      view.renderer = renderer;
+      view.render();
+      g = new PropertyGroup('Tool');
+      g.setProperties(editor.tool.properties);
+      return $('#properties').append(g.$el);
+    });
+  };
+  $(document).ready(start);
+}).call(this);
+
+},{"./core/utils":5,"./core/vec":6,"./document":8,"./document-view":7,"./property-view":10,"./renderers/gradient":12,"./tools/roundbrush":13}],10:[function(require,module,exports){
+(function(){
+  var makeDraggable, SliderView, SliderPropertyView, PropertyView, PropertyGroup, out$ = typeof exports != 'undefined' && exports || this;
   makeDraggable = function(el){
     function DragHelper(el){
       var evtPos, onMouseUp, onMouseMove, startDrag, stopDrag, this$ = this;
@@ -720,37 +754,10 @@
       });
     };
   };
-  Editor = function(){
-    this.tiling = function(){
-      return true;
-    };
-    this.tool = new RoundBrush(this);
-    this.toolObject = function(){
-      return this.tool;
-    };
-  };
-  start = function(){
-    var editor, doc, view, renderer;
-    editor = new Editor;
-    doc = new Document(512, 512);
-    doc.layer.fill(function(){
-      return -1;
-    });
-    view = new DocumentView($('.document-view'), doc, editor);
-    renderer = new GradientRenderer(doc.layer, view);
-    return loadImageData('/img/gradient-1.png', function(g){
-      renderer.gradient(g);
-      view.renderer = renderer;
-      view.render();
-      g = new PropertyGroup('Tool');
-      g.setProperties(editor.tool.properties);
-      return $('#properties').append(g.$el);
-    });
-  };
-  $(document).ready(start);
+  out$.PropertyGroup = PropertyGroup;
 }).call(this);
 
-},{"./core/utils":5,"./core/vec":6,"./document":8,"./document-view":7,"./renderers/gradient":11,"./tools/roundbrush":12}],10:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 (function(){
   var createProperties, GammaRenderer;
   createProperties = require('../core/properties').createProperties;
@@ -785,7 +792,7 @@
   module.exports = GammaRenderer;
 }).call(this);
 
-},{"../core/properties":3}],11:[function(require,module,exports){
+},{"../core/properties":3}],12:[function(require,module,exports){
 (function(){
   var createProperties, GradientRenderer;
   createProperties = require('../core/properties').createProperties;
@@ -832,7 +839,7 @@
   module.exports = GradientRenderer;
 }).call(this);
 
-},{"../core/properties":3}],12:[function(require,module,exports){
+},{"../core/properties":3}],13:[function(require,module,exports){
 (function(){
   var createStepTool, Rect, genBrushFunc, createProperties, RoundBrush;
   createStepTool = require('./utils').createStepTool;
@@ -916,7 +923,7 @@
   module.exports = RoundBrush;
 }).call(this);
 
-},{"../core/core":1,"../core/properties":3,"../core/rect":4,"./utils":13}],13:[function(require,module,exports){
+},{"../core/core":1,"../core/properties":3,"../core/rect":4,"./utils":14}],14:[function(require,module,exports){
 (function(){
   var Rect, createStepTool, out$ = typeof exports != 'undefined' && exports || this;
   Rect = require('../core/rect');
