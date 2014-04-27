@@ -4,12 +4,18 @@ GradientRenderer = (layer, view) !->
   createProperties @, [
     * id: 'gradient'
       name: "Gradient image"
-      type: 'image'
-  ]
+      type: 'gradient'
+      choices: <[
+        img/gradient-1.png
+        img/gradient-2.png
+      ]>
+  ], propChanged
+
+  @name = "Gradient"
 
   ~function propChanged pid, val, prev
     @renderFunc = null
-
+    view.render!
 
   generateFunc = ~>
     width = layer.width

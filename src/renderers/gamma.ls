@@ -9,8 +9,11 @@ GammaRenderer = (layer, view)!->
       range: [0, 10]
   ], propChanged
 
+  @name = "Gamma"
+
   ~function propChanged pid, val, prev
     @renderFunc = null
+    view.render!
 
   generateFunc = ~>
     width = layer.width

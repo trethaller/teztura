@@ -9,8 +9,10 @@
       defaultValue: 1.0,
       range: [0, 10]
     }], propChanged);
+    this.name = "Gamma";
     function propChanged(pid, val, prev){
-      return this$.renderFunc = null;
+      this$.renderFunc = null;
+      return view.render();
     }
     generateFunc = function(){
       var width, height, imgData, fb, gamma, code;

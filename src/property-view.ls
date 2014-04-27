@@ -1,3 +1,5 @@
+{ Vec2 } = require './core/vec'
+{ loadImageData } = require './core/utils'
 
 makeDraggable = (el)->
   function DragHelper @el
@@ -87,6 +89,20 @@ SliderPropertyView = ($el, prop) !->
   @cleanup = ~>
     subscription.dispose!
 
+ImagePropertyView = ($el, prop) !->
+  $select = $ '<select/>'
+    .appendTo $el
+    .change (e)->
+      img <- loadImageData $select.val!
+      prop.value img
+
+  prop.choices.forEach (c)->
+    $op = $ \<option/>
+      .text c
+      .appendTo $select
+
+  @cleanup = ~>;
+
 PropertyView = (prop) !->
   @$el = $ '<div/>'
     .addClass 'property'
@@ -101,7 +117,8 @@ PropertyView = (prop) !->
   pv = null
   if prop.range?
     pv := new SliderPropertyView $prop, prop
-
+  else if prop.type is 'gradient'
+    pv := new ImagePropertyView $prop, prop
 
   @cleanup = !~>
     pv?.cleanup!

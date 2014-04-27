@@ -5,10 +5,17 @@
     <title>T</title>
   </head>
   <body>
-  	<link rel="stylesheet" href="css/bootstrap.min.css" />
-  	<link rel="stylesheet" href="css/teztura.css" />
-	<div id="properties"></div>
-	<div class="document-view"></div>
+    <link rel="stylesheet" href="css/bootstrap.min.css" />
+    <link rel="stylesheet" href="css/teztura.css" />
+
+    <div id="editor">
+      <select data-bind="options: renderers,
+                         value: renderer,
+                         optionsText: 'name'"></select>
+    </div>
+    <div id="properties"></div>
+    <div class="document-view"></div>
+
     <script src="lib/jquery.min.js"></script>
     <script src="lib/jquery.mousewheel.min.js"></script>
     <script src="//cdnjs.cloudflare.com/ajax/libs/knockout/3.1.0/knockout-min.js"></script>

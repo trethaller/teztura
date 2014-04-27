@@ -1,5 +1,7 @@
 (function(){
-  var makeDraggable, SliderView, SliderPropertyView, PropertyView, PropertyGroup, out$ = typeof exports != 'undefined' && exports || this;
+  var Vec2, loadImageData, makeDraggable, SliderView, SliderPropertyView, ImagePropertyView, PropertyView, PropertyGroup, out$ = typeof exports != 'undefined' && exports || this;
+  Vec2 = require('./core/vec').Vec2;
+  loadImageData = require('./core/utils').loadImageData;
   makeDraggable = function(el){
     function DragHelper(el){
       var evtPos, onMouseUp, onMouseMove, startDrag, stopDrag, this$ = this;
@@ -90,6 +92,19 @@
       return subscription.dispose();
     };
   };
+  ImagePropertyView = function($el, prop){
+    var $select, this$ = this;
+    $select = $('<select/>').appendTo($el).change(function(e){
+      return loadImageData($select.val(), function(img){
+        return prop.value(img);
+      });
+    });
+    prop.choices.forEach(function(c){
+      var $op;
+      return $op = $('<option/>').text(c).appendTo($select);
+    });
+    this.cleanup = function(){};
+  };
   PropertyView = function(prop){
     var $prop, pv, this$ = this;
     this.$el = $('<div/>').addClass('property');
@@ -98,6 +113,8 @@
     pv = null;
     if (prop.range != null) {
       pv = new SliderPropertyView($prop, prop);
+    } else if (prop.type === 'gradient') {
+      pv = new ImagePropertyView($prop, prop);
     }
     this.cleanup = function(){
       if (pv != null) {

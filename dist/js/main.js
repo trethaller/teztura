@@ -1,13 +1,15 @@
 (function(){
-  var Vec2, loadImageData, Document, DocumentView, RoundBrush, GradientRenderer, PropertyGroup, Editor, start;
-  Vec2 = require('./core/vec').Vec2;
+  var loadImageData, Document, DocumentView, RoundBrush, GradientRenderer, GammaRenderer, PropertyGroup, ListView, Editor, start;
   loadImageData = require('./core/utils').loadImageData;
   Document = require('./document');
   DocumentView = require('./document-view');
   RoundBrush = require('./tools/roundbrush');
   GradientRenderer = require('./renderers/gradient');
+  GammaRenderer = require('./renderers/gamma');
   PropertyGroup = require('./property-view').PropertyGroup;
+  ListView = function(choices){};
   Editor = function(){
+    var res$, i$, ref$, len$, t, x$, toolProps, y$, renderProps, this$ = this;
     this.tiling = function(){
       return true;
     };
@@ -15,24 +17,35 @@
     this.toolObject = function(){
       return this.tool;
     };
-  };
-  start = function(){
-    var editor, doc, view, renderer;
-    editor = new Editor;
-    doc = new Document(512, 512);
-    doc.layer.fill(function(){
+    this.doc = new Document(512, 512);
+    this.doc.layer.fill(function(){
       return -1;
     });
-    view = new DocumentView($('.document-view'), doc, editor);
-    renderer = new GradientRenderer(doc.layer, view);
-    return loadImageData('/img/gradient-1.png', function(g){
-      renderer.gradient(g);
-      view.renderer = renderer;
-      view.render();
-      g = new PropertyGroup('Tool');
-      g.setProperties(editor.tool.properties);
-      return $('#properties').append(g.$el);
+    this.view = new DocumentView($('.document-view'), this.doc, this);
+    res$ = [];
+    for (i$ = 0, len$ = (ref$ = [GammaRenderer, GradientRenderer]).length; i$ < len$; ++i$) {
+      t = ref$[i$];
+      res$.push(new t(this.doc.layer, this.view));
+    }
+    this.renderers = res$;
+    this.renderer = ko.observable(this.renderers[1]);
+    this.renderer.subscribe(function(r){
+      this$.view.renderer = r;
+      this$.view.render();
+      return renderProps.setProperties(r.properties);
     });
+    x$ = toolProps = new PropertyGroup('Tool');
+    x$.setProperties(this.tool.properties);
+    x$.$el.appendTo($('#properties'));
+    y$ = renderProps = new PropertyGroup('Tool');
+    y$.setProperties(this.renderer().properties);
+    y$.$el.appendTo($('#properties'));
+    this.renderer(this.renderers[0]);
+  };
+  start = function(){
+    var editor;
+    editor = new Editor;
+    return ko.applyBindings(editor, $('#editor')[0]);
   };
   $(document).ready(start);
 }).call(this);

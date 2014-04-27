@@ -595,15 +595,17 @@
 
 },{"./core/layer":2}],9:[function(require,module,exports){
 (function(){
-  var Vec2, loadImageData, Document, DocumentView, RoundBrush, GradientRenderer, PropertyGroup, Editor, start;
-  Vec2 = require('./core/vec').Vec2;
+  var loadImageData, Document, DocumentView, RoundBrush, GradientRenderer, GammaRenderer, PropertyGroup, ListView, Editor, start;
   loadImageData = require('./core/utils').loadImageData;
   Document = require('./document');
   DocumentView = require('./document-view');
   RoundBrush = require('./tools/roundbrush');
   GradientRenderer = require('./renderers/gradient');
+  GammaRenderer = require('./renderers/gamma');
   PropertyGroup = require('./property-view').PropertyGroup;
+  ListView = function(choices){};
   Editor = function(){
+    var res$, i$, ref$, len$, t, x$, toolProps, y$, renderProps, this$ = this;
     this.tiling = function(){
       return true;
     };
@@ -611,31 +613,44 @@
     this.toolObject = function(){
       return this.tool;
     };
-  };
-  start = function(){
-    var editor, doc, view, renderer;
-    editor = new Editor;
-    doc = new Document(512, 512);
-    doc.layer.fill(function(){
+    this.doc = new Document(512, 512);
+    this.doc.layer.fill(function(){
       return -1;
     });
-    view = new DocumentView($('.document-view'), doc, editor);
-    renderer = new GradientRenderer(doc.layer, view);
-    return loadImageData('/img/gradient-1.png', function(g){
-      renderer.gradient(g);
-      view.renderer = renderer;
-      view.render();
-      g = new PropertyGroup('Tool');
-      g.setProperties(editor.tool.properties);
-      return $('#properties').append(g.$el);
+    this.view = new DocumentView($('.document-view'), this.doc, this);
+    res$ = [];
+    for (i$ = 0, len$ = (ref$ = [GammaRenderer, GradientRenderer]).length; i$ < len$; ++i$) {
+      t = ref$[i$];
+      res$.push(new t(this.doc.layer, this.view));
+    }
+    this.renderers = res$;
+    this.renderer = ko.observable(this.renderers[1]);
+    this.renderer.subscribe(function(r){
+      this$.view.renderer = r;
+      this$.view.render();
+      return renderProps.setProperties(r.properties);
     });
+    x$ = toolProps = new PropertyGroup('Tool');
+    x$.setProperties(this.tool.properties);
+    x$.$el.appendTo($('#properties'));
+    y$ = renderProps = new PropertyGroup('Tool');
+    y$.setProperties(this.renderer().properties);
+    y$.$el.appendTo($('#properties'));
+    this.renderer(this.renderers[0]);
+  };
+  start = function(){
+    var editor;
+    editor = new Editor;
+    return ko.applyBindings(editor, $('#editor')[0]);
   };
   $(document).ready(start);
 }).call(this);
 
-},{"./core/utils":5,"./core/vec":6,"./document":8,"./document-view":7,"./property-view":10,"./renderers/gradient":12,"./tools/roundbrush":13}],10:[function(require,module,exports){
+},{"./core/utils":5,"./document":8,"./document-view":7,"./property-view":10,"./renderers/gamma":11,"./renderers/gradient":12,"./tools/roundbrush":13}],10:[function(require,module,exports){
 (function(){
-  var makeDraggable, SliderView, SliderPropertyView, PropertyView, PropertyGroup, out$ = typeof exports != 'undefined' && exports || this;
+  var Vec2, loadImageData, makeDraggable, SliderView, SliderPropertyView, ImagePropertyView, PropertyView, PropertyGroup, out$ = typeof exports != 'undefined' && exports || this;
+  Vec2 = require('./core/vec').Vec2;
+  loadImageData = require('./core/utils').loadImageData;
   makeDraggable = function(el){
     function DragHelper(el){
       var evtPos, onMouseUp, onMouseMove, startDrag, stopDrag, this$ = this;
@@ -726,6 +741,19 @@
       return subscription.dispose();
     };
   };
+  ImagePropertyView = function($el, prop){
+    var $select, this$ = this;
+    $select = $('<select/>').appendTo($el).change(function(e){
+      return loadImageData($select.val(), function(img){
+        return prop.value(img);
+      });
+    });
+    prop.choices.forEach(function(c){
+      var $op;
+      return $op = $('<option/>').text(c).appendTo($select);
+    });
+    this.cleanup = function(){};
+  };
   PropertyView = function(prop){
     var $prop, pv, this$ = this;
     this.$el = $('<div/>').addClass('property');
@@ -734,6 +762,8 @@
     pv = null;
     if (prop.range != null) {
       pv = new SliderPropertyView($prop, prop);
+    } else if (prop.type === 'gradient') {
+      pv = new ImagePropertyView($prop, prop);
     }
     this.cleanup = function(){
       if (pv != null) {
@@ -757,7 +787,7 @@
   out$.PropertyGroup = PropertyGroup;
 }).call(this);
 
-},{}],11:[function(require,module,exports){
+},{"./core/utils":5,"./core/vec":6}],11:[function(require,module,exports){
 (function(){
   var createProperties, GammaRenderer;
   createProperties = require('../core/properties').createProperties;
@@ -769,8 +799,10 @@
       defaultValue: 1.0,
       range: [0, 10]
     }], propChanged);
+    this.name = "Gamma";
     function propChanged(pid, val, prev){
-      return this$.renderFunc = null;
+      this$.renderFunc = null;
+      return view.render();
     }
     generateFunc = function(){
       var width, height, imgData, fb, gamma, code;
@@ -801,10 +833,13 @@
     createProperties(this, [{
       id: 'gradient',
       name: "Gradient image",
-      type: 'image'
-    }]);
+      type: 'gradient',
+      choices: ['img/gradient-1.png', 'img/gradient-2.png']
+    }], propChanged);
+    this.name = "Gradient";
     function propChanged(pid, val, prev){
-      return this$.renderFunc = null;
+      this$.renderFunc = null;
+      return view.render();
     }
     generateFunc = function(){
       var width, imgData, fb, lutImg, lut, round, norm, clamp, code;

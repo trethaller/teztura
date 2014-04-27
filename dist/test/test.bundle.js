@@ -346,8 +346,10 @@
       defaultValue: 1.0,
       range: [0, 10]
     }], propChanged);
+    this.name = "Gamma";
     function propChanged(pid, val, prev){
-      return this$.renderFunc = null;
+      this$.renderFunc = null;
+      return view.render();
     }
     generateFunc = function(){
       var width, height, imgData, fb, gamma, code;
@@ -378,10 +380,13 @@
     createProperties(this, [{
       id: 'gradient',
       name: "Gradient image",
-      type: 'image'
-    }]);
+      type: 'gradient',
+      choices: ['img/gradient-1.png', 'img/gradient-2.png']
+    }], propChanged);
+    this.name = "Gradient";
     function propChanged(pid, val, prev){
-      return this$.renderFunc = null;
+      this$.renderFunc = null;
+      return view.render();
     }
     generateFunc = function(){
       var width, imgData, fb, lutImg, lut, round, norm, clamp, code;
