@@ -17,6 +17,9 @@
       imgData = view.imageData.data;
       fb = layer.getBuffer();
       lutImg = this$.gradient();
+      if (lutImg == null) {
+        return function(){};
+      }
       lut = lutImg.data;
       round = function(val){
         return "(" + val + " + 0.5) | 0";

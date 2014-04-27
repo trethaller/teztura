@@ -16,6 +16,10 @@ GradientRenderer = (layer, view) !->
     imgData = view.imageData.data
     fb = layer.getBuffer()
     lutImg = @gradient!
+    
+    if not lutImg?
+      return ->;
+
     lut = lutImg.data
 
     round = (val)-> "(#{val} + 0.5) | 0"

@@ -389,6 +389,9 @@
       imgData = view.imageData.data;
       fb = layer.getBuffer();
       lutImg = this$.gradient();
+      if (lutImg == null) {
+        return function(){};
+      }
       lut = lutImg.data;
       round = function(val){
         return "(" + val + " + 0.5) | 0";
@@ -415,8 +418,8 @@
 
 },{"../core/properties":3}],9:[function(require,module,exports){
 (function(){
-  var core, Rect, Layer, Vec2, loadImageData, GammaRenderer, GradientRenderer, RoundBrush, testRenderers, testRoundBrush, testBlendModes, tests;
-  core = require('../core/core');
+  var Core, Rect, Layer, Vec2, loadImageData, GammaRenderer, GradientRenderer, RoundBrush, testRenderers, testRoundBrush, testBlendModes, tests;
+  Core = require('../core/core');
   Rect = require('../core/rect');
   Layer = require('../core/layer');
   Vec2 = require('../core/vec').Vec2;
@@ -579,7 +582,7 @@
     renderer.render([new Rect(0, 0, width, height)]);
     return ctx.drawImage($can[0], 0, 0);
   };
-  tests = [["Renderers", testRenderers]];
+  tests = [["Renderers", testRenderers], ["Blend modes", testBlendModes], ["Round brush", testRoundBrush]];
   (function(){
     var $root;
     $root = $('#tests-root');

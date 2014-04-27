@@ -1,4 +1,4 @@
-core              = require '../core/core'
+Core              = require '../core/core'
 Rect              = require '../core/rect'
 Layer             = require '../core/layer'
 {Vec2}            = require '../core/vec'
@@ -131,8 +131,8 @@ testBlendModes = ($el)->
 
 tests = [
   ["Renderers",   testRenderers]
-  #["Blend modes", testBlendModes]
-  #["Round brush", testRoundBrush]
+  ["Blend modes", testBlendModes]
+  ["Round brush", testRoundBrush]
 ]
 
 do ->
