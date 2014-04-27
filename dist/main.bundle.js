@@ -220,7 +220,28 @@
   module.exports = Rect;
 }).call(this);
 
-},{"./vec":5}],5:[function(require,module,exports){
+},{"./vec":6}],5:[function(require,module,exports){
+(function(){
+  var loadImageData, out$ = typeof exports != 'undefined' && exports || this;
+  loadImageData = function(url, done){
+    var imageObj;
+    imageObj = new Image();
+    imageObj.onload = function(){
+      var canvas, ctx, imageData;
+      canvas = document.createElement("canvas");
+      canvas.width = this.width;
+      canvas.height = this.height;
+      ctx = canvas.getContext('2d');
+      ctx.drawImage(this, 0, 0);
+      imageData = ctx.getImageData(0, 0, this.width, this.height);
+      return done(imageData);
+    };
+    imageObj.src = url;
+  };
+  out$.loadImageData = loadImageData;
+}).call(this);
+
+},{}],6:[function(require,module,exports){
 (function(){
   var Vec2, Vec3, ref$, out$ = typeof exports != 'undefined' && exports || this;
   Vec2 = (function(){
@@ -313,7 +334,7 @@
   ref$.Vec3 = Vec3;
 }).call(this);
 
-},{}],6:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
 (function(){
   var Vec2, Rect, GammaRenderer, DocumentView;
   Vec2 = require('./core/vec').Vec2;
@@ -355,6 +376,7 @@
       this.context = $canvas[0].getContext('2d');
       this.imageData = this.context.getImageData(0, 0, this.doc.width, this.doc.height);
       this.context.mozImageSmoothingEnabled = false;
+      this.renderer = null;
       plugin = document.getElementById('wtPlugin');
       penAPI = plugin != null ? plugin.penAPI : void 8;
       getMouseCoords = function(e){
@@ -435,17 +457,14 @@
         return this$.repaint();
       });
     }
-    prototype.getRenderer = function(){
-      if (this.renderer == null) {
-        this.renderer = new GammaRenderer(this.doc.layer, this);
-      }
-      return this.renderer;
-    };
     prototype.screenToCanvas = function(pt){
       return pt.sub(this.offset).scale(1.0 / this.scale);
     };
     prototype.render = function(){
-      this.getRenderer().render([new Rect(0, 0, this.doc.width, this.doc.height)]);
+      var ref$;
+      if ((ref$ = this.renderer) != null) {
+        ref$.render([new Rect(0, 0, this.doc.width, this.doc.height)]);
+      }
       return this.repaint();
     };
     prototype.repaint = function(){
@@ -500,7 +519,9 @@
         console.log(dirtyRects.length + " rects, " + Math.round(Math.sqrt(totalArea)) + " px²");
       }
       if (true) {
-        this.getRenderer().render(dirtyRects);
+        if ((ref$ = this.renderer) != null) {
+          ref$.render(dirtyRects);
+        }
         return this.repaint();
       }
     };
@@ -509,7 +530,7 @@
   module.exports = DocumentView;
 }).call(this);
 
-},{"./core/rect":4,"./core/vec":5,"./renderers/gamma":9}],7:[function(require,module,exports){
+},{"./core/rect":4,"./core/vec":6,"./renderers/gamma":10}],8:[function(require,module,exports){
 (function(){
   var Layer, Document;
   Layer = require('./core/layer');
@@ -572,13 +593,15 @@
   module.exports = Document;
 }).call(this);
 
-},{"./core/layer":2}],8:[function(require,module,exports){
+},{"./core/layer":2}],9:[function(require,module,exports){
 (function(){
-  var Vec2, Document, DocumentView, RoundBrush, makeDraggable, SliderView, PropertyView, PropertyGroup, Editor, start;
+  var Vec2, loadImageData, Document, DocumentView, RoundBrush, GradientRenderer, makeDraggable, SliderView, SliderPropertyView, PropertyView, PropertyGroup, Editor, start;
   Vec2 = require('./core/vec').Vec2;
+  loadImageData = require('./core/utils').loadImageData;
   Document = require('./document');
   DocumentView = require('./document-view');
   RoundBrush = require('./tools/roundbrush');
+  GradientRenderer = require('./renderers/gradient');
   makeDraggable = function(el){
     function DragHelper(el){
       var evtPos, onMouseUp, onMouseMove, startDrag, stopDrag, this$ = this;
@@ -636,45 +659,51 @@
     };
     this.bar.width('50%');
   };
+  SliderPropertyView = function($el, prop){
+    var power, conv, invconv, rmin, rmax, range, sv, subscription, $input, this$ = this;
+    power = prop.power || 1.0;
+    conv = function(v){
+      return Math.pow(v, power);
+    };
+    invconv = function(v){
+      return Math.pow(v, 1.0 / power);
+    };
+    rmin = invconv(prop.range[0]);
+    rmax = invconv(prop.range[1]);
+    range = prop.range[1] - prop.range[0];
+    sv = new SliderView();
+    sv.setValue(invconv(prop.value() / range));
+    sv.el.appendTo($el);
+    sv.el.on('drag', function(e, x, y){
+      prop.value(conv(invconv(prop.value()) + x * range / 500));
+    });
+    subscription = prop.value.subscribe(function(newVal){
+      $input.val(newVal);
+      sv.setValue(invconv(newVal / range));
+    });
+    $input = $('<input/>').val(prop.value()).appendTo($el).addClass('tz-input').change(function(evt){
+      if (prop.type === 'int') {
+        return prop.value(parseInt($input.val()));
+      } else {
+        return prop.value(parseFloat($input.val()));
+      }
+    });
+    this.cleanup = function(){
+      return subscription.dispose();
+    };
+  };
   PropertyView = function(prop){
-    var $prop, power, conv, invconv, rmin, rmax, range, sv, $input, this$ = this;
+    var $prop, pv, this$ = this;
     this.$el = $('<div/>').addClass('property');
     $('<label/>').text(prop.name).appendTo(this.$el);
     $prop = $('<div/>').appendTo(this.$el);
-    this.subs = [];
+    pv = null;
     if (prop.range != null) {
-      power = prop.power || 1.0;
-      conv = function(v){
-        return Math.pow(v, power);
-      };
-      invconv = function(v){
-        return Math.pow(v, 1.0 / power);
-      };
-      rmin = invconv(prop.range[0]);
-      rmax = invconv(prop.range[1]);
-      range = prop.range[1] - prop.range[0];
-      sv = new SliderView();
-      sv.setValue(invconv(prop.value() / range));
-      sv.el.appendTo($prop);
-      sv.el.on('drag', function(e, x, y){
-        prop.value(conv(invconv(prop.value()) + x * range / 500));
-      });
-      this.subscription = prop.value.subscribe(function(newVal){
-        $input.val(newVal);
-        sv.setValue(invconv(newVal / range));
-      });
-      $input = $('<input/>').val(prop.value()).appendTo($prop).addClass('tz-input').change(function(evt){
-        if (prop.type === 'int') {
-          return prop.value(parseInt($input.val()));
-        } else {
-          return prop.value(parseFloat($input.val()));
-        }
-      });
+      pv = new SliderPropertyView($prop, prop);
     }
     this.cleanup = function(){
-      var ref$;
-      if ((ref$ = this$.subscription) != null) {
-        ref$.dispose();
+      if (pv != null) {
+        pv.cleanup();
       }
     };
   };
@@ -701,22 +730,27 @@
     };
   };
   start = function(){
-    var editor, doc, view, g;
+    var editor, doc, view, renderer;
     editor = new Editor;
     doc = new Document(512, 512);
     doc.layer.fill(function(){
       return -1;
     });
     view = new DocumentView($('.document-view'), doc, editor);
-    view.render();
-    g = new PropertyGroup('Tool');
-    g.setProperties(editor.tool.properties);
-    return $('#properties').append(g.$el);
+    renderer = new GradientRenderer(doc.layer, view);
+    return loadImageData('/img/gradient-1.png', function(g){
+      renderer.gradient(g);
+      view.renderer = renderer;
+      view.render();
+      g = new PropertyGroup('Tool');
+      g.setProperties(editor.tool.properties);
+      return $('#properties').append(g.$el);
+    });
   };
   $(document).ready(start);
 }).call(this);
 
-},{"./core/vec":5,"./document":7,"./document-view":6,"./tools/roundbrush":10}],9:[function(require,module,exports){
+},{"./core/utils":5,"./core/vec":6,"./document":8,"./document-view":7,"./renderers/gradient":11,"./tools/roundbrush":12}],10:[function(require,module,exports){
 (function(){
   var createProperties, GammaRenderer;
   createProperties = require('../core/properties').createProperties;
@@ -751,7 +785,54 @@
   module.exports = GammaRenderer;
 }).call(this);
 
-},{"../core/properties":3}],10:[function(require,module,exports){
+},{"../core/properties":3}],11:[function(require,module,exports){
+(function(){
+  var createProperties, GradientRenderer;
+  createProperties = require('../core/properties').createProperties;
+  GradientRenderer = function(layer, view){
+    var generateFunc, this$ = this;
+    createProperties(this, [{
+      id: 'gradient',
+      name: "Gradient image",
+      type: 'image'
+    }]);
+    function propChanged(pid, val, prev){
+      return this$.renderFunc = null;
+    }
+    generateFunc = function(){
+      var width, imgData, fb, lutImg, lut, round, norm, clamp, code;
+      width = layer.width;
+      imgData = view.imageData.data;
+      fb = layer.getBuffer();
+      lutImg = this$.gradient();
+      if (lutImg == null) {
+        return function(){};
+      }
+      lut = lutImg.data;
+      round = function(val){
+        return "(" + val + " + 0.5) | 0";
+      };
+      norm = function(val){
+        return lutImg.width / 2 + ".0 * (1.0 + " + val + ")";
+      };
+      clamp = function(val){
+        return val + " < 0 ? 0 : (" + val + " > " + (lutImg.width - 1) + " ? " + (lutImg.width - 1) + " : " + val + ")";
+      };
+      code = "(function (rects) {'use strict';for(var ri in rects) {var r = rects[ri];var minX = r.x | 0;var minY = r.y | 0;var maxX = minX + r.width | 0;var maxY = minY + r.height | 0;for(var iy=minY; iy<=maxY; ++iy) {var offset = iy * " + width + ";for(var ix=minX; ix<=maxX; ++ix) {var fval = " + round(norm('fb[offset + ix]')) + ";var lookupIndex = (" + clamp('fval') + ") << 2;var off = (offset + ix) << 2;imgData[off] =   lut[lookupIndex];imgData[++off] = lut[++lookupIndex];imgData[++off] = lut[++lookupIndex];imgData[++off] = 0xff;}}view.context.putImageData(view.imageData, 0, 0, r.x, r.y, r.width+1, r.height+1);}});";
+      console.log(code);
+      return eval(code);
+    };
+    this.render = function(rects){
+      if (this$.renderFunc == null) {
+        this$.renderFunc = generateFunc();
+      }
+      this$.renderFunc(rects);
+    };
+  };
+  module.exports = GradientRenderer;
+}).call(this);
+
+},{"../core/properties":3}],12:[function(require,module,exports){
 (function(){
   var createStepTool, Rect, genBrushFunc, createProperties, RoundBrush;
   createStepTool = require('./utils').createStepTool;
@@ -835,7 +916,7 @@
   module.exports = RoundBrush;
 }).call(this);
 
-},{"../core/core":1,"../core/properties":3,"../core/rect":4,"./utils":11}],11:[function(require,module,exports){
+},{"../core/core":1,"../core/properties":3,"../core/rect":4,"./utils":13}],13:[function(require,module,exports){
 (function(){
   var Rect, createStepTool, out$ = typeof exports != 'undefined' && exports || this;
   Rect = require('../core/rect');
@@ -885,4 +966,4 @@
   out$.createStepTool = createStepTool;
 }).call(this);
 
-},{"../core/rect":4}]},{},[8])
+},{"../core/rect":4}]},{},[9])

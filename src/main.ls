@@ -1,8 +1,10 @@
 
 { Vec2 } = require './core/vec'
+{loadImageData} = require './core/utils'
 Document = require './document'
 DocumentView = require './document-view'
 RoundBrush = require './tools/roundbrush'
+GradientRenderer  = require './renderers/gradient'
 
 makeDraggable = (el)->
   function DragHelper @el
@@ -60,6 +62,38 @@ SliderView = !->
 
   @bar.width '50%'
 
+SliderPropertyView = ($el, prop) !->
+  power = prop.power or 1.0
+  conv = (v)-> Math.pow(v, power)
+  invconv = (v)-> Math.pow(v, 1.0 / power)
+
+  rmin = invconv prop.range[0]
+  rmax = invconv prop.range[1]
+  range = prop.range.1 - prop.range.0
+  sv = new SliderView!
+  sv.setValue invconv (prop.value! / range)
+  sv.el
+    .appendTo $el
+  sv.el.on 'drag', (e, x, y) !->
+    prop.value conv(invconv(prop.value!) + (x * range / 500))
+
+  subscription = prop.value.subscribe (newVal) !->
+    $input.val newVal
+    sv.setValue invconv (newVal / range)
+
+  $input = $ '<input/>'
+    .val prop.value!
+    .appendTo $el
+    .addClass 'tz-input'
+    .change (evt)->
+      if prop.type is 'int'
+        prop.value parseInt $input.val!
+      else
+        prop.value parseFloat $input.val!
+  
+  @cleanup = ~>
+    subscription.dispose!
+
 PropertyView = (prop) !->
   @$el = $ '<div/>'
     .addClass 'property'
@@ -71,40 +105,13 @@ PropertyView = (prop) !->
   $prop = $ \<div/>
     .appendTo @$el
 
-  @subs = []
-
+  pv = null
   if prop.range?
-    power = prop.power or 1.0
-    conv = (v)-> Math.pow(v, power)
-    invconv = (v)-> Math.pow(v, 1.0 / power)
-
-    rmin = invconv prop.range[0]
-    rmax = invconv prop.range[1]
-    range = prop.range.1 - prop.range.0
-    sv = new SliderView!
-    sv.setValue invconv (prop.value! / range)
-    sv.el
-      .appendTo $prop
-    sv.el.on 'drag', (e, x, y) !->
-      prop.value conv(invconv(prop.value!) + (x * range / 500))
-
-    @subscription = prop.value.subscribe (newVal) !->
-      $input.val newVal
-      sv.setValue invconv (newVal / range)
-
-    $input = $ '<input/>'
-      .val prop.value!
-      .appendTo $prop
-      .addClass 'tz-input'
-      .change (evt)->
-        if prop.type is 'int'
-          prop.value parseInt $input.val!
-        else
-          prop.value parseFloat $input.val!
+    pv := new SliderPropertyView $prop, prop
 
 
   @cleanup = !~>
-    @subscription?.dispose!
+    pv?.cleanup!
     #ko.applyBindings prop, $range[0]
   
 PropertyGroup = (title)!->
@@ -132,7 +139,14 @@ start = ->
   editor = new Editor
   doc = new Document 512, 512
   doc.layer.fill -> -1
+
   view = new DocumentView $('.document-view'), doc, editor
+
+  renderer = new GradientRenderer doc.layer, view
+  g <- loadImageData '/img/gradient-1.png'
+  renderer.gradient g
+
+  view.renderer = renderer
   view.render!
 
   g = new PropertyGroup 'Tool'

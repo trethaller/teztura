@@ -39,6 +39,7 @@
       this.context = $canvas[0].getContext('2d');
       this.imageData = this.context.getImageData(0, 0, this.doc.width, this.doc.height);
       this.context.mozImageSmoothingEnabled = false;
+      this.renderer = null;
       plugin = document.getElementById('wtPlugin');
       penAPI = plugin != null ? plugin.penAPI : void 8;
       getMouseCoords = function(e){
@@ -119,17 +120,14 @@
         return this$.repaint();
       });
     }
-    prototype.getRenderer = function(){
-      if (this.renderer == null) {
-        this.renderer = new GammaRenderer(this.doc.layer, this);
-      }
-      return this.renderer;
-    };
     prototype.screenToCanvas = function(pt){
       return pt.sub(this.offset).scale(1.0 / this.scale);
     };
     prototype.render = function(){
-      this.getRenderer().render([new Rect(0, 0, this.doc.width, this.doc.height)]);
+      var ref$;
+      if ((ref$ = this.renderer) != null) {
+        ref$.render([new Rect(0, 0, this.doc.width, this.doc.height)]);
+      }
       return this.repaint();
     };
     prototype.repaint = function(){
@@ -184,7 +182,9 @@
         console.log(dirtyRects.length + " rects, " + Math.round(Math.sqrt(totalArea)) + " px²");
       }
       if (true) {
-        this.getRenderer().render(dirtyRects);
+        if ((ref$ = this.renderer) != null) {
+          ref$.render(dirtyRects);
+        }
         return this.repaint();
       }
     };

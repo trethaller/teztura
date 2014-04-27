@@ -26,6 +26,7 @@ class DocumentView
     @imageData = @context.getImageData(0,0,@doc.width,@doc.height)
 
     @context.mozImageSmoothingEnabled = false
+    @renderer = null
 
     plugin = document.getElementById('wtPlugin')
     penAPI = plugin?.penAPI
@@ -102,15 +103,10 @@ class DocumentView
       @repaint()
 
  
-  getRenderer: ->
-    if not @renderer?
-      @renderer = new GammaRenderer @doc.layer, this
-    return @renderer
-
   screenToCanvas: (pt) -> pt.sub(@offset).scale(1.0/@scale)
 
   render: ->
-    @getRenderer().render [new Rect(0,0,@doc.width,@doc.height)]
+    @renderer?.render [new Rect(0,0,@doc.width,@doc.height)]
     @repaint()
 
   repaint: ->
@@ -160,7 +156,7 @@ class DocumentView
 
     if true
     #setTimeout (->
-      @getRenderer().render dirtyRects
+      @renderer?.render dirtyRects
       @repaint()
     #), 0
 

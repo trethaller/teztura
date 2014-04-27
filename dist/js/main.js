@@ -1,9 +1,11 @@
 (function(){
-  var Vec2, Document, DocumentView, RoundBrush, makeDraggable, SliderView, PropertyView, PropertyGroup, Editor, start;
+  var Vec2, loadImageData, Document, DocumentView, RoundBrush, GradientRenderer, makeDraggable, SliderView, SliderPropertyView, PropertyView, PropertyGroup, Editor, start;
   Vec2 = require('./core/vec').Vec2;
+  loadImageData = require('./core/utils').loadImageData;
   Document = require('./document');
   DocumentView = require('./document-view');
   RoundBrush = require('./tools/roundbrush');
+  GradientRenderer = require('./renderers/gradient');
   makeDraggable = function(el){
     function DragHelper(el){
       var evtPos, onMouseUp, onMouseMove, startDrag, stopDrag, this$ = this;
@@ -61,45 +63,51 @@
     };
     this.bar.width('50%');
   };
+  SliderPropertyView = function($el, prop){
+    var power, conv, invconv, rmin, rmax, range, sv, subscription, $input, this$ = this;
+    power = prop.power || 1.0;
+    conv = function(v){
+      return Math.pow(v, power);
+    };
+    invconv = function(v){
+      return Math.pow(v, 1.0 / power);
+    };
+    rmin = invconv(prop.range[0]);
+    rmax = invconv(prop.range[1]);
+    range = prop.range[1] - prop.range[0];
+    sv = new SliderView();
+    sv.setValue(invconv(prop.value() / range));
+    sv.el.appendTo($el);
+    sv.el.on('drag', function(e, x, y){
+      prop.value(conv(invconv(prop.value()) + x * range / 500));
+    });
+    subscription = prop.value.subscribe(function(newVal){
+      $input.val(newVal);
+      sv.setValue(invconv(newVal / range));
+    });
+    $input = $('<input/>').val(prop.value()).appendTo($el).addClass('tz-input').change(function(evt){
+      if (prop.type === 'int') {
+        return prop.value(parseInt($input.val()));
+      } else {
+        return prop.value(parseFloat($input.val()));
+      }
+    });
+    this.cleanup = function(){
+      return subscription.dispose();
+    };
+  };
   PropertyView = function(prop){
-    var $prop, power, conv, invconv, rmin, rmax, range, sv, $input, this$ = this;
+    var $prop, pv, this$ = this;
     this.$el = $('<div/>').addClass('property');
     $('<label/>').text(prop.name).appendTo(this.$el);
     $prop = $('<div/>').appendTo(this.$el);
-    this.subs = [];
+    pv = null;
     if (prop.range != null) {
-      power = prop.power || 1.0;
-      conv = function(v){
-        return Math.pow(v, power);
-      };
-      invconv = function(v){
-        return Math.pow(v, 1.0 / power);
-      };
-      rmin = invconv(prop.range[0]);
-      rmax = invconv(prop.range[1]);
-      range = prop.range[1] - prop.range[0];
-      sv = new SliderView();
-      sv.setValue(invconv(prop.value() / range));
-      sv.el.appendTo($prop);
-      sv.el.on('drag', function(e, x, y){
-        prop.value(conv(invconv(prop.value()) + x * range / 500));
-      });
-      this.subscription = prop.value.subscribe(function(newVal){
-        $input.val(newVal);
-        sv.setValue(invconv(newVal / range));
-      });
-      $input = $('<input/>').val(prop.value()).appendTo($prop).addClass('tz-input').change(function(evt){
-        if (prop.type === 'int') {
-          return prop.value(parseInt($input.val()));
-        } else {
-          return prop.value(parseFloat($input.val()));
-        }
-      });
+      pv = new SliderPropertyView($prop, prop);
     }
     this.cleanup = function(){
-      var ref$;
-      if ((ref$ = this$.subscription) != null) {
-        ref$.dispose();
+      if (pv != null) {
+        pv.cleanup();
       }
     };
   };
@@ -126,17 +134,22 @@
     };
   };
   start = function(){
-    var editor, doc, view, g;
+    var editor, doc, view, renderer;
     editor = new Editor;
     doc = new Document(512, 512);
     doc.layer.fill(function(){
       return -1;
     });
     view = new DocumentView($('.document-view'), doc, editor);
-    view.render();
-    g = new PropertyGroup('Tool');
-    g.setProperties(editor.tool.properties);
-    return $('#properties').append(g.$el);
+    renderer = new GradientRenderer(doc.layer, view);
+    return loadImageData('/img/gradient-1.png', function(g){
+      renderer.gradient(g);
+      view.renderer = renderer;
+      view.render();
+      g = new PropertyGroup('Tool');
+      g.setProperties(editor.tool.properties);
+      return $('#properties').append(g.$el);
+    });
   };
   $(document).ready(start);
 }).call(this);
