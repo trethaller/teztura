@@ -8,9 +8,6 @@ GammaRenderer = require './renderers/gamma'
 {PropertyGroup} = require './property-view'
 
 
-ListView = (choices)!->
-
-
 Editor = !->
   @tiling = -> true
   @tool = new RoundBrush this
@@ -27,7 +24,6 @@ Editor = !->
     @view.renderer = r
     @view.render!
     renderProps.setProperties r.properties
-
 
   toolProps = new PropertyGroup 'Tool'
     ..setProperties @tool.properties

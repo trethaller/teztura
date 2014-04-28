@@ -595,7 +595,7 @@
 
 },{"./core/layer":2}],9:[function(require,module,exports){
 (function(){
-  var loadImageData, Document, DocumentView, RoundBrush, GradientRenderer, GammaRenderer, PropertyGroup, ListView, Editor, start;
+  var loadImageData, Document, DocumentView, RoundBrush, GradientRenderer, GammaRenderer, PropertyGroup, Editor, start;
   loadImageData = require('./core/utils').loadImageData;
   Document = require('./document');
   DocumentView = require('./document-view');
@@ -603,7 +603,6 @@
   GradientRenderer = require('./renderers/gradient');
   GammaRenderer = require('./renderers/gamma');
   PropertyGroup = require('./property-view').PropertyGroup;
-  ListView = function(choices){};
   Editor = function(){
     var res$, i$, ref$, len$, t, x$, toolProps, y$, renderProps, this$ = this;
     this.tiling = function(){
