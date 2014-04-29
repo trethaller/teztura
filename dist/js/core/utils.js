@@ -1,5 +1,5 @@
 (function(){
-  var loadImageData, out$ = typeof exports != 'undefined' && exports || this;
+  var loadImageData, event, ref$, slice$ = [].slice, out$ = typeof exports != 'undefined' && exports || this;
   loadImageData = function(url, done){
     var imageObj;
     imageObj = new Image();
@@ -15,5 +15,29 @@
     };
     imageObj.src = url;
   };
-  out$.loadImageData = loadImageData;
+  event = function(){
+    var subs, f;
+    subs = [];
+    f = function(){
+      var args;
+      args = slice$.call(arguments);
+      subs.forEach(function(sub){
+        return sub.apply(null, args);
+      });
+    };
+    f.subscribe = function(s){
+      return subs.push(s);
+    };
+    f.unsubscribe = function(s){
+      var idx;
+      idx = subs.indexOf(s);
+      if (idx > -1) {
+        return subs.splice(idx, 1);
+      }
+    };
+    return f;
+  };
+  ref$ = out$;
+  ref$.event = event;
+  ref$.loadImageData = loadImageData;
 }).call(this);

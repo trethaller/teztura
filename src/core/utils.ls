@@ -11,4 +11,18 @@ loadImageData = (url, done) !->
     done imageData
   imageObj.src = url
 
-export { loadImageData }
+
+event = ->
+  subs = []
+  f = (...args) !->
+    subs.forEach (sub) ->
+      sub ...args
+  f.subscribe = (s) ->
+    subs.push s
+  f.unsubscribe = (s) ->
+    idx = subs.indexOf s
+    if idx > -1
+      subs.splice(idx, 1)
+  return f
+
+export { event, loadImageData }

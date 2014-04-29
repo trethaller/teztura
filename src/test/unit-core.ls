@@ -1,6 +1,7 @@
 assert          = require 'assert'
 {Vec2, Vec3}    = require '../core/vec'
 Rect            = require '../core/rect'
+{event}         = require '../core/utils'
 
 assertClose = (a,b)->
   assert(Math.abs(a - b) < 1.0e-8, "#{a} != #{b}")
@@ -81,3 +82,39 @@ describe 'Vec3', ->
     assertClose(va.sub(vb).x, -1)
     assertClose(va.sub(vb).y, -1)
     assertClose(va.sub(vb).z, -1)
+
+describe 'Event', ->
+  specify 'subscribe/unsubscribe', ->
+    calls = []
+    f1 = -> calls.push 'f1'
+    f2 = -> calls.push 'f2'
+    f3 = -> calls.push 'f3'
+    history = (h) -> calls.join(',') is h
+
+    evt = event!
+      ..subscribe f1
+      ..subscribe f2
+
+    evt!
+    assert history 'f1,f2'
+    
+    evt!
+    assert history 'f1,f2,f1,f2'
+
+    evt.unsubscribe f1
+    evt!
+    assert history 'f1,f2,f1,f2,f2'
+
+    evt.unsubscribe f2
+    evt!
+    assert history 'f1,f2,f1,f2,f2'
+
+  specify 'arguments', ->
+    calls = []
+    f1 = (a, b)-> calls.push "#{a}+#{b}"
+    evt = event!
+      ..subscribe f1
+
+    evt '1', '2'
+    assert calls.join(',') is '1+2'
+    

@@ -1,8 +1,9 @@
 (function(){
-  var assert, ref$, Vec2, Vec3, Rect, assertClose;
+  var assert, ref$, Vec2, Vec3, Rect, event, assertClose;
   assert = require('assert');
   ref$ = require('../core/vec'), Vec2 = ref$.Vec2, Vec3 = ref$.Vec3;
   Rect = require('../core/rect');
+  event = require('../core/utils').event;
   assertClose = function(a, b){
     return assert(Math.abs(a - b) < 1.0e-8, a + " != " + b);
   };
@@ -90,6 +91,48 @@
       assertClose(va.sub(vb).x, -1);
       assertClose(va.sub(vb).y, -1);
       return assertClose(va.sub(vb).z, -1);
+    });
+  });
+  describe('Event', function(){
+    specify('subscribe/unsubscribe', function(){
+      var calls, f1, f2, f3, history, x$, evt;
+      calls = [];
+      f1 = function(){
+        return calls.push('f1');
+      };
+      f2 = function(){
+        return calls.push('f2');
+      };
+      f3 = function(){
+        return calls.push('f3');
+      };
+      history = function(h){
+        return calls.join(',') === h;
+      };
+      x$ = evt = event();
+      x$.subscribe(f1);
+      x$.subscribe(f2);
+      evt();
+      assert(history('f1,f2'));
+      evt();
+      assert(history('f1,f2,f1,f2'));
+      evt.unsubscribe(f1);
+      evt();
+      assert(history('f1,f2,f1,f2,f2'));
+      evt.unsubscribe(f2);
+      evt();
+      return assert(history('f1,f2,f1,f2,f2'));
+    });
+    return specify('arguments', function(){
+      var calls, f1, x$, evt;
+      calls = [];
+      f1 = function(a, b){
+        return calls.push(a + "+" + b);
+      };
+      x$ = evt = event();
+      x$.subscribe(f1);
+      evt('1', '2');
+      return assert(calls.join(',') === '1+2');
     });
   });
 }).call(this);
