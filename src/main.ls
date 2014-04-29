@@ -19,6 +19,12 @@ Editor = !->
   @view = new DocumentView $('.document-view'), @doc, this
 
   @renderers = [new t @doc.layer, @view for t in [GammaRenderer, GradientRenderer]]
+
+  # Re-render instantly if any property change
+  @renderers.forEach (r) ~>
+    r.propertyChanged.subscribe ~>
+      @view.render!
+
   @renderer = ko.observable @renderers.1
   @renderer.subscribe (r) ~>
     @view.renderer = r

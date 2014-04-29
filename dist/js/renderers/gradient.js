@@ -8,12 +8,11 @@
       name: "Gradient image",
       type: 'gradient',
       choices: ['img/gradient-1.png', 'img/gradient-2.png']
-    }], propChanged);
+    }]);
     this.name = "Gradient";
-    function propChanged(pid, val, prev){
-      this$.renderFunc = null;
-      return view.render();
-    }
+    this.propertyChanged.subscribe(function(){
+      return this.renderFunc = null;
+    });
     generateFunc = function(){
       var width, imgData, fb, lutImg, lut, round, norm, clamp, code;
       width = layer.width;

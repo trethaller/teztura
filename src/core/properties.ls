@@ -1,13 +1,15 @@
+{event} = require '../core/utils'
 
-createProperties = (target, definitions, changed) ->
+createProperties = (target, definitions) ->
   target.properties = []
+  target.propertyChanged = event!
+
   definitions.forEach (def) ->
     prop = ^^def
     prop.value = ko.observable def.defaultValue
 
-    if changed?
-      prop.value.subscribe (val) ->
-        changed prop.id, val
+    prop.value.subscribe (val) ->
+      target.propertyChanged prop.id, val
 
     target[prop.id] = prop.value
     target.properties.push prop

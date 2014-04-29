@@ -126,18 +126,18 @@
 
 },{"../core/rect":4}],3:[function(require,module,exports){
 (function(){
-  var createProperties, out$ = typeof exports != 'undefined' && exports || this;
-  createProperties = function(target, definitions, changed){
+  var event, createProperties, out$ = typeof exports != 'undefined' && exports || this;
+  event = require('../core/utils').event;
+  createProperties = function(target, definitions){
     target.properties = [];
+    target.propertyChanged = event();
     return definitions.forEach(function(def){
       var prop;
       prop = clone$(def);
       prop.value = ko.observable(def.defaultValue);
-      if (changed != null) {
-        prop.value.subscribe(function(val){
-          return changed(prop.id, val);
-        });
-      }
+      prop.value.subscribe(function(val){
+        return target.propertyChanged(prop.id, val);
+      });
       target[prop.id] = prop.value;
       return target.properties.push(prop);
     });
@@ -149,7 +149,7 @@
   }
 }).call(this);
 
-},{}],4:[function(require,module,exports){
+},{"../core/utils":5}],4:[function(require,module,exports){
 (function(){
   var Vec2, Rect;
   Vec2 = require('./vec').Vec2;
@@ -222,7 +222,7 @@
 
 },{"./vec":6}],5:[function(require,module,exports){
 (function(){
-  var loadImageData, out$ = typeof exports != 'undefined' && exports || this;
+  var loadImageData, event, ref$, slice$ = [].slice, out$ = typeof exports != 'undefined' && exports || this;
   loadImageData = function(url, done){
     var imageObj;
     imageObj = new Image();
@@ -238,7 +238,31 @@
     };
     imageObj.src = url;
   };
-  out$.loadImageData = loadImageData;
+  event = function(){
+    var subs, f;
+    subs = [];
+    f = function(){
+      var args;
+      args = slice$.call(arguments);
+      subs.forEach(function(sub){
+        return sub.apply(null, args);
+      });
+    };
+    f.subscribe = function(s){
+      return subs.push(s);
+    };
+    f.unsubscribe = function(s){
+      var idx;
+      idx = subs.indexOf(s);
+      if (idx > -1) {
+        return subs.splice(idx, 1);
+      }
+    };
+    return f;
+  };
+  ref$ = out$;
+  ref$.event = event;
+  ref$.loadImageData = loadImageData;
 }).call(this);
 
 },{}],6:[function(require,module,exports){
@@ -623,6 +647,11 @@
       res$.push(new t(this.doc.layer, this.view));
     }
     this.renderers = res$;
+    this.renderers.forEach(function(r){
+      return r.propertyChanged.subscribe(function(){
+        return this$.view.render();
+      });
+    });
     this.renderer = ko.observable(this.renderers[1]);
     this.renderer.subscribe(function(r){
       this$.view.renderer = r;
@@ -797,12 +826,11 @@
       name: "Gamma",
       defaultValue: 1.0,
       range: [0, 10]
-    }], propChanged);
+    }]);
     this.name = "Gamma";
-    function propChanged(pid, val, prev){
-      this$.renderFunc = null;
-      return view.render();
-    }
+    this.propertyChanged.subscribe(function(){
+      return this.renderFunc = null;
+    });
     generateFunc = function(){
       var width, height, imgData, fb, gamma, code;
       width = layer.width;
@@ -834,12 +862,11 @@
       name: "Gradient image",
       type: 'gradient',
       choices: ['img/gradient-1.png', 'img/gradient-2.png']
-    }], propChanged);
+    }]);
     this.name = "Gradient";
-    function propChanged(pid, val, prev){
-      this$.renderFunc = null;
-      return view.render();
-    }
+    this.propertyChanged.subscribe(function(){
+      return this.renderFunc = null;
+    });
     generateFunc = function(){
       var width, imgData, fb, lutImg, lut, round, norm, clamp, code;
       width = layer.width;

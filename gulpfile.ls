@@ -35,6 +35,12 @@ gulp.task 'test', ['js', 'ls'], ->
     .pipe gulp.dest "#{dist}/test"
     #.pipe connect.reload!
 
+/*
+gulp.task 'browsertest', ->
+  gulp.src "#{dist}/test/index.html"
+    .pipe mochaPhantom!
+*/
+
 gulp.task 'main', ['ls'], ->
   gulp.src "#{dist}/js/main.js"
     .pipe browserify!

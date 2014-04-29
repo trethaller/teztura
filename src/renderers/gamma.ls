@@ -7,13 +7,12 @@ GammaRenderer = (layer, view)!->
       name: "Gamma"
       defaultValue: 1.0
       range: [0, 10]
-  ], propChanged
+  ]
 
   @name = "Gamma"
 
-  ~function propChanged pid, val, prev
+  @propertyChanged.subscribe ->
     @renderFunc = null
-    view.render!
 
   generateFunc = ~>
     width = layer.width

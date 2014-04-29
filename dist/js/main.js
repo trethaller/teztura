@@ -27,6 +27,11 @@
       res$.push(new t(this.doc.layer, this.view));
     }
     this.renderers = res$;
+    this.renderers.forEach(function(r){
+      return r.propertyChanged.subscribe(function(){
+        return this$.view.render();
+      });
+    });
     this.renderer = ko.observable(this.renderers[1]);
     this.renderer.subscribe(function(r){
       this$.view.renderer = r;
