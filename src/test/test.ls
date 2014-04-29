@@ -7,6 +7,51 @@ GammaRenderer     = require '../renderers/gamma'
 GradientRenderer  = require '../renderers/gradient'
 RoundBrush        = require '../tools/roundbrush'
 
+
+testTiling = ($el)->
+  width = 100
+  height = 100
+  $can = $ "<canvas width='#{width}' height='#{height}'/>"
+    .appendTo $el
+    .width 400
+    .height 400
+
+  layer = new Layer width, height
+  layer.fill (x,y)-> -1
+
+  b = new RoundBrush {tiling: true, targetValue: 1.0}
+    ..size 5
+    ..hardness 0.0
+    ..intensity 2.0
+
+  point = (x,y)->
+    pos = new Vec2(x, y)
+    b.beginDraw layer, pos
+    b.draw layer, pos, 1
+    b.endDraw!
+
+  line = (offset, y)->
+    for i from -20 to 20 by 2
+      point (i + offset), y
+
+  line 0, -10
+  line 0.25, 0
+  line 0.5, 10
+  line 0.75, 20
+
+  ctx = $can.0.getContext '2d'
+  view =
+    canvas: $can.0
+    context: ctx
+    imageData: ctx.getImageData 0, 0, width, height
+
+  renderer = new GammaRenderer layer, view
+  renderer.render [new Rect(0,0,width,height)]
+
+  ctx.translate width / 2, height / 2
+  ctx.fillStyle = ctx.createPattern $can.0, "repeat"
+  ctx.fillRect(-width / 2,-height / 2, width, height)
+
 testRenderers = ($el)->
   width = 800
   height = 100
@@ -130,9 +175,10 @@ testBlendModes = ($el)->
 # ----
 
 tests = [
-  ["Renderers",   testRenderers]
-  ["Blend modes", testBlendModes]
-  ["Round brush", testRoundBrush]
+  ["Tiling",      testTiling]
+  #["Renderers",   testRenderers]
+  #["Blend modes", testBlendModes]
+  #["Round brush", testRoundBrush]
 ]
 
 do ->

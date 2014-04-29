@@ -1,5 +1,5 @@
 (function(){
-  var Core, Rect, Layer, Vec2, loadImageData, GammaRenderer, GradientRenderer, RoundBrush, testRenderers, testRoundBrush, testBlendModes, tests;
+  var Core, Rect, Layer, Vec2, loadImageData, GammaRenderer, GradientRenderer, RoundBrush, testTiling, testRenderers, testRoundBrush, testBlendModes, tests;
   Core = require('../core/core');
   Rect = require('../core/rect');
   Layer = require('../core/layer');
@@ -8,6 +8,53 @@
   GammaRenderer = require('../renderers/gamma');
   GradientRenderer = require('../renderers/gradient');
   RoundBrush = require('../tools/roundbrush');
+  testTiling = function($el){
+    var width, height, $can, layer, x$, b, point, line, ctx, view, renderer;
+    width = 100;
+    height = 100;
+    $can = $("<canvas width='" + width + "' height='" + height + "'/>").appendTo($el).width(400).height(400);
+    layer = new Layer(width, height);
+    layer.fill(function(x, y){
+      return -1;
+    });
+    x$ = b = new RoundBrush({
+      tiling: true,
+      targetValue: 1.0
+    });
+    x$.size(5);
+    x$.hardness(0.0);
+    x$.intensity(2.0);
+    point = function(x, y){
+      var pos;
+      pos = new Vec2(x, y);
+      b.beginDraw(layer, pos);
+      b.draw(layer, pos, 1);
+      return b.endDraw();
+    };
+    line = function(offset, y){
+      var i$, i, results$ = [];
+      for (i$ = -20; i$ <= 20; i$ += 2) {
+        i = i$;
+        results$.push(point(i + offset, y));
+      }
+      return results$;
+    };
+    line(0, -10);
+    line(0.25, 0);
+    line(0.5, 10);
+    line(0.75, 20);
+    ctx = $can[0].getContext('2d');
+    view = {
+      canvas: $can[0],
+      context: ctx,
+      imageData: ctx.getImageData(0, 0, width, height)
+    };
+    renderer = new GammaRenderer(layer, view);
+    renderer.render([new Rect(0, 0, width, height)]);
+    ctx.translate(width / 2, height / 2);
+    ctx.fillStyle = ctx.createPattern($can[0], "repeat");
+    return ctx.fillRect(-width / 2, -height / 2, width, height);
+  };
   testRenderers = function($el){
     var width, height, renderTest;
     width = 800;
@@ -163,7 +210,7 @@
     renderer.render([new Rect(0, 0, width, height)]);
     return ctx.drawImage($can[0], 0, 0);
   };
-  tests = [["Renderers", testRenderers], ["Blend modes", testBlendModes], ["Round brush", testRoundBrush]];
+  tests = [["Tiling", testTiling]];
   (function(){
     var $root;
     $root = $('#tests-root');
