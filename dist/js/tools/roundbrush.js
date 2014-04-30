@@ -70,7 +70,6 @@
       }
       return this$.tool;
     }
-    this.beginDraw = function(){};
     this.draw = function(){
       return getTool().draw.apply(this$, arguments);
     };

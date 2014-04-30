@@ -64,7 +64,6 @@ class DocumentView
         @drawing = true
         @actionDirtyRect = null
         coords = getCanvasCoords()
-        @editor.toolObject().beginDraw(@doc.layer, coords)
         @doc.beginEdit()
         @onDraw(coords, getPressure())
 
@@ -76,7 +75,7 @@ class DocumentView
     $container.mouseup (e) ~>
       e.preventDefault()
       if e.which is 1
-        @editor.toolObject().endDraw(getCanvasCoords())
+        @editor.toolObject().endDraw()
         @drawing = false
         if @actionDirtyRect?
           @doc.afterEdit(@actionDirtyRect)

@@ -471,7 +471,6 @@
     x$.hardness(0.0);
     x$.intensity(1.6);
     point = function(pos){
-      b.beginDraw(layer, pos);
       b.draw(layer, pos, 1);
       b.endDraw();
     };
@@ -576,7 +575,6 @@
           v = ref$[k];
           brush[k](v);
         }
-        brush.beginDraw(layer, new Vec2(0, ypos));
         steps = 20;
         for (i$ = 0; i$ <= steps; ++i$) {
           i = i$;
@@ -752,7 +750,6 @@
       }
       return this$.tool;
     }
-    this.beginDraw = function(){};
     this.draw = function(){
       return getTool().draw.apply(this$, arguments);
     };
@@ -768,7 +765,7 @@
   var Rect, createStepTool, out$ = typeof exports != 'undefined' && exports || this;
   Rect = require('../core/rect');
   createStepTool = function(options, stepFunc){
-    var step, tiling, lastpos, accumulator, draw, beginDraw, endDraw;
+    var step, tiling, lastpos, accumulator, draw, endDraw;
     step = options.step || 4.0;
     tiling = options.tiling || false;
     lastpos = null;
@@ -798,14 +795,12 @@
       lastpos = pos.clone();
       return rect;
     };
-    beginDraw = function(layer, pos){};
     endDraw = function(pos){
       lastpos = null;
       accumulator = 0;
     };
     return {
       draw: draw,
-      beginDraw: beginDraw,
       endDraw: endDraw
     };
   };

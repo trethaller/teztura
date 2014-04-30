@@ -2,7 +2,7 @@
   var Rect, createStepTool, out$ = typeof exports != 'undefined' && exports || this;
   Rect = require('../core/rect');
   createStepTool = function(options, stepFunc){
-    var step, tiling, lastpos, accumulator, draw, beginDraw, endDraw;
+    var step, tiling, lastpos, accumulator, draw, endDraw;
     step = options.step || 4.0;
     tiling = options.tiling || false;
     lastpos = null;
@@ -32,14 +32,12 @@
       lastpos = pos.clone();
       return rect;
     };
-    beginDraw = function(layer, pos){};
     endDraw = function(pos){
       lastpos = null;
       accumulator = 0;
     };
     return {
       draw: draw,
-      beginDraw: beginDraw,
       endDraw: endDraw
     };
   };

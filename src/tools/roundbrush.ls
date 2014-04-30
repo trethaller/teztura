@@ -71,7 +71,6 @@ RoundBrush = (env) !->
       @tool = createTool!
     @tool
 
-  @beginDraw = ->;
   @draw = (...)~>
     getTool().draw(...)
   @endDraw = (...)~>

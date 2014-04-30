@@ -76,7 +76,6 @@
           this$.drawing = true;
           this$.actionDirtyRect = null;
           coords = getCanvasCoords();
-          this$.editor.toolObject().beginDraw(this$.doc.layer, coords);
           this$.doc.beginEdit();
           this$.onDraw(coords, getPressure());
         }
@@ -89,7 +88,7 @@
       $container.mouseup(function(e){
         e.preventDefault();
         if (e.which === 1) {
-          this$.editor.toolObject().endDraw(getCanvasCoords());
+          this$.editor.toolObject().endDraw();
           this$.drawing = false;
           if (this$.actionDirtyRect != null) {
             this$.doc.afterEdit(this$.actionDirtyRect);

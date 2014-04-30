@@ -27,12 +27,10 @@ createStepTool = (options, stepFunc)->
     lastpos := pos.clone!
     return rect
 
-  beginDraw = (layer, pos) !->
-
   endDraw = (pos) !->
     lastpos := null
     accumulator := 0
 
-  {draw, beginDraw, endDraw}
+  {draw, endDraw}
 
 export { createStepTool }

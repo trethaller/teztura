@@ -437,7 +437,6 @@
           this$.drawing = true;
           this$.actionDirtyRect = null;
           coords = getCanvasCoords();
-          this$.editor.toolObject().beginDraw(this$.doc.layer, coords);
           this$.doc.beginEdit();
           this$.onDraw(coords, getPressure());
         }
@@ -450,7 +449,7 @@
       $container.mouseup(function(e){
         e.preventDefault();
         if (e.which === 1) {
-          this$.editor.toolObject().endDraw(getCanvasCoords());
+          this$.editor.toolObject().endDraw();
           this$.drawing = false;
           if (this$.actionDirtyRect != null) {
             this$.doc.afterEdit(this$.actionDirtyRect);
@@ -973,7 +972,6 @@
       }
       return this$.tool;
     }
-    this.beginDraw = function(){};
     this.draw = function(){
       return getTool().draw.apply(this$, arguments);
     };
@@ -989,7 +987,7 @@
   var Rect, createStepTool, out$ = typeof exports != 'undefined' && exports || this;
   Rect = require('../core/rect');
   createStepTool = function(options, stepFunc){
-    var step, tiling, lastpos, accumulator, draw, beginDraw, endDraw;
+    var step, tiling, lastpos, accumulator, draw, endDraw;
     step = options.step || 4.0;
     tiling = options.tiling || false;
     lastpos = null;
@@ -1019,14 +1017,12 @@
       lastpos = pos.clone();
       return rect;
     };
-    beginDraw = function(layer, pos){};
     endDraw = function(pos){
       lastpos = null;
       accumulator = 0;
     };
     return {
       draw: draw,
-      beginDraw: beginDraw,
       endDraw: endDraw
     };
   };

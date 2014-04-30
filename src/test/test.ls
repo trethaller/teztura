@@ -25,7 +25,6 @@ testTiling = ($el)->
     ..intensity 1.6
 
   point = (pos)!->
-    b.beginDraw layer, pos
     b.draw layer, pos, 1
     b.endDraw!
 
@@ -116,7 +115,6 @@ testRoundBrush = ($el)->
       for k, v of props
         brush[k](v)
 
-      brush.beginDraw layer, new Vec2(0, ypos)
       steps = 20
       for i from 0 to steps
         t = i / steps

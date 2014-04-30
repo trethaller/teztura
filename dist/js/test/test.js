@@ -25,7 +25,6 @@
     x$.hardness(0.0);
     x$.intensity(1.6);
     point = function(pos){
-      b.beginDraw(layer, pos);
       b.draw(layer, pos, 1);
       b.endDraw();
     };
@@ -130,7 +129,6 @@
           v = ref$[k];
           brush[k](v);
         }
-        brush.beginDraw(layer, new Vec2(0, ypos));
         steps = 20;
         for (i$ = 0; i$ <= steps; ++i$) {
           i = i$;
