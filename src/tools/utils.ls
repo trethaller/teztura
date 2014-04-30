@@ -9,7 +9,7 @@ createStepTool = (options, stepFunc)->
 
   draw = (layer, pos, pressure) ->
     const wpos = if tiling then pos.wrap(layer.width, layer.height) else pos.clone!
-    const rect = new Rect(wpos.x, wpos.y, 1, 1)
+    rect = new Rect(wpos.x, wpos.y, 0, 0)
     if lastpos?
       delt = pos.sub lastpos
       length = delt.length()
@@ -28,10 +28,10 @@ createStepTool = (options, stepFunc)->
     return rect
 
   beginDraw = (layer, pos) !->
-    accumulator := 0
 
   endDraw = (pos) !->
     lastpos := null
+    accumulator := 0
 
   {draw, beginDraw, endDraw}
 

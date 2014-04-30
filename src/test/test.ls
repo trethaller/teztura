@@ -22,22 +22,37 @@ testTiling = ($el)->
   b = new RoundBrush {tiling: true, targetValue: 1.0}
     ..size 5
     ..hardness 0.0
-    ..intensity 2.0
+    ..intensity 1.6
 
-  point = (x,y)->
-    pos = new Vec2(x, y)
+  point = (pos)!->
     b.beginDraw layer, pos
     b.draw layer, pos, 1
     b.endDraw!
 
-  line = (offset, y)->
-    for i from -20 to 20 by 2
-      point (i + offset), y
+  line = (start, step)!->
+    for i from 0 to 30 by 1
+      point start.add step.scale(i)
 
-  line 0, -10
-  line 0.25, 0
-  line 0.5, 10
-  line 0.75, 20
+  line new Vec2(-30,    -45), new Vec2(2, 1)
+  line new Vec2(-29.75, -40), new Vec2(2, 1)
+  line new Vec2(-29.5,  -35), new Vec2(2, 1)
+  line new Vec2(-29.25, -30), new Vec2(2, 1)
+
+  b.size 12
+  b.hardness 0.6
+
+  point new Vec2(-3, -3)
+  point new Vec2(3, -3)
+  point new Vec2(3, 3)
+  point new Vec2(-3, 3)
+
+  b.size 6
+  b.hardness 0
+  line new Vec2(-30, 15), new Vec2(2, 0)
+  line new Vec2(-40, 20), new Vec2(2.67, 0)
+
+  b.size 4
+  line new Vec2(-20, 25), new Vec2(1.3, 0)
 
   ctx = $can.0.getContext '2d'
   view =
@@ -176,9 +191,9 @@ testBlendModes = ($el)->
 
 tests = [
   ["Tiling",      testTiling]
-  #["Renderers",   testRenderers]
-  #["Blend modes", testBlendModes]
-  #["Round brush", testRoundBrush]
+  ["Renderers",   testRenderers]
+  ["Blend modes", testBlendModes]
+  ["Round brush", testRoundBrush]
 ]
 
 do ->

@@ -11,7 +11,7 @@
     var blendExp, brushExp, str;
     blendExp = opts.blendExp.replace(/{dst}/g, "dstData[dsti]").replace(/{src}/g, "_tmp");
     brushExp = opts.brushExp.replace(/{out}/g, "_tmp");
-    str = "(function (rect, layer, " + opts.args + ") {var invw = 2.0 / (rect.width - 1);var invh = 2.0 / (rect.height - 1);var offx = -(rect.x % 1.0) * invw - 1.0;var offy = -(rect.y % 1.0) * invh - 1.0;var fbw = layer.width;var fbh = layer.height;var dstData = layer.getBuffer();";
+    str = "(function (rect, layer, " + opts.args + ") {var invw = 2.0 / (rect.width - 1);var invh = 2.0 / (rect.height - 1);var offx = -((rect.x % 1.0 + 1.0) % 1.0) * invw - 1.0;var offy = -((rect.y % 1.0 + 1.0) % 1.0) * invh - 1.0;var fbw = layer.width;var fbh = layer.height;var dstData = layer.getBuffer();";
     str += opts.tiling
       ? "var minx = Math.floor(rect.x) + fbw;var miny = Math.floor(rect.y) + fbh;var sw = Math.round(rect.width);var sh = Math.round(rect.height);for(var sy=0; sy<sh; ++sy) {var y = sy * invh + offy;for(var sx=0; sx<sw; ++sx) {var x = sx * invw + offx;var dsti = ((sy + miny) % fbh) * fbw + ((sx + minx) % fbw);var _tmp = 0.0;" + brushExp + ";" + blendExp + ";}}"
       : "var minx = Math.floor(Math.max(0, -rect.x));var miny = Math.floor(Math.max(0, -rect.y));var sw = Math.round(Math.min(rect.width, fbw - rect.x));var sh = Math.round(Math.min(rect.height, fbh - rect.y));for(var sy=miny; sy<sh; ++sy) {var dsti = (Math.floor(rect.y) + sy) * layer.width + Math.floor(rect.x) + minx;var y = sy * invh + offy;for(var sx=minx; sx<sw; ++sx) {var x = sx * invw + offx;var _tmp = 0.0;" + brushExp + ";" + blendExp + ";++dsti;}}";
@@ -372,7 +372,7 @@
     }]);
     this.name = "Gamma";
     this.propertyChanged.subscribe(function(){
-      return this.renderFunc = null;
+      return this$.renderFunc = null;
     });
     generateFunc = function(){
       var width, height, imgData, fb, gamma, code;
@@ -408,7 +408,7 @@
     }]);
     this.name = "Gradient";
     this.propertyChanged.subscribe(function(){
-      return this.renderFunc = null;
+      return this$.renderFunc = null;
     });
     generateFunc = function(){
       var width, imgData, fb, lutImg, lut, round, norm, clamp, code;
@@ -469,26 +469,35 @@
     });
     x$.size(5);
     x$.hardness(0.0);
-    x$.intensity(2.0);
-    point = function(x, y){
-      var pos;
-      pos = new Vec2(x, y);
+    x$.intensity(1.6);
+    point = function(pos){
       b.beginDraw(layer, pos);
       b.draw(layer, pos, 1);
-      return b.endDraw();
+      b.endDraw();
     };
-    line = function(offset, y){
-      var i$, i, results$ = [];
-      for (i$ = -20; i$ <= 20; i$ += 2) {
+    line = function(start, step){
+      var i$, i;
+      for (i$ = 0; i$ <= 30; ++i$) {
         i = i$;
-        results$.push(point(i + offset, y));
+        point(start.add(step.scale(i)));
       }
-      return results$;
     };
-    line(0, -10);
-    line(0.25, 0);
-    line(0.5, 10);
-    line(0.75, 20);
+    line(new Vec2(-30, -45), new Vec2(2, 1));
+    line(new Vec2(-29.75, -40), new Vec2(2, 1));
+    line(new Vec2(-29.5, -35), new Vec2(2, 1));
+    line(new Vec2(-29.25, -30), new Vec2(2, 1));
+    b.size(12);
+    b.hardness(0.6);
+    point(new Vec2(-3, -3));
+    point(new Vec2(3, -3));
+    point(new Vec2(3, 3));
+    point(new Vec2(-3, 3));
+    b.size(6);
+    b.hardness(0);
+    line(new Vec2(-30, 15), new Vec2(2, 0));
+    line(new Vec2(-40, 20), new Vec2(2.67, 0));
+    b.size(4);
+    line(new Vec2(-20, 25), new Vec2(1.3, 0));
     ctx = $can[0].getContext('2d');
     view = {
       canvas: $can[0],
@@ -656,7 +665,7 @@
     renderer.render([new Rect(0, 0, width, height)]);
     return ctx.drawImage($can[0], 0, 0);
   };
-  tests = [["Tiling", testTiling]];
+  tests = [["Tiling", testTiling], ["Renderers", testRenderers], ["Blend modes", testBlendModes], ["Round brush", testRoundBrush]];
   (function(){
     var $root;
     $root = $('#tests-root');
@@ -710,10 +719,10 @@
       }
     ];
     this.tool = null;
-    createProperties(this, properties, propChanged);
-    function propChanged(pid, val, prev){
+    createProperties(this, properties);
+    this.propertyChanged.subscribe(function(){
       return this$.tool = null;
-    }
+    });
     function createTool(){
       var hardness, intensity, size, func, drawFunc, stepOpts;
       hardness = Math.pow(this$.hardness(), 2.0) * 8.0;
@@ -769,7 +778,7 @@
       wpos = tiling
         ? pos.wrap(layer.width, layer.height)
         : pos.clone();
-      rect = new Rect(wpos.x, wpos.y, 1, 1);
+      rect = new Rect(wpos.x, wpos.y, 0, 0);
       if (lastpos != null) {
         delt = pos.sub(lastpos);
         length = delt.length();
@@ -789,11 +798,10 @@
       lastpos = pos.clone();
       return rect;
     };
-    beginDraw = function(layer, pos){
-      accumulator = 0;
-    };
+    beginDraw = function(layer, pos){};
     endDraw = function(pos){
       lastpos = null;
+      accumulator = 0;
     };
     return {
       draw: draw,

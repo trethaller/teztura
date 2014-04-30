@@ -11,7 +11,7 @@ GammaRenderer = (layer, view)!->
 
   @name = "Gamma"
 
-  @propertyChanged.subscribe ->
+  @propertyChanged.subscribe ~>
     @renderFunc = null
 
   generateFunc = ~>

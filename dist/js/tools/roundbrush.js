@@ -37,10 +37,10 @@
       }
     ];
     this.tool = null;
-    createProperties(this, properties, propChanged);
-    function propChanged(pid, val, prev){
+    createProperties(this, properties);
+    this.propertyChanged.subscribe(function(){
       return this$.tool = null;
-    }
+    });
     function createTool(){
       var hardness, intensity, size, func, drawFunc, stepOpts;
       hardness = Math.pow(this$.hardness(), 2.0) * 8.0;

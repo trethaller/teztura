@@ -12,7 +12,7 @@
       wpos = tiling
         ? pos.wrap(layer.width, layer.height)
         : pos.clone();
-      rect = new Rect(wpos.x, wpos.y, 1, 1);
+      rect = new Rect(wpos.x, wpos.y, 0, 0);
       if (lastpos != null) {
         delt = pos.sub(lastpos);
         length = delt.length();
@@ -32,11 +32,10 @@
       lastpos = pos.clone();
       return rect;
     };
-    beginDraw = function(layer, pos){
-      accumulator = 0;
-    };
+    beginDraw = function(layer, pos){};
     endDraw = function(pos){
       lastpos = null;
+      accumulator = 0;
     };
     return {
       draw: draw,

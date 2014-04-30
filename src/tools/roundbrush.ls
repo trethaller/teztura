@@ -34,11 +34,11 @@ RoundBrush = (env) !->
       power: 2.0
 
   @tool = null
-  createProperties @, properties, propChanged
+  createProperties @, properties
 
-  ~function propChanged pid, val, prev
+  @propertyChanged.subscribe ~>
     @tool = null
-
+  
   ~function createTool
     hardness = Math.pow(@hardness!, 2.0) * 8.0;
     intensity = @intensity!

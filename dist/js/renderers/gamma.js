@@ -11,7 +11,7 @@
     }]);
     this.name = "Gamma";
     this.propertyChanged.subscribe(function(){
-      return this.renderFunc = null;
+      return this$.renderFunc = null;
     });
     generateFunc = function(){
       var width, height, imgData, fb, gamma, code;

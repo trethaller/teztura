@@ -13,7 +13,7 @@ GradientRenderer = (layer, view) !->
 
   @name = "Gradient"
 
-  @propertyChanged.subscribe ->
+  @propertyChanged.subscribe ~>
     @renderFunc = null
 
   generateFunc = ~>
