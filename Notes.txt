@@ -1,0 +1,12 @@
+
+tips = []
+
+
+# Keeping tools identity?
+
+class ToolTransform
+  update: (dt, tip)->
+
+    return outTips
+
+
