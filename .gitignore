@@ -2,4 +2,6 @@
 node_modules
 bower_components
 *.map
+*.bundle.js
+dist/js/**/*.js
 
