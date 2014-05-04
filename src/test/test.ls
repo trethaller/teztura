@@ -6,7 +6,41 @@ Layer             = require '../core/layer'
 GammaRenderer     = require '../renderers/gamma'
 GradientRenderer  = require '../renderers/gradient'
 RoundBrush        = require '../tools/roundbrush'
-# {ToolStack}       = require '../tools/stack'
+{ToolStack}       = require '../tools/stack'
+
+
+testStepTransform = ($el) ->
+  width = 800
+  height = 400
+  $can = $ "<canvas width='#{width}' height='#{height}'/>"
+    .appendTo $el
+  layer = new Layer width, height
+  layer.fill (x,y) -> -1
+
+  env =
+    tiling: true
+    targetValue: 1.0
+
+  doc = { width, height }
+
+  brush = new RoundBrush env
+  stack = new ToolStack brush, doc
+
+  stack.draw layer, new Vec2(100, 50), 1
+  stack.draw layer, new Vec2(700, 50), 1
+  stack.draw layer, new Vec2(700, 100), 1
+  stack.draw layer, new Vec2(100, 100), 1
+  stack.endDraw!
+
+  ctx = $can.0.getContext '2d'
+  view =
+    canvas: $can.0
+    context: ctx
+    imageData: ctx.getImageData 0, 0, width, height
+
+  renderer = new GammaRenderer layer, view
+  renderer.render [new Rect(0,0,width,height)]
+  ctx.drawImage $can.0, 0, 0
 
 testTiling = ($el)->
   width = 100
@@ -188,10 +222,11 @@ testBlendModes = ($el)->
 # ----
 
 tests = [
-  ["Tiling",      testTiling]
-  ["Renderers",   testRenderers]
+  ["Step transform", testStepTransform] /*
+  ["Tiling", testTiling]
+  ["Renderers", testRenderers]
   ["Blend modes", testBlendModes]
-  ["Round brush", testRoundBrush]
+  ["Round brush", testRoundBrush] */
 ]
 
 do ->

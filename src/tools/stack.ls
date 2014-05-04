@@ -35,12 +35,10 @@ class StepTransform
         @accumulator += stepSize
         p = @lastpos.add dir.scale(@accumulator)
         if tiling
-          p := pos.wrap @doc.width, @doc.height
+          p := p.wrap @doc.width, @doc.height
         @tool.step p, pressure
-        # stepFunc layer, pt, pressure, rect
       @accumulator -= length
     else
-      # stepFunc layer, wpos, pressure, rect
       @tool.step wpos, pressure
 
     @lastpos = pos.clone!
