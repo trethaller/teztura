@@ -10,3 +10,25 @@ class ToolTransform
     return outTips
 
 
+  create:
+    t1 = next.create()
+    t2 = next.create()
+
+  update:
+    t1.update()
+    t2.update()
+
+
+pool = {
+  tips = []
+  create: -> new Tool()
+}
+
+transformStack
+  t[i].next = t[i+1].next
+  t[i].next = {
+    create: -> new Transformer
+
+  }
+
+  t[last]

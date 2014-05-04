@@ -2,6 +2,7 @@
 Rect = require './core/rect'
 GammaRenderer = require './renderers/gamma'
 
+
 class DocumentView
   drawing: false
   panning: false
@@ -121,7 +122,6 @@ class DocumentView
       ctx.drawImage(@canvas, 0, 0)
 
   onDraw: (pos, pressure) ->
-    dirtyRects = []
 
     layer = @doc.layer
     tool = @editor.toolObject()
@@ -130,17 +130,19 @@ class DocumentView
     
     r = tool.draw(layer, pos, pressure).round()
 
-    if @editor.tiling()
-      for xoff in [-1,0,1]
-        for yoff in [-1,0,1]
-          dirtyRects.push(r.offset(new Vec2(xoff * layerRect.width, yoff * layerRect.height)))
-    else
-      dirtyRects.push(r.intersect(layerRect))
+    dirtyRects = []
+    # if @editor.tiling()
+    #   for xoff in [-1,0,1]
+    #     for yoff in [-1,0,1]
+    #       dirtyRects.push(r.offset(new Vec2(xoff * layerRect.width, yoff * layerRect.height)))
+    # else
+    #   dirtyRects.push(r.intersect(layerRect))
 
-    dirtyRects = dirtyRects
-      .map((r) ->r.intersect(layerRect))
-      .filter((r) ->not r.isEmpty())
+    # dirtyRects = dirtyRects
+    #   .map((r) ->r.intersect(layerRect))
+    #   .filter((r) ->not r.isEmpty())
 
+    # For undo
     dirtyRects.forEach (r) ~>
       if not @actionDirtyRect?
         @actionDirtyRect = r.clone()

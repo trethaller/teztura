@@ -1,4 +1,4 @@
-{createStepTool}    = require './utils'
+# {createStepTool}    = require './utils'
 Rect                = require '../core/rect'
 {genBrushFunc}      = require '../core/core'
 {createProperties}  = require '../core/properties'
@@ -33,18 +33,18 @@ RoundBrush = (env) !->
       range: [0.0, 1.0]
       power: 2.0
 
-  @tool = null
+  @func = null
   createProperties @, properties
 
   @propertyChanged.subscribe ~>
-    @tool = null
+    @func = null
   
-  ~function createTool
+  ~function genFunc
     hardness = Math.pow(@hardness!, 2.0) * 8.0;
     intensity = @intensity!
     size = @size!
 
-    func = genBrushFunc {
+    bf = genBrushFunc {
       args: "intensity, target, h"
       tiling: env.tiling
       blendExp: "{dst} += {src} * intensity"
@@ -52,28 +52,27 @@ RoundBrush = (env) !->
                 {out} = Math.cos(d * Math.PI) * 0.5 + 0.5;"
     }
 
-    drawFunc = (layer, pos, pressure, rect)~>
+    @func = (layer, pos, pressure)~>
       r = new Rect(
         pos.x - size * 0.5,
         pos.y - size * 0.5,
         size, size)
       func(r, layer, pressure * intensity, env.targetValue, hardness)
-      rect.extend r.round()
+      return r
+
+    /*
 
     stepOpts = 
       step: Math.max(1, Math.round(@step! * @size! / 100.0))
       tiling: env.tiling
 
     return createStepTool stepOpts, drawFunc
-
-  ~function getTool
-    if not @tool?
-      @tool = createTool!
-    @tool
+    */
 
   @draw = (...)~>
-    getTool().draw(...)
-  @endDraw = (...)~>
-    getTool().endDraw(...)
+    if not @func?
+      @func = genFunc!
+    @func(...)
+  @release = ~> ;
 
 module.exports = RoundBrush

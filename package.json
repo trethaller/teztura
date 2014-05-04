@@ -15,5 +15,8 @@
     "gulp-mocha": "^0.4.1",
     "gulp-mocha-phantomjs": "^0.1.5",
     "gulp-less": "^1.2.3"
+  },
+  "dependencies": {
+    "prelude-ls": "^1.1.1"
   }
 }

@@ -12,8 +12,7 @@ class Rect
 
   union: (rect)->
     new Rect(@x,@y,@width,@height)
-      ..extend(rect.topLeft())
-      ..extend(rect.bottomRight())
+      ..extend(rect)
 
   clone: ->
     new Rect(@x, @y, @width, @height)
