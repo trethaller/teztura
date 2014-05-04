@@ -52,8 +52,7 @@ class DocumentView
       return 1.0
 
     updatePen = (e) !~>
-      pos = getMouseCoords(e)
-      @penPos = @penPos.add( pos.sub(@penPos).scale(0.6) )
+      @penPos = getMouseCoords(e)
 
     getCanvasCoords = ~>
       @screenToCanvas(@penPos)

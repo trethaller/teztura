@@ -11,8 +11,7 @@ class Rect
     new Rect(nx, ny, Math.max(0, nmaxx - nx), Math.max(0, nmaxy - ny))
 
   union: (rect)->
-    new Rect(@x,@y,@width,@height)
-      ..extend(rect)
+    Rect.union this, rect
 
   clone: ->
     new Rect(@x, @y, @width, @height)
@@ -68,5 +67,8 @@ class Rect
     new Vec2(@x + @width, @y + @height)
 
 Rect.Empty = new Rect(0,0,0,0)
+Rect.union = (r1, r2) ->
+  r1.clone!
+    ..extend r2
 
 module.exports = Rect

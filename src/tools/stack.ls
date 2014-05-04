@@ -1,6 +1,7 @@
 RoundBrush = require './roundbrush'
-{concat} = require 'prelude-ls'
+{concat, fold1} = require 'prelude-ls'
 {createProperties}  = require '../core/properties'
+Rect  = require '../core/rect'
 
 class StepTransform
   @properties = [
@@ -66,8 +67,13 @@ class ToolStack
     @root.step pos, pressure
     w = @doc.width
     h = @doc.height
-    outRects = concat @dirtyRects.map(-> it.wrap w, h)
-    return outRects
+
+    if @dirtyRects.length > 0
+      dirtyRect = fold1 Rect.union, @dirtyRects
+      return dirtyRect.wrap w, h
+    else
+      return []
+
   endDraw: ->
     @root.release!
 
