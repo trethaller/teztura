@@ -1,6 +1,8 @@
 {event} = require '../core/utils'
 
 createProperties = (target, definitions) ->
+  if not target?
+    target = {}
   target.properties = []
   target.propertyChanged = event!
 
@@ -13,5 +15,7 @@ createProperties = (target, definitions) ->
 
     target[prop.id] = prop.value
     target.properties.push prop
+
+  return target
 
 export { createProperties }

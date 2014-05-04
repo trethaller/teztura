@@ -133,7 +133,7 @@ class DocumentView
       else
         @actionDirtyRect.extend r.round!
 
-    if false # Log dirty rects
+    if false and dirtyRects.length > 0 # Log dirty rects
       totalArea = dirtyRects
         .map((r) -> r.width * r.height)
         .reduce((a,b) -> a+b)

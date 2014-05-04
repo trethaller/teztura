@@ -1,12 +1,14 @@
-Core              = require '../core/core'
-Rect              = require '../core/rect'
-Layer             = require '../core/layer'
-{Vec2}            = require '../core/vec'
-{loadImageData}   = require '../core/utils'
-GammaRenderer     = require '../renderers/gamma'
-GradientRenderer  = require '../renderers/gradient'
-RoundBrush        = require '../tools/roundbrush'
-{ToolStack}       = require '../tools/stack'
+Core                = require '../core/core'
+Rect                = require '../core/rect'
+Layer               = require '../core/layer'
+{Vec2}              = require '../core/vec'
+{loadImageData}     = require '../core/utils'
+{createProperties}  = require '../core/properties'
+GammaRenderer       = require '../renderers/gamma'
+GradientRenderer    = require '../renderers/gradient'
+RoundBrush          = require '../tools/roundbrush'
+FilterStack         = require '../tools/filters/stack'
+{InterpolateFilter} = require '../tools/filters/basic'
 
 
 mockEnv = (width, height)->
@@ -29,7 +31,7 @@ quickRender = (layer, canvas)->
   renderer.render [new Rect(0,0,layer.width,layer.height)]
   ctx.drawImage canvas, 0, 0
 
-testStepTransform = ($el) ->
+testInterpolateFilter = ($el) ->
   width = 800
   height = 150
   $can = $ "<canvas width='#{width}' height='#{height}'/>"
@@ -40,13 +42,19 @@ testStepTransform = ($el) ->
   env = mockEnv width, height
   brush = new RoundBrush env
   env.tool = brush
-  stack = new ToolStack env
 
-  stack.draw layer, new Vec2(100, 50), 1
-  stack.draw layer, new Vec2(700, 50), 1
-  stack.draw layer, new Vec2(700, 100), 1
-  stack.draw layer, new Vec2(100, 100), 1
-  stack.endDraw!
+  stack = [
+  * type: InterpolateFilter
+    props: createProperties null, InterpolateFilter.properties
+  ]
+  
+  filter = new FilterStack env, stack
+
+  filter.draw layer, new Vec2(100, 50), 1
+  filter.draw layer, new Vec2(700, 50), 1
+  filter.draw layer, new Vec2(700, 100), 1
+  filter.draw layer, new Vec2(100, 100), 1
+  filter.endDraw!
 
   quickRender layer, $can.0
 
@@ -211,7 +219,7 @@ testBlendModes = ($el)->
 # ----
 
 tests = [
-  ["Step transform", testStepTransform]
+  ["InterpolateFilter", testInterpolateFilter]
   ["Tiling", testTiling]
   ["Renderers", testRenderers]
   ["Blend modes", testBlendModes]

@@ -1,12 +1,16 @@
 
 {loadImageData} = require './core/utils'
+{createProperties}  = require './core/properties'
 Document = require './document'
 DocumentView = require './document-view'
 RoundBrush = require './tools/roundbrush'
 GradientRenderer = require './renderers/gradient'
 GammaRenderer = require './renderers/gamma'
 {PropertyGroup} = require './property-view'
-{ToolStack} = require './tools/stack'
+
+{SmoothFilter1, InterpolateFilter} = require './tools/filters/basic'
+FilterStack = require './tools/filters/stack'
+
 
 
 Editor = !->
@@ -17,8 +21,17 @@ Editor = !->
   @doc = new Document 512, 512
   @doc.layer.fill -> -1
 
-  stack = new ToolStack this
-  @toolObject = -> stack  
+  stack = [
+  * type: SmoothFilter1
+    props: createProperties null, SmoothFilter1.properties
+  * type: InterpolateFilter
+    props: createProperties null, InterpolateFilter.properties
+  ]
+
+  stack.0.props.factor 0.5
+
+  transStack = new FilterStack this, stack
+  @toolObject = -> transStack
 
   @view = new DocumentView $('.document-view'), @doc, this
 
