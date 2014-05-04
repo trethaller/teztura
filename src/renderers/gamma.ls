@@ -17,13 +17,12 @@ GammaRenderer = (layer, view)!->
   generateFunc = ~>
     width = layer.width
     height = layer.height
-    imgData = view.imageData.data
-    fb = layer.getBuffer()
     gamma = @gamma!
 
     code = "
-    (function (rects) {
+    (function (rects, view, fb) {
       'use strict';
+      var imgData = view.imageData.data;
       for(var ri in rects) {
         var r = rects[ri];
         var minX = r.x;
@@ -47,7 +46,10 @@ GammaRenderer = (layer, view)!->
       }
     });
     "
-    eval code
+    fimpl = eval code
+    return (rects) ->
+      fb = layer.getBuffer!
+      fimpl rects, view, fb
 
   @render = (rects) !~>
     if not @renderFunc?

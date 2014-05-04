@@ -6,16 +6,20 @@ RoundBrush = require './tools/roundbrush'
 GradientRenderer = require './renderers/gradient'
 GammaRenderer = require './renderers/gamma'
 {PropertyGroup} = require './property-view'
+{ToolStack} = require './tools/stack'
 
 
 Editor = !->
   @tiling = -> true
 
   @tool = new RoundBrush this
-  @toolObject = -> @tool
 
   @doc = new Document 512, 512
   @doc.layer.fill -> -1
+
+  stack = new ToolStack @tool, @doc
+  @toolObject = -> stack
+  
 
   /*
   @dirtyRects = null

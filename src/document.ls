@@ -7,9 +7,6 @@ class Document
     @history = []
     @histIndex = 1
 
-  getRect: ->
-    new Rect 0,0,@width,@height
-
   beginEdit: ->
     if @histIndex > 0
       # Discard obsolete history branch

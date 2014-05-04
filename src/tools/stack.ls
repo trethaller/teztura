@@ -1,5 +1,5 @@
 RoundBrush = require './roundbrush'
-{map, concat, filter} = require 'prelude-ls'
+{concat} = require 'prelude-ls'
 
 /*
 class ToolPoint
@@ -77,12 +77,9 @@ class ToolStack
     @dirtyRects = []
     @layer = layer
     @root.step pos, pressure
-    docrect = @doc.getRect!
-    outRects = @dirtyRects
-      |> map -> it.wrap docrect
-      |> concat
-      |> filter -> not it.isEmpty!
-
+    w = @doc.width
+    h = @doc.height
+    outRects = concat @dirtyRects.map(-> it.wrap w, h)
     return outRects
   endDraw: ->
     @root.release!

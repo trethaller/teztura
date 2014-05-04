@@ -128,9 +128,7 @@ class DocumentView
 
     layerRect = layer.getRect()
     
-    r = tool.draw(layer, pos, pressure).round()
-
-    dirtyRects = []
+    dirtyRects = tool.draw(layer, pos, pressure)
     # if @editor.tiling()
     #   for xoff in [-1,0,1]
     #     for yoff in [-1,0,1]
@@ -145,9 +143,9 @@ class DocumentView
     # For undo
     dirtyRects.forEach (r) ~>
       if not @actionDirtyRect?
-        @actionDirtyRect = r.clone()
+        @actionDirtyRect = r.round!
       else
-        @actionDirtyRect.extend(r)
+        @actionDirtyRect.extend r.round!
 
     if false # Log dirty rects
       totalArea = dirtyRects
@@ -157,7 +155,7 @@ class DocumentView
 
     if true
     #setTimeout (->
-      @renderer?.render dirtyRects
+      @renderer?.render dirtyRects.map -> it.round!
       @repaint()
     #), 0
 

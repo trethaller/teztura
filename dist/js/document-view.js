@@ -143,17 +143,16 @@
       }
     };
     prototype.onDraw = function(pos, pressure){
-      var layer, tool, layerRect, r, dirtyRects, totalArea, ref$, this$ = this;
+      var layer, tool, layerRect, dirtyRects, totalArea, ref$, this$ = this;
       layer = this.doc.layer;
       tool = this.editor.toolObject();
       layerRect = layer.getRect();
-      r = tool.draw(layer, pos, pressure).round();
-      dirtyRects = [];
+      dirtyRects = tool.draw(layer, pos, pressure);
       dirtyRects.forEach(function(r){
         if (this$.actionDirtyRect == null) {
-          return this$.actionDirtyRect = r.clone();
+          return this$.actionDirtyRect = r.round();
         } else {
-          return this$.actionDirtyRect.extend(r);
+          return this$.actionDirtyRect.extend(r.round());
         }
       });
       if (false) {
@@ -166,7 +165,9 @@
       }
       if (true) {
         if ((ref$ = this.renderer) != null) {
-          ref$.render(dirtyRects);
+          ref$.render(dirtyRects.map(function(it){
+            return it.round();
+          }));
         }
         return this.repaint();
       }

@@ -1,5 +1,5 @@
 (function(){
-  var loadImageData, Document, DocumentView, RoundBrush, GradientRenderer, GammaRenderer, PropertyGroup, Editor, start;
+  var loadImageData, Document, DocumentView, RoundBrush, GradientRenderer, GammaRenderer, PropertyGroup, ToolStack, Editor, start;
   loadImageData = require('./core/utils').loadImageData;
   Document = require('./document');
   DocumentView = require('./document-view');
@@ -7,19 +7,21 @@
   GradientRenderer = require('./renderers/gradient');
   GammaRenderer = require('./renderers/gamma');
   PropertyGroup = require('./property-view').PropertyGroup;
+  ToolStack = require('./tools/stack').ToolStack;
   Editor = function(){
-    var res$, i$, ref$, len$, t, x$, toolProps, y$, renderProps, this$ = this;
+    var stack, res$, i$, ref$, len$, t, x$, toolProps, y$, renderProps, this$ = this;
     this.tiling = function(){
       return true;
     };
     this.tool = new RoundBrush(this);
-    this.toolObject = function(){
-      return this.tool;
-    };
     this.doc = new Document(512, 512);
     this.doc.layer.fill(function(){
       return -1;
     });
+    stack = new ToolStack(this.tool, this.doc);
+    this.toolObject = function(){
+      return stack;
+    };
     /*
     @dirtyRects = null
     env = {
