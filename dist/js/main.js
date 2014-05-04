@@ -20,6 +20,30 @@
     this.doc.layer.fill(function(){
       return -1;
     });
+    /*
+    @dirtyRects = null
+    env = {
+      tool: ~> {
+        step: (pos, pressure) !~>
+          @dirtyRects.push @tool.draw @doc.layer, pos, pressure
+        release: !-> ;
+      }
+    }
+    
+    st = new StepTransform @doc, env
+    
+    @draw = (pos, pressure) !~>
+      @dirtyRects = []
+      st.step pos, pressure
+      docrect = @doc.getRect!
+      @dirtyRects
+        |> map r -> r.wrap docrect
+        |> concat
+        |> filter r -> not r.isEmpty!
+    
+    @endDraw = 
+      st.release!
+    */
     this.view = new DocumentView($('.document-view'), this.doc, this);
     res$ = [];
     for (i$ = 0, len$ = (ref$ = [GammaRenderer, GradientRenderer]).length; i$ < len$; ++i$) {

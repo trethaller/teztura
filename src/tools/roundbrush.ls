@@ -52,12 +52,12 @@ RoundBrush = (env) !->
                 {out} = Math.cos(d * Math.PI) * 0.5 + 0.5;"
     }
 
-    @func = (layer, pos, pressure)~>
+    return (layer, pos, pressure) ~>
       r = new Rect(
         pos.x - size * 0.5,
         pos.y - size * 0.5,
         size, size)
-      func(r, layer, pressure * intensity, env.targetValue, hardness)
+      bf(r, layer, pressure * intensity, env.targetValue, hardness)
       return r
 
     /*
@@ -69,10 +69,10 @@ RoundBrush = (env) !->
     return createStepTool stepOpts, drawFunc
     */
 
-  @draw = (...)~>
+  @draw = (...) ~>
     if not @func?
       @func = genFunc!
     @func(...)
-  @release = ~> ;
+  @endDraw = ~> ;
 
 module.exports = RoundBrush

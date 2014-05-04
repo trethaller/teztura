@@ -12,6 +12,9 @@
       this.history = [];
       this.histIndex = 1;
     }
+    prototype.getRect = function(){
+      return new Rect(0, 0, this.width, this.height);
+    };
     prototype.beginEdit = function(){
       if (this.histIndex > 0) {
         this.history.splice(0, this.histIndex);

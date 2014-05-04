@@ -6,7 +6,7 @@ Layer             = require '../core/layer'
 GammaRenderer     = require '../renderers/gamma'
 GradientRenderer  = require '../renderers/gradient'
 RoundBrush        = require '../tools/roundbrush'
-
+# {ToolStack}       = require '../tools/stack'
 
 testTiling = ($el)->
   width = 100
@@ -115,7 +115,7 @@ testRoundBrush = ($el)->
       for k, v of props
         brush[k](v)
 
-      steps = 20
+      steps = 30
       for i from 0 to steps
         t = i / steps
         pos = new Vec2(xoffset + t * 300, ypos - 30 * Math.sin(Math.PI * t))

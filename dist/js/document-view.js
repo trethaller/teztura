@@ -143,28 +143,12 @@
       }
     };
     prototype.onDraw = function(pos, pressure){
-      var dirtyRects, layer, tool, layerRect, r, i$, ref$, len$, xoff, j$, ref1$, len1$, yoff, totalArea, this$ = this;
-      dirtyRects = [];
+      var layer, tool, layerRect, r, dirtyRects, totalArea, ref$, this$ = this;
       layer = this.doc.layer;
       tool = this.editor.toolObject();
       layerRect = layer.getRect();
       r = tool.draw(layer, pos, pressure).round();
-      if (this.editor.tiling()) {
-        for (i$ = 0, len$ = (ref$ = [-1, 0, 1]).length; i$ < len$; ++i$) {
-          xoff = ref$[i$];
-          for (j$ = 0, len1$ = (ref1$ = [-1, 0, 1]).length; j$ < len1$; ++j$) {
-            yoff = ref1$[j$];
-            dirtyRects.push(r.offset(new Vec2(xoff * layerRect.width, yoff * layerRect.height)));
-          }
-        }
-      } else {
-        dirtyRects.push(r.intersect(layerRect));
-      }
-      dirtyRects = dirtyRects.map(function(r){
-        return r.intersect(layerRect);
-      }).filter(function(r){
-        return !r.isEmpty();
-      });
+      dirtyRects = [];
       dirtyRects.forEach(function(r){
         if (this$.actionDirtyRect == null) {
           return this$.actionDirtyRect = r.clone();

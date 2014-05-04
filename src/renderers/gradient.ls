@@ -18,22 +18,19 @@ GradientRenderer = (layer, view) !->
 
   generateFunc = ~>
     width = layer.width
-    imgData = view.imageData.data
-    fb = layer.getBuffer()
     lutImg = @gradient!
     
     if not lutImg?
       return ->;
-
-    lut = lutImg.data
 
     round = (val)-> "(#{val} + 0.5) | 0"
     norm = (val)-> "#{lutImg.width / 2}.0 * (1.0 + #{val})"
     clamp = (val)-> "#{val} < 0 ? 0 : (#{val} > #{lutImg.width-1} ? #{lutImg.width-1} : #{val})"
 
     code = "
-    (function (rects) {
+    (function (rects, view, lut, fb) {
       'use strict';
+      var imgData = view.imageData.data;
       for(var ri in rects) {
         var r = rects[ri];
         var minX = r.x | 0;
@@ -56,8 +53,11 @@ GradientRenderer = (layer, view) !->
       }
     });
     "
-    console.log code
-    eval code
+    fimpl = eval code
+    return (rects) ->
+      fb = layer.getBuffer!
+      lut = lutImg.data
+      fimpl rects, view, lut, fb
 
   @render = (rects) !~>
     if not @renderFunc?
