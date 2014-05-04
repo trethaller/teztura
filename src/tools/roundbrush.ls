@@ -60,15 +60,6 @@ RoundBrush = (env) !->
       bf(r, layer, pressure * intensity, env.targetValue, hardness)
       return r
 
-    /*
-
-    stepOpts = 
-      step: Math.max(1, Math.round(@step! * @size! / 100.0))
-      tiling: env.tiling
-
-    return createStepTool stepOpts, drawFunc
-    */
-
   @draw = (...) ~>
     if not @func?
       @func = genFunc!

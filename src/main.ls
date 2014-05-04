@@ -10,41 +10,15 @@ GammaRenderer = require './renderers/gamma'
 
 
 Editor = !->
-  @tiling = -> true
+  @tiling = true
 
   @tool = new RoundBrush this
 
   @doc = new Document 512, 512
   @doc.layer.fill -> -1
 
-  stack = new ToolStack @tool, @doc
-  @toolObject = -> stack
-  
-
-  /*
-  @dirtyRects = null
-  env = {
-    tool: ~> {
-      step: (pos, pressure) !~>
-        @dirtyRects.push @tool.draw @doc.layer, pos, pressure
-      release: !-> ;
-    }
-  }
-
-  st = new StepTransform @doc, env
-
-  @draw = (pos, pressure) !~>
-    @dirtyRects = []
-    st.step pos, pressure
-    docrect = @doc.getRect!
-    @dirtyRects
-      |> map r -> r.wrap docrect
-      |> concat
-      |> filter r -> not r.isEmpty!
-
-  @endDraw = 
-    st.release!
-  */
+  stack = new ToolStack this
+  @toolObject = -> stack  
 
   @view = new DocumentView $('.document-view'), @doc, this
 

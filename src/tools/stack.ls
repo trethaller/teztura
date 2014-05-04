@@ -1,31 +1,25 @@
 RoundBrush = require './roundbrush'
 {concat} = require 'prelude-ls'
-
-/*
-class ToolPoint
-  (@pos, @pressure, @size) ->;
-*/
+{createProperties}  = require '../core/properties'
 
 class StepTransform
-  (@doc, @env, @props) ->
-    /*
-    createProperties @, [
-    * id: 'step'
-      name: "Step %"
-      defaultValue: 10
-      range: [0, 100]
-    ]
-    */
+  @properties = [
+  * id: 'step'
+    name: "Step %"
+    defaultValue: 10
+    range: [0, 100]
+  ]
 
+  (@editor, @next, @props) ->
     @lastpos = null
     @accumulator = 0.0
-    @tool = @env.tool!
+    @child = @next!
 
   step: (pos, pressure) !->
-    const wpos = if tiling then pos.wrap(@doc.width, @doc.height) else pos.clone!
-
-    const tiling = true # TODO
-    const stepSize = 4 # TODO
+    doc = @editor.doc
+    const tiling = @editor.tiling
+    const wpos = if tiling then pos.wrap(doc.width, doc.height) else pos.clone!
+    const stepSize = Math.max(1, Math.round(@props.step! * @editor.tool.size! / 100.0))
 
     if @lastpos?
       delt = pos.sub @lastpos
@@ -35,41 +29,36 @@ class StepTransform
         @accumulator += stepSize
         p = @lastpos.add dir.scale(@accumulator)
         if tiling
-          p := p.wrap @doc.width, @doc.height
-        @tool.step p, pressure
+          p := p.wrap doc.width, doc.height
+        @child.step p, pressure
       @accumulator -= length
     else
-      @tool.step wpos, pressure
+      @child.step wpos, pressure
 
     @lastpos = pos.clone!
 
   release: !->
     @lastpos = null
     @accumulator = 0
-    @tool.release!
+    @child.release!
 
-/*
-class OutTransform 
-  (@rects) -> ;
-  step: (pos, pressure) !~>
-    @rects.push @tool.draw @doc.layer, pos, pressure
-  release: !-> ;
-*/
 
 class ToolStack
-  (@tool, @doc) ->
+  (editor) ->
     # @tool = new RoundBrush env
     @layer = null
+    @doc = editor.doc
+    
+    props = {}
+    createProperties props, StepTransform.properties
 
-    env = {
-      tool: ~> {
-        step: (pos, pressure) !~>
-          @dirtyRects.push @tool.draw @layer, pos, pressure
-        release: !-> ;
-      }
+    nextFunc = ~> {
+      step: (pos, pressure) !~>
+        @dirtyRects.push editor.tool.draw @layer, pos, pressure
+      release: !-> ;
     }
 
-    @root = new StepTransform @doc, env
+    @root = new StepTransform editor, nextFunc, props
 
   draw: (layer, pos, pressure) ->
     @dirtyRects = []

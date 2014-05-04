@@ -2,6 +2,7 @@ Layer = require './core/layer'
 
 class Document
   (@width,@height)->
+    @tiling = true
     @layer = new Layer(@width,@height)
     @backup = new Layer(@width,@height)
     @history = []

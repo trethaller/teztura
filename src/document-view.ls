@@ -115,7 +115,7 @@ class DocumentView
       ..translate(@offset.x, @offset.y)
       ..scale(@scale, @scale)
     
-    if @editor.tiling()
+    if @editor.tiling
       ctx.fillStyle = ctx.createPattern(@canvas,"repeat")
       ctx.fillRect(-@offset.x / @scale,-@offset.y / @scale,@canvas.width / @scale, @canvas.height / @scale)
     else
@@ -125,20 +125,7 @@ class DocumentView
 
     layer = @doc.layer
     tool = @editor.toolObject()
-
-    layerRect = layer.getRect()
-    
     dirtyRects = tool.draw(layer, pos, pressure)
-    # if @editor.tiling()
-    #   for xoff in [-1,0,1]
-    #     for yoff in [-1,0,1]
-    #       dirtyRects.push(r.offset(new Vec2(xoff * layerRect.width, yoff * layerRect.height)))
-    # else
-    #   dirtyRects.push(r.intersect(layerRect))
-
-    # dirtyRects = dirtyRects
-    #   .map((r) ->r.intersect(layerRect))
-    #   .filter((r) ->not r.isEmpty())
 
     # For undo
     dirtyRects.forEach (r) ~>

@@ -9,22 +9,38 @@ RoundBrush        = require '../tools/roundbrush'
 {ToolStack}       = require '../tools/stack'
 
 
+mockEnv = (width, height)->
+  {
+    targetValue: 1.0
+    tiling: true
+    doc: {
+      width, height
+    }
+  }
+
+quickRender = (layer, canvas)->
+  ctx = canvas.getContext '2d'
+  view =
+    canvas: canvas
+    context: ctx
+    imageData: ctx.getImageData 0, 0, layer.width, layer.height
+
+  renderer = new GammaRenderer layer, view
+  renderer.render [new Rect(0,0,layer.width,layer.height)]
+  ctx.drawImage canvas, 0, 0
+
 testStepTransform = ($el) ->
   width = 800
-  height = 400
+  height = 150
   $can = $ "<canvas width='#{width}' height='#{height}'/>"
     .appendTo $el
   layer = new Layer width, height
   layer.fill (x,y) -> -1
 
-  env =
-    tiling: true
-    targetValue: 1.0
-
-  doc = { width, height }
-
+  env = mockEnv width, height
   brush = new RoundBrush env
-  stack = new ToolStack brush, doc
+  env.tool = brush
+  stack = new ToolStack env
 
   stack.draw layer, new Vec2(100, 50), 1
   stack.draw layer, new Vec2(700, 50), 1
@@ -32,15 +48,7 @@ testStepTransform = ($el) ->
   stack.draw layer, new Vec2(100, 100), 1
   stack.endDraw!
 
-  ctx = $can.0.getContext '2d'
-  view =
-    canvas: $can.0
-    context: ctx
-    imageData: ctx.getImageData 0, 0, width, height
-
-  renderer = new GammaRenderer layer, view
-  renderer.render [new Rect(0,0,width,height)]
-  ctx.drawImage $can.0, 0, 0
+  quickRender layer, $can.0
 
 testTiling = ($el)->
   width = 100
@@ -53,7 +61,7 @@ testTiling = ($el)->
   layer = new Layer width, height
   layer.fill (x,y)-> -1
 
-  b = new RoundBrush {tiling: true, targetValue: 1.0}
+  b = new RoundBrush mockEnv width, height
     ..size 5
     ..hardness 0.0
     ..intensity 1.6
@@ -141,9 +149,9 @@ testRoundBrush = ($el)->
 
   brush-test = (ypos, props) !->
     f = (xoffset, tiling) !->
-      env =
-        tiling: tiling
-        targetValue: 1.0
+
+      env = mockEnv width, height
+      env.doc.tiling = tiling
 
       brush = new RoundBrush env
       for k, v of props
@@ -168,17 +176,7 @@ testRoundBrush = ($el)->
   brush-test (y+=50), {size: 50, step: 30, hardness: 0.5}
   brush-test (y+=50), {size: 50, step: 30, hardness: 1.0}
 
-  ctx = $can.0.getContext '2d'
-  view =
-    canvas: $can.0
-    context: ctx
-    imageData: ctx.getImageData 0, 0, width, height
-
-  renderer = new GammaRenderer layer, view
-  renderer.render [new Rect(0,0,width,height)]
-  ctx.drawImage $can.0, 0, 0
-
-
+  quickRender layer, $can.0
 
 testBlendModes = ($el)->
   width = 800
@@ -208,25 +206,16 @@ testBlendModes = ($el)->
   blend-test(200, "intensity", "{dst} = {dst} * (1 - intensity*{src}) + 0.5 * intensity*{src}")
   blend-test(300, "intensity", "{dst} = {src} * intensity")
 
-  view = {
-    canvas: $can.0
-    context: ctx
-    imageData: ctx.getImageData 0, 0, width, height
-  }
-
-  renderer = new GammaRenderer layer, view
-  renderer.render [new Rect(0,0,width,height)]
-  ctx.drawImage $can.0, 0, 0
-
+  quickRender layer, $can.0
 
 # ----
 
 tests = [
-  ["Step transform", testStepTransform] /*
+  ["Step transform", testStepTransform]
   ["Tiling", testTiling]
   ["Renderers", testRenderers]
   ["Blend modes", testBlendModes]
-  ["Round brush", testRoundBrush] */
+  ["Round brush", testRoundBrush]
 ]
 
 do ->
