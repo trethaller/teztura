@@ -30,7 +30,7 @@ class Rect
       Math.ceil(@width),
       Math.ceil(@height))
 
-  extend: (obj)->
+  extend: (obj) !->
     if obj.width?
       @extend(obj.topLeft())
       @extend(obj.bottomRight())
@@ -45,6 +45,21 @@ class Rect
         @y = obj.y
       else
         @height = Math.max(@height, obj.y - @y)
+
+  wrap: (w, h) ->
+    # Generate 8 neighbours 
+    const basepos = @topLeft! .wrap w, h
+    rects = []
+    for xoff from -1 to 1
+      for yoff from -1 to 1
+        offpos = basepos.add new Vec2(xoff * w, yoff * h) 
+        rects.push new Rect offpos.x, offpos.y, @width, @height
+
+    # Filter empty
+    const wrapRect = new Rect 0, 0, w, h
+    return rects
+      .map -> it.intersect wrapRect
+      .filter -> not it.isEmpty!
     
   topLeft: ->
     new Vec2(@x,@y)

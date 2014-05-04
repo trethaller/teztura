@@ -6,6 +6,11 @@ Rect            = require '../core/rect'
 assertClose = (a,b)->
   assert(Math.abs(a - b) < 1.0e-8, "#{a} != #{b}")
 
+assertCloseRects = (r1, r2) ->
+  assertClose r1.x, r2.x
+  assertClose r1.y, r2.y
+  assertClose r1.width, r2.width
+  assertClose r1.height, r2.height
 
 describe 'Rect', ->
   specify 'should intersect correctly', ->
@@ -38,20 +43,47 @@ describe 'Rect', ->
   specify 'should extend', ->
     a = new Rect(10,10,10,10)
     a.extend(new Vec2(5,0))
-    assertClose(a.width, 15)
-    assertClose(a.height, 20)
-    assertClose(a.x, 5)
-    assertClose(a.y, 0)
+    assertCloseRects a, new Rect 5, 0, 15, 20
     a.extend(new Vec2(30,40))
-    assertClose(a.width, 25)
-    assertClose(a.height, 40)
-    assertClose(a.x, 5)
-    assertClose(a.y, 0)
+    assertCloseRects a, new Rect 5, 0, 25, 40
 
   specify 'should not extend inner point', ->
     a = new Rect(10,10,10,10)
     a.extend(new Vec2(15,15))
     assert.deepEqual(a, new Rect(10,10,10,10))
+
+  testWrap = (x, y, w, h, ww, wh) ->
+    a = new Rect(x,y,w,h)
+    return a.wrap ww, wh
+
+  specify 'should not wrap inner rectangle', ->
+    w = testWrap 10, 10, 10, 10, 30, 30
+    assert w.length is 1
+    assert.deepEqual w.0, new Rect(10,10,10,10)
+
+    w2 = testWrap 40, 40, 10, 10, 30, 30
+    assert w2.length is 1
+    assert.deepEqual w2.0, new Rect(10,10,10,10)
+
+  specify 'should wrap left/right', ->
+    w = testWrap -5, 10, 10, 10, 30, 30
+    assert w.length is 2
+    assertCloseRects w[0], new Rect 0, 10, 5, 10
+    assertCloseRects w[1], new Rect 25, 10, 5, 10
+
+    w2 = testWrap 25, 10, 10, 10, 30, 30
+    assertCloseRects w[0], w2[0]
+    assertCloseRects w[1], w2[1]
+
+  specify 'should wrap up/down', ->
+    w = testWrap 10, -5, 10, 10, 30, 30
+    assert w.length is 2
+    assertCloseRects w[0], new Rect 10, 0, 10, 5
+    assertCloseRects w[1], new Rect 10, 25, 10, 5
+
+    w2 = testWrap 10, 25, 10, 10, 30, 30
+    assertCloseRects w[0], w2[0]
+    assertCloseRects w[1], w2[1]
 
 
 describe 'Vec2', ->
