@@ -1,9 +1,15 @@
 
 @color-back: #111;
+@color-back2: lighten(@color-back, 8%);
+@color-back3: lighten(@color-back, 15%);
 @color-front: lighten(@color-back, 50%);
 @color-highlight: red;
 
 @import url(http://fonts.googleapis.com/css?family=Roboto);
+
+.light-grad(@basecol, @amount:10%) {
+  .gradient(@basecol, @basecol, lighten(@basecol, @amount));  
+}
 
 body {
   background-color: @color-back;
@@ -12,10 +18,26 @@ body {
   font-size: 13px;
 }
 
+button {
+  .light-grad(@color-back2);
+  .box-shadow(
+    inset 0px 1px 1px  lighten(@color-back2, 20%)
+    ;);
+
+  padding: 0 6px 0 6px !important;
+  border: 1px solid black;
+
+  &:hover {
+    .light-grad(lighten(@color-back2, 5%));
+  }
+  &:active {
+    .light-grad(darken(@color-back2, 4%));
+  }
+}
+
+
 .property-group {
-  //.drop-shadow(@blur: 6px, @alpha: 0.5);
   margin: 4px;
-  //background-color: lighten(@color-back, 8%);
 
   > h1 {
     font-size: 120%;
@@ -26,32 +48,76 @@ body {
   > div {
     .drop-shadow(@blur: 6px, @alpha: 0.5);
     padding: 4px;
-    background-color: lighten(@color-back, 8%);
-    overflow: hidden;
+    background-color: @color-back2;
   }
 }
 
 .property {
   .user-select(none);
-  
+  border: 1px solid black;
+
   margin-top: 4px;
   label {
     font-weight: normal;
+    margin-bottom: 1px;
   }
 }
 
-.prop-slider {
+.prop-gradient {
+  .gradient(@color-highlight, darken(@color-highlight, 10%), @color-highlight);
+  //.rounded(4px);
+}
 
+.prop-number {
   span {
-    min-height: 8px;
+    height: 8px;
     display: block;
   }
 
-  .prop-slider-bg {
+  input {
+    float: right;
+    background: none;
+    width: 50px;
+    border: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .slider-bg {
     background-color: @color-back;
   }
-  .prop-slider-bar {
-    .gradient(@color-highlight, darken(@color-highlight, 10%), @color-highlight);
+  .slider-bar {
+    .prop-gradient;
   }
 }
 
+.prop-bool {
+  .check {
+    display: block;
+    float: right;
+    width: 12px;
+    height: 12px;
+    margin-top: 4px;
+    .prop-gradient;
+  }
+}
+
+.prop-bool.false {
+  color: darken(@color-front, 10%);
+  .check {
+    background: @color-back;
+  }
+}
+
+
+.prop-choice {
+  > a {
+    float: right;
+  }
+
+  .dropdown-menu {
+    .rounded(0);
+    padding: 2px;
+    background-color: @color-back3;
+  }
+}
