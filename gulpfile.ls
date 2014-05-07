@@ -52,7 +52,13 @@ gulp.task 'main', ['ls'], ->
     .pipe connect.reload!
 
 gulp.task 'less', ->
-  gulp.src "styles/**/*.less"
+  gulp.src "styles/teztura.less"
+    .pipe less!.on('error', err)
+    .pipe gulp.dest "#{dist}/css"
+    .pipe connect.reload!
+
+gulp.task 'bootstrap', ->
+  gulp.src "styles/bootstrap/bootstrap.less"
     .pipe less!.on('error', err)
     .pipe gulp.dest "#{dist}/css"
     .pipe connect.reload!
@@ -65,4 +71,5 @@ gulp.task 'connect', ->
 
 gulp.task 'serve', ['test', 'main', 'connect'], ->
   gulp.watch ['src/**/*', "#{dist}/**/*.html"], ['test', 'main']
-  gulp.watch ['styles/**/*.less'], ['less']
+  gulp.watch ['styles/*.less'], ['less']
+  gulp.watch ['styles/bootstrap/*.less'], ['bootstrap']

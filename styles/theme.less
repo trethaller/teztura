@@ -1,0 +1,57 @@
+
+@color-back: #111;
+@color-front: lighten(@color-back, 50%);
+@color-highlight: red;
+
+@import url(http://fonts.googleapis.com/css?family=Roboto);
+
+body {
+  background-color: @color-back;
+  color: @color-front;
+  font-family: 'Roboto', sans-serif;
+  font-size: 13px;
+}
+
+.property-group {
+  //.drop-shadow(@blur: 6px, @alpha: 0.5);
+  margin: 4px;
+  //background-color: lighten(@color-back, 8%);
+
+  > h1 {
+    font-size: 120%;
+    margin: 4px;
+    text-align: left;
+  }
+
+  > div {
+    .drop-shadow(@blur: 6px, @alpha: 0.5);
+    padding: 4px;
+    background-color: lighten(@color-back, 8%);
+    overflow: hidden;
+  }
+}
+
+.property {
+  .user-select(none);
+  
+  margin-top: 4px;
+  label {
+    font-weight: normal;
+  }
+}
+
+.prop-slider {
+
+  span {
+    min-height: 8px;
+    display: block;
+  }
+
+  .prop-slider-bg {
+    background-color: @color-back;
+  }
+  .prop-slider-bar {
+    .gradient(@color-highlight, darken(@color-highlight, 10%), @color-highlight);
+  }
+}
+

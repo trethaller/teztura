@@ -1,52 +1,57 @@
+@import url(http://fonts.googleapis.com/css?family=Roboto);
+/*---------------------------------------------------
+    LESS Elements 0.9
+  ---------------------------------------------------
+    A set of useful LESS mixins
+    More info at: http://lesselements.com
+  ---------------------------------------------------*/
 body {
-  background-color: #202020;
-  color: #868686;
+  background-color: #111111;
+  color: #919191;
+  font-family: 'Roboto', sans-serif;
   font-size: 13px;
 }
-#properties {
-  width: 200px;
-  position: absolute;
-  right: 0;
-}
-.clear {
-  clear: both;
-}
 .property-group {
-  background-color: #3a3a3a;
-  padding: 5px;
+  margin: 4px;
+}
+.property-group > h1 {
+  font-size: 120%;
+  margin: 4px;
+  text-align: left;
+}
+.property-group > div {
+  -webkit-box-shadow: 0 1px 6px rgba(0, 0, 0, 0.5);
+  -moz-box-shadow: 0 1px 6px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.5);
+  padding: 4px;
+  background-color: #252525;
   overflow: hidden;
 }
-.property-group .property {
-  clear: both;
-}
-.property-group h1 {
-  font-size: 130%;
-  color: #868686;
-  margin: 0;
-}
-.property-group input {
-  float: right;
-  width: 40px;
-  border: 0;
-  background-color: transparent;
-}
-.property-group .tz-slider {
-  float: left;
-  width: 140px;
-}
-.tz-slider {
-  -webkit-touch-callout: none;
+.property {
   -webkit-user-select: none;
-  -khtml-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;
   user-select: none;
-  padding: 1px;
-  background-color: #868686;
+  margin-top: 4px;
+}
+.property label {
+  font-weight: normal;
+}
+.prop-slider span {
+  min-height: 8px;
   display: block;
 }
-.tz-slider-bar {
-  height: 12px;
-  background-color: #ff6a30;
-  display: block;
+.prop-slider .prop-slider-bg {
+  background-color: #111111;
+}
+.prop-slider .prop-slider-bar {
+  background: #ff0000;
+  background: -webkit-gradient(linear, left bottom, left top, color-stop(0, #cc0000), color-stop(1, #ff0000));
+  background: -ms-linear-gradient(bottom, #cc0000, #ff0000);
+  background: -moz-linear-gradient(center bottom, #cc0000 0%, #ff0000 100%);
+  background: -o-linear-gradient(#ff0000, #cc0000);
+  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff0000', endColorstr='#cc0000', GradientType=0);
+}
+.properties {
+  width: 300px;
 }

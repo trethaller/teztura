@@ -4,3 +4,4 @@ bower_components
 *.map
 *.bundle.js
 dist/js/**/*.js
+dist/css
