@@ -18,45 +18,23 @@ body {
   font-size: 13px;
 }
 
-button {
-  .light-grad(@color-back2);
-  .box-shadow(
-    inset 0px 1px 1px  lighten(@color-back2, 20%)
-    ;);
-
-  padding: 0 6px 0 6px !important;
-  border: 1px solid black;
-
-  &:hover {
-    .light-grad(lighten(@color-back2, 5%));
-  }
-  &:active {
-    .light-grad(darken(@color-back2, 4%));
-  }
-}
-
 
 .property-group {
   margin: 4px;
 
   > h1 {
     font-size: 120%;
-    margin: 4px;
+    margin: 8px;
     text-align: left;
-  }
-
-  > div {
-    .drop-shadow(@blur: 6px, @alpha: 0.5);
-    padding: 4px;
-    background-color: @color-back2;
   }
 }
 
 .property {
   .user-select(none);
-  border: 1px solid black;
-
-  margin-top: 4px;
+  .drop-shadow(@blur: 6px, @alpha: 0.75);
+  background-color: @color-back2;
+  padding: 4px;
+  margin-top: 2px;
   label {
     font-weight: normal;
     margin-bottom: 1px;
@@ -84,6 +62,7 @@ button {
   }
 
   .slider-bg {
+    margin-top: 2px;
     background-color: @color-back;
   }
   .slider-bar {
@@ -93,10 +72,11 @@ button {
 
 .prop-bool {
   .check {
+    border: 1px solid black;
     display: block;
     float: right;
-    width: 12px;
-    height: 12px;
+    width: 13px;
+    height: 13px;
     margin-top: 4px;
     .prop-gradient;
   }
@@ -109,7 +89,6 @@ button {
   }
 }
 
-
 .prop-choice {
   > a {
     float: right;
@@ -119,5 +98,22 @@ button {
     .rounded(0);
     padding: 2px;
     background-color: @color-back3;
+  }
+}
+
+button {
+  .light-grad(@color-back2);
+  .box-shadow(
+    inset 0px 1px 1px  lighten(@color-back2, 20%)
+    ;);
+
+  padding: 0 6px 0 6px !important;
+  border: 1px solid black;
+
+  &:hover {
+    .light-grad(lighten(@color-back2, 5%));
+  }
+  &:active {
+    .light-grad(darken(@color-back2, 4%));
   }
 }

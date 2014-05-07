@@ -1,0 +1,17 @@
+script(type='text/html', id='prop-number')
+  .prop-number
+    input(type="number" step="any" value='0')
+    label
+    span.slider-bg
+      span.slider-bar
+
+script(type='text/html', id='prop-bool')
+  .prop-bool
+    span.check
+    label
+
+script(type='text/html', id='prop-menu')
+  .dropdown.prop-choice
+    a(href='#', data-toggle='dropdown') Value
+    label
+    .dropdown-menu(aria-labelledby='dLabel', role='menu')

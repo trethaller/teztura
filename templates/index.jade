@@ -1,0 +1,21 @@
+doctype html
+html(lang="en")
+  head
+    title teztura
+  body
+    link(href='css/bootstrap.min.css'  rel='stylesheet')
+    link(href='css/teztura.css'        rel='stylesheet')
+
+    include properties
+
+    #editor
+      select(data-bind="options: renderers, value: renderer, optionsText: 'name'")
+    
+    #properties
+    
+    .document-view
+    
+    script(src='lib/jquery.min.js')
+    script(src='lib/jquery.mousewheel.min.js')
+    script(src='//cdnjs.cloudflare.com/ajax/libs/knockout/3.1.0/knockout-min.js')
+    script(src='main.bundle.js')

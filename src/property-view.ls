@@ -1,6 +1,9 @@
 { Vec2 } = require './core/vec'
 { loadImageData } = require './core/utils'
 
+template = (id) ->
+  $($('#' + id).html!)
+
 makeDraggable = (el)->
   function DragHelper @el
     @startPos = null
@@ -40,24 +43,8 @@ makeDraggable = (el)->
   new DragHelper el
 
 
-SliderView = !->
-  @el = $ '<span/>'
-    .addClass 'tz-slider'
 
-  @bar = $ '<span/>'
-    .addClass 'tz-slider-bar'
-    .appendTo @el
-
-  @setValue = (v)~>
-    @bar.width (v * 100) + '%'
-
-  drag = makeDraggable @el
-  @cleanup = ~>
-    drag.cleanup!
-
-  @bar.width '50%'
-
-SliderPropertyView = ($el, prop) !->
+NumberPropertyView = ($el, prop) !->
   power = prop.power or 1.0
   conv = (v)-> Math.pow(v, power)
   invconv = (v)-> Math.pow(v, 1.0 / power)
@@ -65,22 +52,32 @@ SliderPropertyView = ($el, prop) !->
   rmin = invconv prop.range[0]
   rmax = invconv prop.range[1]
   range = prop.range.1 - prop.range.0
-  sv = new SliderView!
-  sv.setValue invconv (prop.value! / range)
-  sv.el
+
+  @el = template 'prop-number'
     .appendTo $el
-  sv.el.on 'drag', (e, x, y) !->
+
+  @el.find 'label'
+    .text prop.name
+
+  $bar = @el.find '.slider-bar'
+  $slider = @el.find '.slider-bg'
+  drag = makeDraggable $slider
+  setVal = (v) !->
+    $bar.width (v * 100) + '%'    
+
+  setVal invconv (prop.value! / range)
+
+  $slider.on 'drag', (e, x, y) !->
     prop.value conv(invconv(prop.value!) + (x * range / 500))
 
   subscription = prop.value.subscribe (newVal) !->
     $input.val newVal
-    sv.setValue invconv (newVal / range)
+    setVal invconv (newVal / range)
 
-  $input = $ '<input/>'
+  $input = @el.find 'input'
     .val prop.value!
-    .appendTo $el
-    .addClass 'tz-input'
-    .change (evt)->
+    .attr 'step', range/20
+    .change (evt) !->
       if prop.type is 'int'
         prop.value parseInt $input.val!
       else
@@ -88,6 +85,7 @@ SliderPropertyView = ($el, prop) !->
   
   @cleanup = ~>
     subscription.dispose!
+    drag.cleanup!
 
 ImagePropertyView = ($el, prop) !->
   $select = $ '<select/>'
@@ -107,16 +105,12 @@ PropertyView = (prop) !->
   @$el = $ '<div/>'
     .addClass 'property'
 
-  $ '<label/>'
-    .text prop.name
-    .appendTo @$el
-
   $prop = $ \<div/>
     .appendTo @$el
 
   pv = null
   if prop.range?
-    pv := new SliderPropertyView $prop, prop
+    pv := new NumberPropertyView $prop, prop
   else if prop.type is 'gradient'
     pv := new ImagePropertyView $prop, prop
 

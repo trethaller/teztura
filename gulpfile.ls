@@ -2,12 +2,11 @@ gulp          = require 'gulp'
 browserify    = require 'gulp-browserify'
 ls            = require 'gulp-livescript'
 connect       = require 'gulp-connect'
-
 rename        = require 'gulp-rename'
 uglify        = require 'gulp-uglify'
 mocha         = require 'gulp-mocha'
-mochaPhantom  = require 'gulp-mocha-phantomjs'
 less          = require 'gulp-less'
+jade          = require 'gulp-jade'
 
 dist = './dist'
 
@@ -57,6 +56,14 @@ gulp.task 'less', ->
     .pipe gulp.dest "#{dist}/css"
     .pipe connect.reload!
 
+gulp.task 'templates', ->
+  gulp.src "templates/index.jade"
+    .pipe jade {
+      pretty: true
+    }
+    .pipe gulp.dest "#{dist}"
+    .pipe connect.reload!
+
 gulp.task 'bootstrap', ->
   gulp.src "styles/bootstrap/bootstrap.less"
     .pipe less!.on('error', err)
@@ -70,6 +77,8 @@ gulp.task 'connect', ->
     livereload: true
 
 gulp.task 'serve', ['test', 'main', 'connect'], ->
-  gulp.watch ['src/**/*', "#{dist}/**/*.html"], ['test', 'main']
+  gulp.watch ['src/**/*'], ['test', 'main']
   gulp.watch ['styles/*.less'], ['less']
   gulp.watch ['styles/bootstrap/*.less'], ['bootstrap']
+  gulp.watch ['templates/*.jade'], ['templates']
+
