@@ -13,25 +13,32 @@ assertCloseRects = (r1, r2) ->
   assertClose r1.height, r2.height
 
 describe 'Rect', ->
-  specify 'should intersect correctly', ->
+  specify 'intersect overlapping', ->
     a = new Rect(10,20,100,100)
     b = new Rect(20,10,100,100)
-    assertClose(a.intersect(b).width, 90)
-    assertClose(b.intersect(a).width, 90)
-    assertClose(a.intersect(b).height, 90)
-    assertClose(b.intersect(a).height, 90)
-    a = new Rect(0,0,100,100)
-    b = new Rect(200,50,100,100)
-    assertClose(a.intersect(b).width, 0)
-    assertClose(b.intersect(a).height, 50)
-  
-  specify 'should intersect inner rect', ->
+    assertCloseRects a.intersect(b), new Rect 20, 20, 90, 90
+    assertCloseRects b.intersect(a), new Rect 20, 20, 90, 90
+
+  specify 'intersect inner rect', ->
     a = new Rect(0,0,100,100)
     b = new Rect(10,20,20,20)
-    c = a.intersect(b)
-    assert.deepEqual(b,c)
+    assertCloseRects a.intersect(b), b
+    assertCloseRects b.intersect(a), b
 
-  specify 'should union', ->
+  specify 'intersect negative coordinates', ->
+    a = new Rect(-100,-100,100,100)
+    b = new Rect(-50,-50,100,100)
+    assertCloseRects a.intersect(b), new Rect -50, -50, 50, 50
+    assertCloseRects b.intersect(a), new Rect -50, -50, 50, 50
+
+  specify 'empty intersection', ->
+    a = new Rect(0,0,50,50)
+    assert a.intersect(new Rect(100,10,10,10)).isEmpty!
+    assert a.intersect(new Rect(-100,10,10,10)).isEmpty!
+    assert a.intersect(new Rect(10,100,10,10)).isEmpty!
+    assert a.intersect(new Rect(10,-100,10,10)).isEmpty!
+
+  specify 'union', ->
     a = new Rect(10,20,10,10)
     b = new Rect(15,25,10,15)
     c = a.union(b)
@@ -40,7 +47,7 @@ describe 'Rect', ->
     assertClose(c.width, 15)
     assertClose(c.height, 20)
    
-  specify 'should extend', ->
+  specify 'extend', ->
     a = new Rect(10,10,10,10)
     a.extend(new Vec2(5,0))
     assertCloseRects a, new Rect 5, 0, 15, 20
@@ -50,7 +57,7 @@ describe 'Rect', ->
   specify 'should not extend inner point', ->
     a = new Rect(10,10,10,10)
     a.extend(new Vec2(15,15))
-    assert.deepEqual(a, new Rect(10,10,10,10))
+    assertCloseRects a, new Rect(10,10,10,10)
 
   testWrap = (x, y, w, h, ww, wh) ->
     a = new Rect(x,y,w,h)
@@ -58,16 +65,16 @@ describe 'Rect', ->
 
   specify 'should not wrap inner rectangle', ->
     w = testWrap 10, 10, 10, 10, 30, 30
-    assert w.length is 1
-    assert.deepEqual w.0, new Rect(10,10,10,10)
+    assert.equal w.length, 1
+    assertCloseRects w.0, new Rect(10,10,10,10)
 
     w2 = testWrap 40, 40, 10, 10, 30, 30
-    assert w2.length is 1
-    assert.deepEqual w2.0, new Rect(10,10,10,10)
+    assert.equal w2.length, 1
+    assertCloseRects w2.0, new Rect(10,10,10,10)
 
   specify 'should wrap left/right', ->
     w = testWrap -5, 10, 10, 10, 30, 30
-    assert w.length is 2
+    assert.equal w.length, 2
     assertCloseRects w[0], new Rect 0, 10, 5, 10
     assertCloseRects w[1], new Rect 25, 10, 5, 10
 
@@ -77,7 +84,7 @@ describe 'Rect', ->
 
   specify 'should wrap up/down', ->
     w = testWrap 10, -5, 10, 10, 30, 30
-    assert w.length is 2
+    assert.equal w.length, 2
     assertCloseRects w[0], new Rect 10, 0, 10, 5
     assertCloseRects w[1], new Rect 10, 25, 10, 5
 
