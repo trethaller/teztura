@@ -56,7 +56,7 @@ Editor = !->
     ..setProperties @renderer!.properties
     ..$el.appendTo $ \#properties
 
-  @renderer @renderers.0
+  @renderer @renderers.1
 
 
 start = ->

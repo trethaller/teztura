@@ -5,6 +5,20 @@
     A set of useful LESS mixins
     More info at: http://lesselements.com
   ---------------------------------------------------*/
+.clearfix {
+  zoom: 1;
+}
+.clearfix:before,
+.clearfix:after {
+  content: "";
+  display: table;
+}
+.clearfix:after {
+  clear: both;
+}
+.clear {
+  clear: both;
+}
 body {
   background-color: #111111;
   color: #919191;
@@ -20,6 +34,7 @@ body {
   text-align: left;
 }
 .property {
+  zoom: 1;
   -webkit-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;
@@ -30,6 +45,14 @@ body {
   background-color: #252525;
   padding: 4px;
   margin-top: 2px;
+}
+.property:before,
+.property:after {
+  content: "";
+  display: table;
+}
+.property:after {
+  clear: both;
 }
 .property label {
   font-weight: normal;
@@ -87,7 +110,7 @@ body {
 .prop-bool.false .check {
   background: #111111;
 }
-.prop-choice > a {
+.prop-choice .value {
   float: right;
 }
 .prop-choice .dropdown-menu {

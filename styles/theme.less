@@ -11,6 +11,16 @@
   .gradient(@basecol, @basecol, lighten(@basecol, @amount));  
 }
 
+.clearfix {
+  zoom:1;
+  &:before, &:after{ content:""; display:table; }
+  &:after{ clear: both; }
+}
+
+.clear {
+  clear: both;
+}
+
 body {
   background-color: @color-back;
   color: @color-front;
@@ -30,6 +40,7 @@ body {
 }
 
 .property {
+  .clearfix;
   .user-select(none);
   .drop-shadow(@blur: 6px, @alpha: 0.75);
   background-color: @color-back2;
@@ -90,10 +101,9 @@ body {
 }
 
 .prop-choice {
-  > a {
+  .value {
     float: right;
   }
-
   .dropdown-menu {
     .rounded(0);
     padding: 2px;

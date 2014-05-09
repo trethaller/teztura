@@ -1,17 +1,18 @@
-script(type='text/html', id='prop-number')
+script(type='text/html', id='tpl-prop-number')
   .prop-number
     input(type="number" step="any" value='0')
     label
     span.slider-bg
       span.slider-bar
 
-script(type='text/html', id='prop-bool')
+script(type='text/html', id='tpl-prop-bool')
   .prop-bool
     span.check
     label
 
-script(type='text/html', id='prop-menu')
+script(type='text/html', id='tpl-prop-choice')
   .dropdown.prop-choice
-    a(href='#', data-toggle='dropdown') Value
     label
-    .dropdown-menu(aria-labelledby='dLabel', role='menu')
+    .value(data-toggle='dropdown')
+    .clear
+    .dropdown-menu.pull-right(aria-labelledby='dLabel', role='menu')

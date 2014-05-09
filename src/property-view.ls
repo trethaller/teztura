@@ -2,7 +2,7 @@
 { loadImageData } = require './core/utils'
 
 template = (id) ->
-  $($('#' + id).html!)
+  $($('#tpl-' + id).html!)
 
 makeDraggable = (el)->
   function DragHelper @el
@@ -39,9 +39,11 @@ makeDraggable = (el)->
         $(document).off 'mouseup', onMouseUp
         $(document).off 'mousemove', onMouseMove
 
-    @el.on 'mousedown', startDrag
-  new DragHelper el
+    @el.on 'mousedown', (e) !->
+      e.preventDefault!
+      startDrag e
 
+  new DragHelper el
 
 
 NumberPropertyView = ($el, prop) !->
@@ -76,7 +78,7 @@ NumberPropertyView = ($el, prop) !->
 
   $input = @el.find 'input'
     .val prop.value!
-    .attr 'step', range/20
+    # .attr 'step', range/20
     .change (evt) !->
       if prop.type is 'int'
         prop.value parseInt $input.val!
@@ -87,7 +89,25 @@ NumberPropertyView = ($el, prop) !->
     subscription.dispose!
     drag.cleanup!
 
-ImagePropertyView = ($el, prop) !->
+GradientPropertyView = ($el, prop) !->
+  @el = template 'prop-choice'
+    .appendTo $el
+
+  @el.find 'label'
+    .text prop.name
+
+  @img = $ '<img/>'
+    .width '100%'
+    .height '4'
+    .attr 'src', prop.value
+    .appendTo @el.find '.value'
+
+  /*
+  sub = prop.value.subscribe (newVal) !~>
+    @img.attr 'src', newVal
+  */
+  
+  /*
   $select = $ '<select/>'
     .appendTo $el
     .change (e)->
@@ -98,7 +118,7 @@ ImagePropertyView = ($el, prop) !->
     $op = $ \<option/>
       .text c
       .appendTo $select
-
+  */
   @cleanup = ~>;
 
 PropertyView = (prop) !->
@@ -112,7 +132,7 @@ PropertyView = (prop) !->
   if prop.range?
     pv := new NumberPropertyView $prop, prop
   else if prop.type is 'gradient'
-    pv := new ImagePropertyView $prop, prop
+    pv := new GradientPropertyView $prop, prop
 
   @cleanup = !~>
     pv?.cleanup!

@@ -6,21 +6,23 @@
   <body>
     <link href="css/bootstrap.min.css" rel="stylesheet">
     <link href="css/teztura.css" rel="stylesheet">
-    <script type="text/html" id="prop-number">
+    <script type="text/html" id="tpl-prop-number">
       <div class="prop-number">
         <input type="number" step="any" value="0">
         <label></label><span class="slider-bg"><span class="slider-bar"></span></span>
       </div>
     </script>
-    <script type="text/html" id="prop-bool">
+    <script type="text/html" id="tpl-prop-bool">
       <div class="prop-bool"><span class="check"></span>
         <label></label>
       </div>
     </script>
-    <script type="text/html" id="prop-menu">
-      <div class="dropdown prop-choice"><a href="#" data-toggle="dropdown">Value</a>
+    <script type="text/html" id="tpl-prop-choice">
+      <div class="dropdown prop-choice">
         <label></label>
-        <div aria-labelledby="dLabel" role="menu" class="dropdown-menu"></div>
+        <div data-toggle="dropdown" class="value"></div>
+        <div class="clear"></div>
+        <div aria-labelledby="dLabel" role="menu" class="dropdown-menu pull-right"></div>
       </div>
     </script>
     <div id="editor">
