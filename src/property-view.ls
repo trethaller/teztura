@@ -118,24 +118,33 @@ GradientPropertyView = ($el, prop) !->
       .appendTo $menu
       .click ->
         setVal c
+  @cleanup = ~>;
 
-  /*
-  sub = prop.value.subscribe (newVal) !~>
-    @img.attr 'src', newVal
-  */
-  
-  /*
-  $select = $ '<select/>'
+ChoicePropertyView = ($el, prop) !->
+  @el = template 'prop-choice'
     .appendTo $el
-    .change (e)->
-      img <- loadImageData $select.val!
-      prop.value img
+
+  @el.find 'label'
+    .text prop.name
+
+  $val = $ '<button/>'
+    .appendTo @el.find '.value'
+
+  setVal = (v) !~>
+    $val.text v
+
+  setVal prop.value!
+  
+  $menu = @el.find '.dropdown-menu'
 
   prop.choices.forEach (c)->
-    $op = $ \<option/>
+    $a = $ '<button/>'
       .text c
-      .appendTo $select
-  */
+      .width '80px'
+      .appendTo $menu #($('<li/>').appendTo $menu)
+      .click ->
+        setVal c
+
   @cleanup = ~>;
 
 PropertyView = (prop) !->
@@ -150,6 +159,8 @@ PropertyView = (prop) !->
     pv := new NumberPropertyView $prop, prop
   else if prop.type is 'gradient'
     pv := new GradientPropertyView $prop, prop
+  else if prop.choices?
+    pv := new ChoicePropertyView $prop, prop
 
   @cleanup = !~>
     pv?.cleanup!

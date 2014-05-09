@@ -46,7 +46,6 @@ GammaRenderer = (layer, view)!->
       }
     });
     "
-    console.log code
     fimpl = eval code
     return (rects) ->
       fb = layer.getBuffer!

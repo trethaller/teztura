@@ -6,11 +6,6 @@ Rect                = require '../core/rect'
 
 RoundBrush = (env) !->
   properties = 
-    * id: 'step'
-      name: "Step %"
-      defaultValue: 10
-      range: [0, 100]
-    
     * id: 'hardness'
       name: "Hardness"
       defaultValue: 0.2
