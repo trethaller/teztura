@@ -1,14 +1,17 @@
 { createProperties } = require '../core/properties'
 
+Gradients = [
+  * src: 'img/gradient-1.png'
+  * src: 'img/gradient-2.png'
+]
+
 GradientRenderer = (layer, view) !->
   createProperties @, [
     * id: 'gradient'
       name: "Gradient image"
       type: 'gradient'
-      choices: <[
-        img/gradient-1.png
-        img/gradient-2.png
-      ]>
+      choices: Gradients
+      defaultValue: Gradients.0
   ]
 
   @name = "Gradient"
@@ -18,9 +21,9 @@ GradientRenderer = (layer, view) !->
 
   generateFunc = ~>
     width = layer.width
-    lutImg = @gradient!
-    
-    if not lutImg?
+    lutImg = @gradient!?.data
+
+    if not lutImg?.width?
       return ->;
 
     round = (val)-> "(#{val} + 0.5) | 0"

@@ -96,11 +96,28 @@ GradientPropertyView = ($el, prop) !->
   @el.find 'label'
     .text prop.name
 
+  setVal = (grad) !~>
+    @img.attr 'src', grad.src
+    img <- loadImageData grad.src
+    grad.data = img
+    prop.value grad
+
   @img = $ '<img/>'
     .width '100%'
-    .height '4'
-    .attr 'src', prop.value
+    .height '12'
     .appendTo @el.find '.value'
+
+  setVal prop.value!
+  
+  $menu = @el.find '.dropdown-menu'
+  prop.choices.forEach (c)->
+    $img = $ '<img/>'
+      .width '100%'
+      .height '12'
+      .attr 'src', c.src
+      .appendTo $menu
+      .click ->
+        setVal c
 
   /*
   sub = prop.value.subscribe (newVal) !~>

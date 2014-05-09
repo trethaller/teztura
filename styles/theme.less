@@ -1,4 +1,6 @@
 
+@import "elements.less";
+
 @color-back: #111;
 @color-back2: lighten(@color-back, 8%);
 @color-back3: lighten(@color-back, 15%);
@@ -41,7 +43,6 @@ body {
 
 .property {
   .clearfix;
-  .user-select(none);
   .drop-shadow(@blur: 6px, @alpha: 0.75);
   background-color: @color-back2;
   padding: 4px;
@@ -59,6 +60,7 @@ body {
 
 .prop-number {
   span {
+    .user-select(none);
     height: 8px;
     display: block;
   }
