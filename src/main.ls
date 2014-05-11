@@ -57,18 +57,74 @@ Editor = !->
     ..setProperties @renderer!.properties
     ..$el.appendTo $ \#properties
 
-  @renderer @renderers.1
+  @renderer @renderers.0
 
 
 start = ->
   editor = new Editor
   ko.applyBindings editor, $('#editor')[0]
 
-  /*
-  renderer = new GradientRenderer doc.layer, view
-  g <- loadImageData '/img/gradient-1.png'
-  renderer.gradient g
-  */
+
+  width = 400
+  height = 400
+  $canvas = $ \<canvas/>
+    .attr 'width', width
+    .attr 'height', height
+    .appendTo $(\#webgl)
+  @canvas = $canvas[0]
+
+  @renderer = new THREE.WebGLRenderer(canvas: @canvas)
+    ..setSize(width, height)
+    ..setClearColor(0, 1)
+    ..antialias = false
+    ..autoClear = true
+
+  @scene = new THREE.Scene()
+  @camera = new THREE.PerspectiveCamera( 30, width / height, 0.01, 10 )
+    ..position.z = 2
+    ..position.x = 2
+    ..position.y = 2
+    ..lookAt(@scene.position)
+
+  boxGeom = new THREE.TorusGeometry( 0.6, 0.4, 20, 30 )
+
+  @texture = new THREE.Texture(editor.view.canvas)
+    ..wrapS = THREE.RepeatWrapping
+    ..wrapT = THREE.RepeatWrapping
+    ..magFilter = THREE.LinearFilter
+
+  editor.doc.changed.subscribe !~>
+    @texture.needsUpdate = true
+    @render!
+
+  mat = new THREE.MeshPhongMaterial {
+    color: new THREE.Color("gray")
+    # map: @texture
+    bumpMap: @texture
+    bumpScale: 0.3
+    shininess: 20
+  }
+
+  box = new THREE.Mesh( boxGeom, mat )
+
+  @root = new THREE.Object3D()
+    ..add box
+  @scene.add @root
+
+  light = new THREE.PointLight(0xffffff, 1.5, 10)
+    ..position = new THREE.Vector3 2, 2, 2
+  @scene.add(light)
+
+
+  @render = ~>
+    @renderer.clearDepth()
+    @renderer.render @scene, @camera
+
+  mainLoop = ~>
+    @render!
+    @root.rotation.y += 0.02
+    requestAnimationFrame mainLoop
+  mainLoop!
 
 
 $(document).ready start

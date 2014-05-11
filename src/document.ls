@@ -1,4 +1,6 @@
 Layer = require './core/layer'
+{event} = require './core/utils'
+
 
 class Document
   (@width,@height)->
@@ -7,6 +9,7 @@ class Document
     @backup = new Layer(@width,@height)
     @history = []
     @histIndex = 1
+    @changed = event!
 
   beginEdit: ->
     if @histIndex > 0
@@ -32,6 +35,8 @@ class Document
     histSize = 10
     if @history.length >= histSize
       @history.splice(histSize)
+
+    @changed!
 
   undo: ->
     if @histIndex >= @history.length
