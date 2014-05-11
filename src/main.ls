@@ -52,7 +52,8 @@ Editor = !->
     ..setProperties @tool.properties
     ..$el.appendTo $ \#properties
 
-  renderProps = new PropertyGroup 'Tool'
+  
+  renderProps = new PropertyGroup 'Renderer'
     ..setProperties @renderer!.properties
     ..$el.appendTo $ \#properties
 

@@ -35,10 +35,6 @@ body {
 }
 .property {
   zoom: 1;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-  user-select: none;
   -webkit-box-shadow: 0 1px 6px rgba(0, 0, 0, 0.75);
   -moz-box-shadow: 0 1px 6px rgba(0, 0, 0, 0.75);
   box-shadow: 0 1px 6px rgba(0, 0, 0, 0.75);
@@ -67,6 +63,10 @@ body {
   filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff0000', endColorstr='#cc0000', GradientType=0);
 }
 .prop-number span {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
   height: 8px;
   display: block;
 }
@@ -117,8 +117,12 @@ body {
   -webkit-border-radius: 0;
   -moz-border-radius: 0;
   border-radius: 0;
+  width: 100px;
   padding: 2px;
   background-color: #373737;
+}
+.prop-choice .dropdown-menu button {
+  min-width: 100%;
 }
 button {
   background: #252525;
@@ -150,5 +154,7 @@ button:active {
   filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#353535', endColorstr='#1b1b1b', GradientType=0);
 }
 #properties {
+  position: absolute;
+  right: 4px;
   width: 220px;
 }
