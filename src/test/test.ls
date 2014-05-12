@@ -43,10 +43,11 @@ testInterpolateFilter = ($el) ->
   brush = new RoundBrush env
   env.tool = brush
 
-  stack = [
-  * type: InterpolateFilter
-    props: createProperties null, InterpolateFilter.properties
-  ]
+  filter = {
+    type: InterpolateFilter
+  }
+  createProperties filter, InterpolateFilter.properties
+  stack = [filter]
   
   filter = new FilterStack env, stack
 
@@ -149,7 +150,7 @@ testRenderers = ($el)->
 
 testRoundBrush = ($el)->
   width = 800
-  height = 400
+  height = 320
   $can = $ "<canvas width='#{width}' height='#{height}'/>"
     .appendTo $el
   layer = new Layer width, height
@@ -178,11 +179,9 @@ testRoundBrush = ($el)->
   y = 0
   brush-test (y+=50), {}
   brush-test (y+=50), {size: 50}
-  brush-test (y+=50), {size: 50, step: 30}
-  brush-test (y+=50), {size: 50, step: 50}
-  brush-test (y+=50), {size: 50, step: 30, hardness: 0.3}
-  brush-test (y+=50), {size: 50, step: 30, hardness: 0.5}
-  brush-test (y+=50), {size: 50, step: 30, hardness: 1.0}
+  brush-test (y+=50), {size: 50, hardness: 0.3}
+  brush-test (y+=50), {size: 50, hardness: 0.5}
+  brush-test (y+=50), {size: 50, hardness: 1.0}
 
   quickRender layer, $can.0
 
