@@ -60,17 +60,13 @@ Editor = !->
   @renderer @renderers.0
 
 
-start = ->
-  editor = new Editor
-  ko.applyBindings editor, $('#editor')[0]
-
-
+WebGLViewer = (editor, $parent) !->
   width = 400
   height = 400
   $canvas = $ \<canvas/>
     .attr 'width', width
     .attr 'height', height
-    .appendTo $(\#webgl)
+    .appendTo $parent
   @canvas = $canvas[0]
 
   @renderer = new THREE.WebGLRenderer(canvas: @canvas)
@@ -124,7 +120,18 @@ start = ->
     @render!
     @root.rotation.y += 0.02
     requestAnimationFrame mainLoop
-  mainLoop!
+
+  @start = mainLoop
+
+
+start = ->
+  editor = new Editor
+  webgl = new WebGLViewer editor, $('#webgl')
+    ..start!
+  ko.applyBindings editor, $('#editor')[0]
+
+
+
 
 
 $(document).ready start
