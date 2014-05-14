@@ -15,7 +15,7 @@ class FilterStack
     nextFunc = (-> lastStage)
     (reverse stack).forEach (def) !->
       nf = nextFunc
-      nextFunc := -> new def.type editor, nf, def.props
+      nextFunc := -> new def.type editor, nf, def
 
     @root = nextFunc!
 

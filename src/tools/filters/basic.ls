@@ -1,5 +1,6 @@
 
 class SmoothFilter1
+  @name = 'Smooth'
   @properties = [
   * id: 'factor'
     name: "Factor"
@@ -7,7 +8,7 @@ class SmoothFilter1
     range: [0, 1.0]
   ]
 
-  (@editor, @next, @props) ->
+  (@editor, @next, @properties) ->
     @pos = null
     @child = @next!
 
@@ -15,7 +16,7 @@ class SmoothFilter1
     if not @pos?
       @pos = pos
     else
-      @pos = @pos.add( pos.sub(@pos).scale(@props.factor!) )
+      @pos = @pos.add( pos.sub(@pos).scale(@properties.factor!) )
     @child.step @pos, pressure
 
   release: !->
@@ -24,6 +25,7 @@ class SmoothFilter1
 
 
 class InterpolateFilter
+  @name = 'Interpolate'
   @properties = [
   * id: 'step'
     name: "Step %"
@@ -31,7 +33,7 @@ class InterpolateFilter
     range: [0, 100]
   ]
 
-  (@editor, @next, @props) ->
+  (@editor, @next, @properties) ->
     @lastpos = null
     @accumulator = 0.0
     @child = @next!
@@ -40,7 +42,7 @@ class InterpolateFilter
     doc = @editor.doc
     const tiling = @editor.tiling
     const wpos = if tiling then pos.wrap(doc.width, doc.height) else pos.clone!
-    const stepSize = Math.max(1, Math.round(@props.step! * @editor.tool.size! / 100.0))
+    const stepSize = Math.max(1, Math.round(@properties.step! * @editor.tool.size! / 100.0))
 
     if @lastpos?
       delt = pos.sub @lastpos

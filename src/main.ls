@@ -12,6 +12,20 @@ GammaRenderer = require './renderers/gamma'
 FilterStack = require './tools/filters/stack'
 
 
+ToolFilter = (@type) !->
+  createProperties this, @type.properties
+
+ToolStackView = (@filters)!->
+  @$el = $ '<div/>'
+  rebuild = !~>
+    @$el.empty()
+    @filters().forEach (filter) !~>
+      props = new PropertyGroup filter.type.name
+        ..setProperties filter.properties
+        ..$el.appendTo @$el
+
+  @filters.subscribe rebuild
+  rebuild()
 
 Editor = !->
   @tiling = true
@@ -21,17 +35,16 @@ Editor = !->
   @doc = new Document 512, 512
   @doc.layer.fill -> -1
 
-  stack = [
-  * type: SmoothFilter1
-    props: createProperties null, SmoothFilter1.properties
-  * type: InterpolateFilter
-    props: createProperties null, InterpolateFilter.properties
-  ]
+  @filterStack = null
+  @toolFilters = ko.observableArray()
+  @toolFilters.subscribe = !~>
+    @filterStack = new FilterStack this, @toolFilters()
 
-  stack.0.props.factor 0.5
+  @toolFilters [
+    new ToolFilter(SmoothFilter1),
+    new ToolFilter(InterpolateFilter)]
 
-  transStack = new FilterStack this, stack
-  @toolObject = -> transStack
+  @toolObject = -> @filterStack
 
   @view = new DocumentView $('.document-view'), @doc, this
 
@@ -52,6 +65,8 @@ Editor = !->
     ..setProperties @tool.properties
     ..$el.appendTo $ \#properties
 
+  tsView = new ToolStackView @toolFilters
+    ..$el.appendTo $ \#properties
   
   renderProps = new PropertyGroup 'Renderer'
     ..setProperties @renderer!.properties
