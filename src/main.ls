@@ -6,7 +6,7 @@ DocumentView = require './document-view'
 RoundBrush = require './tools/roundbrush'
 GradientRenderer = require './renderers/gradient'
 GammaRenderer = require './renderers/gamma'
-{PropertyGroup} = require './property-view'
+{PropertyGroup, PropertyView} = require './property-view'
 
 {SmoothFilter1, InterpolateFilter} = require './tools/filters/basic'
 FilterStack = require './tools/filters/stack'
@@ -19,7 +19,7 @@ ToolFilterStage = (@type) !->
   createProperties this, @type.properties
 
 ToolStackView = (@filters) !->
-  @$el = $($('#tpl-stack-menu').html())
+  @$el = $($('#tpl-filter-stack').html())
   @$container = $ '<div/>'
     .appendTo @$el
 
@@ -33,9 +33,18 @@ ToolStackView = (@filters) !->
   @rebuild = !~>
     @$container.empty()
     @filters().forEach (filter) !~>
-      props = new PropertyGroup filter.type.displayName
-        ..setProperties filter.properties
-        ..$el.appendTo @$container
+      $ '<button/>'
+        .text 'x'
+        .addClass 'right-btn'
+        .appendTo @$container
+        .click !~>
+          @filters.remove filter
+      $ '<h2/>'
+        .text filter.type.displayName
+        .appendTo @$container
+      filter.properties.forEach (p) !~>
+        pv = new PropertyView p
+        @$container.append pv.$el
 
   # --
   $menu = @$el.find 'ul'
@@ -61,6 +70,7 @@ Editor = !->
   @toolFilters.subscribe !~>
     @filterStack := new FilterStack @, @toolFilters()
 
+  @toolFilters.push new ToolFilterStage SmoothFilter1
   /*
   @toolFilters [
     new ToolFilter(SmoothFilter1),

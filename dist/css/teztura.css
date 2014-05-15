@@ -28,10 +28,18 @@ body {
 .property-group {
   margin: 4px;
 }
-.property-group > h1 {
+.property-group h1 {
   font-size: 120%;
   margin: 8px;
   text-align: left;
+}
+.property-group h2 {
+  font-size: 110%;
+  margin: 4px;
+  text-align: left;
+}
+.property-group .right-btn {
+  float: right;
 }
 .property {
   zoom: 1;

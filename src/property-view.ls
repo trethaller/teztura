@@ -181,4 +181,4 @@ PropertyGroup = (title)!->
       pv = new PropertyView p
       @$el.append pv.$el
 
-export { PropertyGroup }
+export { PropertyGroup, PropertyView }

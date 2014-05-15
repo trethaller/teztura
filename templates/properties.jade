@@ -17,9 +17,9 @@ script(type='text/html', id='tpl-prop-choice')
     .clear
     .dropdown-menu.pull-right(role="menu")
 
-script(type='text/html', id='tpl-stack-menu')
-  div
-    .dropdown.select
-      button(data-toggle="dropdown") Add (+)
-      ul.dropdown-menu(role="menu")
-        
+script(type='text/html', id='tpl-filter-stack')
+  .property-group
+    .dropdown
+      button.right-btn(data-toggle="dropdown") Add (+)
+      ul.dropdown-menu.pull-right(role="menu")
+    h1 Filters
