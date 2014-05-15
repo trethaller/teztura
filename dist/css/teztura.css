@@ -26,20 +26,35 @@ body {
   font-size: 13px;
 }
 .property-group {
-  margin: 4px;
+  margin: 16px 4px 4px 4px;
+}
+.property-group h1,
+.property-group h2 {
+  margin: 2px;
 }
 .property-group h1 {
   font-size: 120%;
-  margin: 8px;
-  text-align: left;
 }
 .property-group h2 {
-  font-size: 110%;
-  margin: 4px;
-  text-align: left;
+  font-size: 100%;
 }
 .property-group .right-btn {
+  margin-top: -17px;
+  min-height: 15px;
+  font-size: 80%;
+  font-weight: normal;
   float: right;
+}
+.property-group .filter-stage {
+  zoom: 1;
+}
+.property-group .filter-stage:before,
+.property-group .filter-stage:after {
+  content: "";
+  display: table;
+}
+.property-group .filter-stage:after {
+  clear: both;
 }
 .property {
   zoom: 1;

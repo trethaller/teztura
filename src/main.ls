@@ -33,18 +33,20 @@ ToolStackView = (@filters) !->
   @rebuild = !~>
     @$container.empty()
     @filters().forEach (filter) !~>
-      $ '<button/>'
-        .text 'x'
-        .addClass 'right-btn'
+      $div = $ '<div/>'
+        .addClass 'filter-stage'
         .appendTo @$container
-        .click !~>
-          @filters.remove filter
       $ '<h2/>'
         .text filter.type.displayName
-        .appendTo @$container
+        .appendTo $div
+      $ '<button/>'
+        .addClass 'right-btn fa fa-times'
+        .appendTo $div
+        .click !~>
+          @filters.remove filter
       filter.properties.forEach (p) !~>
         pv = new PropertyView p
-        @$container.append pv.$el
+        $div.append pv.$el
 
   # --
   $menu = @$el.find 'ul'
