@@ -134,3 +134,23 @@ button {
     .light-grad(darken(@color-back2, 4%));
   }
 }
+
+.dropdown {
+  .dropdown-menu {
+    .rounded(3px);
+    background-color: @color-back3;
+    padding: 0;
+  }
+
+  li {
+    font-size: 90%;
+    .user-select(none);
+    cursor: pointer;
+    padding: 2px 6px 2px 6px;
+  }
+  li:hover {
+    color: lighten(@color-front, 20%);
+    background: darken(@color-back3, 5%);
+  }
+
+}

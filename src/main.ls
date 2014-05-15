@@ -11,21 +11,42 @@ GammaRenderer = require './renderers/gamma'
 {SmoothFilter1, InterpolateFilter} = require './tools/filters/basic'
 FilterStack = require './tools/filters/stack'
 
+ListSelectVM = (choices) !->
+  @choices = choices
+  @selection = ko.observable ''
 
-ToolFilter = (@type) !->
+ToolFilterStage = (@type) !->
   createProperties this, @type.properties
 
-ToolStackView = (@filters)!->
-  @$el = $ '<div/>'
-  rebuild = !~>
-    @$el.empty()
-    @filters().forEach (filter) !~>
-      props = new PropertyGroup filter.type.name
-        ..setProperties filter.properties
-        ..$el.appendTo @$el
+ToolStackView = (@filters) !->
+  @$el = $($('#tpl-stack-menu').html())
+  @$container = $ '<div/>'
+    .appendTo @$el
 
-  @filters.subscribe rebuild
-  rebuild()
+  @filters.subscribe !~>
+    @rebuild()
+
+  @addStage = (ftype) !~>
+    s = new ToolFilterStage ftype
+    @filters.push s
+
+  @rebuild = !~>
+    @$container.empty()
+    @filters().forEach (filter) !~>
+      props = new PropertyGroup filter.type.displayName
+        ..setProperties filter.properties
+        ..$el.appendTo @$container
+
+  # --
+  $menu = @$el.find 'ul'
+  [SmoothFilter1, InterpolateFilter].forEach (ftype) !~>
+    $i = $ '<li/>'
+      .text ftype.displayName
+      .appendTo $menu
+      .click !~>
+        @addStage ftype
+
+  @rebuild()
 
 Editor = !->
   @tiling = true
@@ -37,12 +58,14 @@ Editor = !->
 
   @filterStack = null
   @toolFilters = ko.observableArray()
-  @toolFilters.subscribe = !~>
-    @filterStack = new FilterStack this, @toolFilters()
+  @toolFilters.subscribe !~>
+    @filterStack := new FilterStack @, @toolFilters()
 
+  /*
   @toolFilters [
     new ToolFilter(SmoothFilter1),
-    new ToolFilter(InterpolateFilter)]
+    new ToolFilter(InterpolateFilter)]  
+  */
 
   @toolObject = -> @filterStack
 
@@ -141,8 +164,10 @@ WebGLViewer = (editor, $parent) !->
 
 start = ->
   editor = new Editor
+  /*
   webgl = new WebGLViewer editor, $('#webgl')
     ..start!
+  */
   ko.applyBindings editor, $('#editor')[0]
 
 

@@ -1,6 +1,6 @@
 
 class SmoothFilter1
-  @name = 'Smooth'
+  @displayName = 'Smooth'
   @properties = [
   * id: 'factor'
     name: "Factor"
@@ -25,7 +25,7 @@ class SmoothFilter1
 
 
 class InterpolateFilter
-  @name = 'Interpolate'
+  @displayName = 'Interpolate'
   @properties = [
   * id: 'step'
     name: "Step %"
