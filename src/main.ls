@@ -11,10 +11,6 @@ GammaRenderer = require './renderers/gamma'
 {SmoothFilter1, InterpolateFilter} = require './tools/filters/basic'
 FilterStack = require './tools/filters/stack'
 
-ListSelectVM = (choices) !->
-  @choices = choices
-  @selection = ko.observable ''
-
 ToolFilterStage = (@type) !->
   createProperties this, @type.properties
 
