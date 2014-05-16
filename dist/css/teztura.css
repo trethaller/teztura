@@ -5,6 +5,9 @@
     A set of useful LESS mixins
     More info at: http://lesselements.com
   ---------------------------------------------------*/
+.debug {
+  border: 1px dashed #0F0;
+}
 .clearfix {
   zoom: 1;
 }
@@ -38,12 +41,16 @@ body {
 .property-group h2 {
   font-size: 100%;
 }
-.property-group .right-btn {
-  margin-top: -17px;
-  min-height: 15px;
+.property-group .buttons {
+  border: 1px dashed #0F0;
+  float: right;
+  margin-top: -18px;
+}
+.property-group .buttons button {
+  display: inline-block;
   font-size: 80%;
   font-weight: normal;
-  float: right;
+  min-height: 15px;
 }
 .property-group .filter-stage {
   zoom: 1;

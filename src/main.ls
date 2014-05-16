@@ -32,16 +32,30 @@ ToolStackView = (@filters) !->
 
   @rebuild = !~>
     @$container.empty()
-    @filters().forEach (filter) !~>
+    filtersArray = @filters()
+    filtersArray.forEach (filter) !~>
       $div = $ '<div/>'
         .addClass 'filter-stage'
         .appendTo @$container
       $ '<h2/>'
         .text filter.type.displayName
         .appendTo $div
+      $btns = $ '<div/>'
+        .addClass 'buttons'
+        .appendTo $div
+      if filter isnt filtersArray[filtersArray.length - 1]
+        $ '<button/>'
+          .addClass 'right-btn fa fa-sort-asc'
+          .appendTo $btns
+          .click !~>
+            i = filtersArray.indexOf filter
+            filtersArray.splice i, 1
+            filtersArray.splice i+1, 0, filter
+            @filters filtersArray
+
       $ '<button/>'
         .addClass 'right-btn fa fa-times'
-        .appendTo $div
+        .appendTo $btns
         .click !~>
           @filters.remove filter
       filter.properties.forEach (p) !~>
