@@ -59,6 +59,14 @@ RoundBrush = (env) !->
     if not @func?
       @func = genFunc!
     @func(...)
-  @endDraw = ~> ;
+
+  @preview = (context, pos) !~>
+    context
+      ..beginPath()
+      ..arc pos.x, pos.y, @size() * 0.5, 0, Math.PI*2
+      ..stroke()
+
+
+  @endDraw = !~> ;
 
 module.exports = RoundBrush

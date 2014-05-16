@@ -32,7 +32,14 @@ class DocumentView
     plugin = document.getElementById('wtPlugin')
     penAPI = plugin?.penAPI
 
- 
+
+    mainLoop = ~>
+      if @paintRequest
+        @repaint!
+        @paintRequest = false
+      requestAnimationFrame mainLoop
+    mainLoop!
+
     getMouseCoords = (e)~>
       v = new Vec2(e.pageX, e.pageY)
 
@@ -54,22 +61,19 @@ class DocumentView
     updatePen = (e) !~>
       @penPos = getMouseCoords(e)
 
-    getCanvasCoords = ~>
-      @screenToCanvas(@penPos)
-
     $backCanvas.mousedown (e) ~>
       e.preventDefault()
 
       if e.which is 1
         @drawing = true
         @actionDirtyRect = null
-        coords = getCanvasCoords()
+        coords = @getCanvasCoords()
         @doc.beginEdit()
         @onDraw(coords, getPressure())
 
       if e.which is 2
         @panning = true
-        @panningStart = getMouseCoords(e)
+        @panningStart = @penPos.clone()
         @offsetStart = @offset.clone()
 
     $container.mouseup (e) ~>
@@ -88,25 +92,31 @@ class DocumentView
       updatePen(e)
 
       if @drawing
-        @onDraw(getCanvasCoords(), getPressure())
+        @onDraw(@getCanvasCoords(), getPressure())
 
       if @panning
-        curPos = getMouseCoords(e)
-        o = @offsetStart.add(curPos.sub(@panningStart))
+        o = @offsetStart.add(@penPos.sub(@panningStart))
         @offset = o
-        @repaint()
+      
+      @requestRepaint()
 
     $container.mousewheel (e, delta, deltaX, deltaY) ~>
       mult = 1.0 + (deltaY * 0.25)
       @scale *= mult
-      @repaint()
+      @requestRepaint()
 
  
   screenToCanvas: (pt) -> pt.sub(@offset).scale(1.0/@scale)
 
+  getCanvasCoords: ->
+    @screenToCanvas @penPos
+
   render: ->
     @renderer?.render [new Rect(0,0,@doc.width,@doc.height)]
-    @repaint()
+    @requestRepaint()
+
+  requestRepaint: ->
+    @paintRequest = true
 
   repaint: ->
     ctx = @backContext
@@ -119,6 +129,14 @@ class DocumentView
       ctx.fillRect(-@offset.x / @scale,-@offset.y / @scale,@canvas.width / @scale, @canvas.height / @scale)
     else
       ctx.drawImage(@canvas, 0, 0)
+
+    if not @drawing
+      ctx
+        ..strokeStyle = '#808080'
+        ..lineWidth = 1 / @scale
+
+      @editor.toolObject()
+        ..preview ctx, @getCanvasCoords()
 
   onDraw: (pos, pressure) ->
 
@@ -139,10 +157,7 @@ class DocumentView
         .reduce((a,b) -> a+b)
       console.log "#{dirtyRects.length} rects, #{Math.round(Math.sqrt(totalArea))} px²"
 
-    if true
-    #setTimeout (->
-      @renderer?.render dirtyRects.map -> it.round!
-      @repaint()
-    #), 0
+    @renderer?.render dirtyRects.map -> it.round!
+    @requestRepaint()
 
 module.exports = DocumentView

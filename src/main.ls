@@ -39,6 +39,7 @@ ToolStackView = (@filters) !->
       $btns = $ '<div/>'
         .addClass 'buttons'
         .appendTo $div
+        
       if filter isnt filtersArray[filtersArray.length - 1]
         $ '<button/>'
           .addClass 'right-btn fa fa-sort-asc'

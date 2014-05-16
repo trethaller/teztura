@@ -4,15 +4,21 @@ Rect  = require '../../core/rect'
 class FilterStack
   (editor, stack) ->
     @layer = null
+    @previewCtx = null
     @doc = editor.doc
     
-    lastStage = {
-      step: (pos, pressure) !~>
-        @dirtyRects.push editor.tool.draw @layer, pos, pressure
-      release: !-> ;
+    @drawStep = (pos, pressure) !~>
+      @dirtyRects.push editor.tool.draw @layer, pos, pressure
+
+    @previewStep = (pos, pressure) !~>
+      editor.tool.preview @previewCtx, pos
+
+    @outStage = {
+      step: !->;
+      release: !->;
     }
 
-    nextFunc = (-> lastStage)
+    nextFunc = ~> @outStage
     (reverse stack).forEach (def) !->
       nf = nextFunc
       nextFunc := -> new def.type editor, nf, def
@@ -22,6 +28,7 @@ class FilterStack
   draw: (layer, pos, pressure) ->
     @dirtyRects = []
     @layer = layer
+    @outStage.step = @drawStep
     @root.step pos, pressure
     w = @doc.width
     h = @doc.height
@@ -31,6 +38,13 @@ class FilterStack
       return dirtyRect.wrap w, h
     else
       return []
+
+  preview: (context, pos) ->
+    @previewCtx = context
+    @outStage.step = @previewStep
+    @root.step pos, 1.0
+    @root.release()
+    @previewCtx = null
 
   endDraw: ->
     @root.release!
