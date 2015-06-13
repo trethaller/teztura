@@ -4,7 +4,7 @@ class SmoothFilter1
   @properties = [
   * id: 'factor'
     name: "Factor"
-    defaultValue: 1.0
+    defaultValue: 0.1
     range: [0, 1.0]
   ]
 

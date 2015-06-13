@@ -13,7 +13,7 @@ RoundBrush = (env) !->
     
     * id: 'size'
       name: "Size"
-      defaultValue: 30.0
+      defaultValue: 8.0
       range: [1.0, 256.0]
       type: 'int'
     

@@ -6,6 +6,7 @@ DocumentView = require './document-view'
 RoundBrush = require './tools/roundbrush'
 GradientRenderer = require './renderers/gradient'
 GammaRenderer = require './renderers/gamma'
+NormalRenderer = require './renderers/normal'
 {PropertyGroup, PropertyView} = require './property-view'
 
 {SmoothFilter1, InterpolateFilter} = require './tools/filters/basic'
@@ -75,7 +76,7 @@ Editor = !->
 
   @tool = new RoundBrush this
 
-  @doc = new Document 512, 512
+  @doc = new Document 700 , 512
   @doc.layer.fill -> -1
 
   @filterStack = null
@@ -84,6 +85,7 @@ Editor = !->
     @filterStack := new FilterStack @, @toolFilters()
 
   @toolFilters.push new ToolFilterStage SmoothFilter1
+  @toolFilters.push new ToolFilterStage InterpolateFilter
   /*
   @toolFilters [
     new ToolFilter(SmoothFilter1),
@@ -94,7 +96,8 @@ Editor = !->
 
   @view = new DocumentView $('.document-view'), @doc, this
 
-  @renderers = [new t @doc.layer, @view for t in [GammaRenderer, GradientRenderer]]
+  @renderers = [new t @doc.layer, @view for t in [
+    GammaRenderer, GradientRenderer, NormalRenderer]]
 
   # Re-render instantly if any property change
   @renderers.forEach (r) ~>
@@ -187,8 +190,7 @@ WebGLViewer = (editor, $parent) !->
 
 start = ->
   editor = new Editor
-  /*
-  webgl = new WebGLViewer editor, $('#webgl')
+  /*webgl = new WebGLViewer editor, $('#webgl')
     ..start!
   */
   ko.applyBindings editor, $('#editor')[0]
